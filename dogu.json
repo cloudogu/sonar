@@ -25,5 +25,9 @@
   "HealthCheck": {
     "Type": "tcp",
     "Port": 9000
-  }
+  },
+  "ExposedCommands": [{
+    "Name": "post-upgrade",
+    "Command": "/post-upgrade.sh"
+  }]
 }
