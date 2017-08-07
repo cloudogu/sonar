@@ -9,3 +9,4 @@ if ! doguctl healthy --wait --timeout 120 sonar; then
   exit 1
 fi
 curl --insecure -X POST https://$(doguctl config --global fqdn)/sonar/api/system/migrate_db
+echo "db migration successful"
