@@ -3,9 +3,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-ADMINGROUP=$(doguctl config --global admin_group)
-SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
-
 function move_sonar_dir(){
   DIR="$1"
   if [ ! -d "/var/lib/sonar/$DIR" ]; then
@@ -27,9 +24,7 @@ function render_template(){
   if [ -f "$FILE" ]; then
     rm -f "$FILE"
   fi
-
   echo "render template $FILE.tpl to $FILE"
-
   # render template
   eval "echo \"$(cat $FILE.tpl)\"" | egrep -v '^#' | egrep -v '^\s*$' > "$FILE"
 }
@@ -73,42 +68,12 @@ function writeProxyAuthenticationCredentialsTo(){
   echo http.proxyPassword=${PROXYPASSWORD} >> ${SONAR_PROPERTIESFILE}
 }
 
-# End of function declaration, work is done now...
-
-
-move_sonar_dir conf
-move_sonar_dir extensions
-move_sonar_dir data
-move_sonar_dir logs
-move_sonar_dir temp
-
-# get variables for templates
-FQDN=$(doguctl config --global fqdn)
-DOMAIN=$(doguctl config --global domain)
-DATABASE_TYPE=postgresql
-DATABASE_IP=postgresql
-DATABASE_PORT=5432
-DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-
-# wait until postgresql passes all health checks
-echo "wait until postgresql passes all health checks"
-if ! doguctl healthy --wait --timeout 120 postgresql; then
-  echo "timeout reached by waiting of postgresql to get healthy"
-  exit 1
-fi
-
 function sql(){
   PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
   return $?
 }
 
-# create truststore, which is used in the sonar.properties file
-create_truststore.sh > /dev/null
-
-# pre cas authentication configuration
-if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.security.realm=cas" ]; then
+function firstSonarStart() {
 	# prepare config
 	REALM="cas"
 	render_template "${SONAR_PROPERTIESFILE}"
@@ -123,8 +88,8 @@ if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.se
 
   setProxyConfiguration
 
-	# start in background
-	su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+  # start sonar in background
+  su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
 
   echo "wait until sonarqube has finished database migration"
   N=0
@@ -141,17 +106,13 @@ if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.se
   # sleep 10 seconds more to sure migration has finished
   sleep 10
 
-  echo "apply ces configurations"
-
+  echo "write ces configurations into database"
 	# set base url
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('sonar.core.serverBaseURL', 'https://${FQDN}/sonar');"
-
   # remove default admin
   sql "DELETE FROM users WHERE login='admin';"
-
   # add admin group
   sql "INSERT INTO groups (name, description, created_at) VALUES ('${ADMINGROUP}', 'CES Administrator Group', now());"
-
   # add admin privileges to admin group
   sql "INSERT INTO group_roles (group_id, role) VALUES((SELECT id FROM groups WHERE name='${ADMINGROUP}'), 'admin');"
 
@@ -161,9 +122,46 @@ if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.se
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', 'sonar@${DOMAIN}');"
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
 
-  # reattach to sonarqube process
-  wait
-else
+
+  # we are using this because checking for port is not enough
+  for i in `seq 1 10`;
+  do
+    # starting compute engine is the last thing sonar does on startup
+    if grep -s "Compute Engine is up" /opt/sonar/logs/sonar.log > /dev/null; then
+      break
+    fi
+    if [ $i -eq 10 ] ; then
+    echo "compute engine did not start in the allowed time. Dogu exits now"
+      exit 1
+    fi
+    echo "wait for compute engine to be up"
+    sleep 5
+  done
+
+  echo "restarting sonar"
+  # kill process (sonar) in background
+  kill $!
+  # kill CeServer process
+  kill $(ps -ax | grep CeServer | awk 'NR==1{print $1}')
+  
+  for i in `seq 1 10`;
+  do
+    JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
+    # 1 instead of 0 because the grep java command itself
+    if [ $JAVA_PROCESSES -eq 1 ] ; then
+      echo "all java processes ended. Start sonar again"
+      break
+    fi
+    if [ $i -eq 10 ] ; then
+      echo "java processes did not end in the allowed time. Dogu exits now"
+      exit 1
+    fi
+    echo "wait for all java processes to end"
+    sleep 5
+  done
+}
+
+function subsequentSonarStart() {
   # refresh base url
   sql "UPDATE properties SET text_value='https://${FQDN}/sonar' WHERE prop_key='sonar.core.serverBaseURL';"
 
@@ -174,7 +172,46 @@ else
   sed -i "/sonar.cas.casServerLogoutUrl=.*/c\sonar.cas.casServerLogoutUrl=https://${FQDN}/cas/logout" ${SONAR_PROPERTIESFILE}
 
   setProxyConfiguration
+}
 
-  # fire it up
-  exec su - sonar -c "exec java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar"
+SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
+
+# get variables for templates
+ADMINGROUP=$(doguctl config --global admin_group)
+FQDN=$(doguctl config --global fqdn)
+DOMAIN=$(doguctl config --global domain)
+DATABASE_TYPE=postgresql
+DATABASE_IP=postgresql
+DATABASE_PORT=5432
+DATABASE_USER=$(doguctl config -e sa-postgresql/username)
+DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
+DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+
+### End of declarations, work is done now:
+move_sonar_dir conf
+move_sonar_dir extensions
+move_sonar_dir data
+move_sonar_dir logs
+move_sonar_dir temp
+
+echo "wait until postgresql passes all health checks"
+if ! doguctl healthy --wait --timeout 120 postgresql; then
+  echo "timeout reached by waiting of postgresql to get healthy"
+  exit 1
 fi
+
+# create truststore, which is used in the sonar.properties file
+create_truststore.sh > /dev/null
+
+doguctl state "installing..."
+
+# pre cas authentication configuration
+if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.security.realm=cas" ]; then
+  firstSonarStart
+else
+  subsequentSonarStart
+fi
+
+doguctl state "ready"
+# fire it up
+exec su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar"
