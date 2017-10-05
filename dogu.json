@@ -22,10 +22,12 @@
   "ServiceAccounts": [{
     "Type": "postgresql"
   }],
-  "HealthCheck": {
+  "HealthChecks": [{
     "Type": "tcp",
     "Port": 9000
-  },
+  },{
+    "Type": "state"
+  }],
   "ExposedCommands": [{
     "Name": "post-upgrade",
     "Command": "/post-upgrade.sh"
