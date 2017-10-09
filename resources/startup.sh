@@ -3,14 +3,29 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
+
+# get variables for templates
+ADMINGROUP=$(doguctl config --global admin_group)
+FQDN=$(doguctl config --global fqdn)
+DOMAIN=$(doguctl config --global domain)
+# shellcheck disable=SC2034
+DATABASE_TYPE=postgresql
+DATABASE_IP=postgresql
+# shellcheck disable=SC2034
+DATABASE_PORT=5432
+DATABASE_USER=$(doguctl config -e sa-postgresql/username)
+DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
+DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+
 function move_sonar_dir(){
   DIR="$1"
   if [ ! -d "/var/lib/sonar/$DIR" ]; then
-    mv /opt/sonar/$DIR /var/lib/sonar
-    ln -s /var/lib/sonar/$DIR /opt/sonar/$DIR
+    mv "/opt/sonar/$DIR" /var/lib/sonar
+    ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
   elif [ ! -L "/opt/sonar/$DIR" ] && [ -d "/opt/sonar/$DIR" ]; then
-    rm -rf /opt/sonar/$DIR
-    ln -s /var/lib/sonar/$DIR /opt/sonar/$DIR
+    rm -rf "/opt/sonar/$DIR"
+    ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
   fi
 }
 
@@ -26,7 +41,7 @@ function render_template(){
   fi
   echo "render template $FILE.tpl to $FILE"
   # render template
-  eval "echo \"$(cat $FILE.tpl)\"" | egrep -v '^#' | egrep -v '^\s*$' > "$FILE"
+  eval "echo \"$(cat "$FILE.tpl")\"" | egrep -v '^#' | egrep -v '^\s*$' > "$FILE"
 }
 
 function setProxyConfiguration(){
@@ -47,25 +62,25 @@ function setProxyConfiguration(){
 }
 
 function removeProxyRelatedEntriesFrom() {
-  sed -i '/http.proxyHost=.*/d' $1
-  sed -i '/http.proxyPort=.*/d' $1
-  sed -i '/http.proxyUser=.*/d' $1
-  sed -i '/http.proxyPassword=.*/d' $1
+  sed -i '/http.proxyHost=.*/d' "$1"
+  sed -i '/http.proxyPort=.*/d' "$1"
+  sed -i '/http.proxyUser=.*/d' "$1"
+  sed -i '/http.proxyPassword=.*/d' "$1"
 }
 
 function writeProxyCredentialsTo(){
-  echo http.proxyHost=${PROXYSERVER} >> $1
-  echo http.proxyPort=${PROXYPORT} >> $1
+  echo http.proxyHost="${PROXYSERVER}" >> "$1"
+  echo http.proxyPort="${PROXYPORT}" >> "$1"
 }
 
 function writeProxyAuthenticationCredentialsTo(){
   # Check for java option and add it if not existent
-  if [ -z "$(grep sonar.web.javaAdditionalOpts= $1 | grep Djdk.http.auth.tunneling.disabledSchemes=)" ]; then
-    sed -i '/^sonar.web.javaAdditionalOpts=/ s/$/ -Djdk.http.auth.tunneling.disabledSchemes=/' $1
+  if [ -z "$(grep sonar.web.javaAdditionalOpts= "$1" | grep Djdk.http.auth.tunneling.disabledSchemes=)" ]; then
+    sed -i '/^sonar.web.javaAdditionalOpts=/ s/$/ -Djdk.http.auth.tunneling.disabledSchemes=/' "$1"
   fi
   # Add proxy authentication credentials
-  echo http.proxyUser=${PROXYUSER} >> ${SONAR_PROPERTIESFILE}
-  echo http.proxyPassword=${PROXYPASSWORD} >> ${SONAR_PROPERTIESFILE}
+  echo http.proxyUser="${PROXYUSER}" >> ${SONAR_PROPERTIESFILE}
+  echo http.proxyPassword="${PROXYPASSWORD}" >> ${SONAR_PROPERTIESFILE}
 }
 
 function sql(){
@@ -75,6 +90,7 @@ function sql(){
 
 function firstSonarStart() {
 	# prepare config
+  # shellcheck disable=SC2034
 	REALM="cas"
 	render_template "${SONAR_PROPERTIESFILE}"
 	# move cas plugin to right folder
@@ -124,35 +140,36 @@ function firstSonarStart() {
 
 
   # we are using this because checking for port is not enough
-  for i in `seq 1 10`;
+  for i in $(seq 1 10);
   do
     # starting compute engine is the last thing sonar does on startup
     if grep -s "Compute Engine is up" /opt/sonar/logs/sonar.log > /dev/null; then
       break
     fi
-    if [ $i -eq 10 ] ; then
-    echo "compute engine did not start in the allowed time. Dogu exits now"
+    if [ "$i" -eq 10 ] ; then
+      echo "compute engine did not start in the allowed time. Dogu exits now"
       exit 1
     fi
     echo "wait for compute engine to be up"
     sleep 5
   done
 
-  echo "restarting sonar"
+  echo "restarting sonar to account for configuration changes"
   # kill process (sonar) in background
   kill $!
-  # kill CeServer process
-  kill $(ps -ax | grep CeServer | awk 'NR==1{print $1}')
-  
-  for i in `seq 1 10`;
+  # kill CeServer process which is started by sonar
+  kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
+
+  # wait for killed processes to disappear
+  for i in $(seq 1 10);
   do
     JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
-    # 1 instead of 0 because the grep java command itself
-    if [ $JAVA_PROCESSES -eq 1 ] ; then
-      echo "all java processes ended. Start sonar again"
+    # 1 instead of 0 because the 'grep java' command itself
+    if [ "$JAVA_PROCESSES" -eq 1 ] ; then
+      echo "all java processes ended. Starting sonar again"
       break
     fi
-    if [ $i -eq 10 ] ; then
+    if [ "$i" -eq 10 ] ; then
       echo "java processes did not end in the allowed time. Dogu exits now"
       exit 1
     fi
@@ -174,19 +191,6 @@ function subsequentSonarStart() {
   setProxyConfiguration
 }
 
-SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
-
-# get variables for templates
-ADMINGROUP=$(doguctl config --global admin_group)
-FQDN=$(doguctl config --global fqdn)
-DOMAIN=$(doguctl config --global domain)
-DATABASE_TYPE=postgresql
-DATABASE_IP=postgresql
-DATABASE_PORT=5432
-DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-
 ### End of declarations, work is done now:
 move_sonar_dir conf
 move_sonar_dir extensions
@@ -205,7 +209,7 @@ create_truststore.sh > /dev/null
 
 doguctl state "installing..."
 
-# pre cas authentication configuration
+# check whether initialization has already been performed
 if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.security.realm=cas" ]; then
   firstSonarStart
 else
