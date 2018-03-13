@@ -191,12 +191,17 @@ function subsequentSonarStart() {
   setProxyConfiguration
 }
 
-### End of declarations, work is done now:
+### End of declarations, work is done now
+
+doguctl state "internalPreparations"
+
 move_sonar_dir conf
 move_sonar_dir extensions
 move_sonar_dir data
 move_sonar_dir logs
 move_sonar_dir temp
+
+doguctl state "waitingForPostgreSQL"
 
 echo "wait until postgresql passes all health checks"
 if ! doguctl healthy --wait --timeout 120 postgresql; then
