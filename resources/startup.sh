@@ -5,10 +5,21 @@ set -o pipefail
 
 SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
 
+# return global config value or default value
+# param1 config key
+# param2 default value
+function global_cfg_or_default {
+  if ! VALUE=$(doguctl config --global "${1}"); then
+    VALUE="${2}"
+  fi
+  echo "${VALUE}"
+}
+
 # get variables for templates
 ADMINGROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
+MAIL_ADDRESS=$(global_cfg_or_default 'mail_address' "sonar@${DOMAIN}")
 # shellcheck disable=SC2034
 DATABASE_TYPE=postgresql
 DATABASE_IP=postgresql
@@ -135,7 +146,7 @@ function firstSonarStart() {
   # set email settings
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_host.secured', 'postfix');"
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_port.secured', '25');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', 'sonar@${DOMAIN}');"
+  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', '${MAIL_ADDRESS}');"
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
 
 
