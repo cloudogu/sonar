@@ -5,21 +5,11 @@ set -o pipefail
 
 SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
 
-# return global config value or default value
-# param1 config key
-# param2 default value
-function global_cfg_or_default {
-  if ! VALUE=$(doguctl config --global "${1}"); then
-    VALUE="${2}"
-  fi
-  echo "${VALUE}"
-}
-
 # get variables for templates
 ADMINGROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
-MAIL_ADDRESS=$(global_cfg_or_default 'mail_address' "sonar@${DOMAIN}")
+MAIL_ADDRESS=$(doguctl config -d "sonar@${DOMAIN}" --global mail_address)
 # shellcheck disable=SC2034
 DATABASE_TYPE=postgresql
 DATABASE_IP=postgresql
