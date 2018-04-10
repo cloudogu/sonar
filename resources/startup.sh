@@ -21,6 +21,7 @@ DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 
 function move_sonar_dir(){
   DIR="$1"
+echo "Directory $DIR"
   if [ ! -d "/var/lib/sonar/$DIR" ]; then
     mv "/opt/sonar/$DIR" /var/lib/sonar
     ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
@@ -201,6 +202,16 @@ move_sonar_dir extensions
 move_sonar_dir data
 move_sonar_dir logs
 move_sonar_dir temp
+
+
+echo "Directory qualityprofiles"
+if [ ! -d "/var/lib/qualityprofiles" ]; then
+  mv "/opt/sonar/qualityprofiles" /var/lib/qualityprofiles
+  ln -s "/var/lib/qualityprofiles" "/opt/sonar/qualityprofiles"
+elif [ ! -L "/opt/sonar/qualityprofiles" ] && [ -d "/var/lib/qualityprofiles" ]; then
+  rm -rf "/opt/sonar/qualityprofiles"
+  ln -s "/var/lib/qualityprofiles" "/opt/sonar/qualityprofiles"
+fi
 
 doguctl state "waitingForPostgreSQL"
 
