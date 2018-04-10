@@ -21,7 +21,7 @@
   }, 
   {
     "Name": "qualityprofiles",
-    "Path": "/var/lib/sonar",
+    "Path": "/var/lib/sonar/qualityprofiles",
     "Owner": "1000",
     "Group": "1000"
   }],
