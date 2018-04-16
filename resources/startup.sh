@@ -6,6 +6,7 @@ set -o pipefail
 SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
 
 # get variables for templates
+QUALITYPROFILESADD_USER="qualityProfilesAdd"
 ADMINGROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
@@ -18,6 +19,21 @@ DATABASE_PORT=5432
 DATABASE_USER=$(doguctl config -e sa-postgresql/username)
 DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+
+function create_user_for_importing_profiles {
+   # create extra user for importing quality profiles
+  if ! doguctl config -e "qualityProfileAdd_password" > /dev/null ; then
+    QUALITYPROFILEADD_PW=$(doguctl random)
+    doguctl config -e "qualityProfileAdd_password" "${QUALITYPROFILEADD_PW}"
+  fi
+
+  QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
+
+  curl -X POST -v -u admin:admin "http://$(doguctl config --global fqdn)/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER" --insecure
+ # curl -X POST -v -u admin:admin "http://$(doguctl config --global fqdn)/sonar/api/permissions/add?permission=profileadmin&user=$QUALITYPROFILESADD_USER" --insecure
+
+  echo "extra user for importing quality profiles is set"
+}
 
 function move_sonar_dir(){
   DIR="$1"
@@ -123,6 +139,10 @@ function firstSonarStart() {
 
   # sleep 10 seconds more to sure migration has finished
   sleep 10
+
+  # create extra user for importing quality profiles
+  create_user_for_importing_profiles
+
 
   echo "write ces configurations into database"
 	# set base url
