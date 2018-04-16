@@ -12,14 +12,15 @@ if (!webdriverType) {
 module.exports = {
     fqdn: cesFqdn,
     baseUrl: 'https://' + cesFqdn,
-    jenkinsContextPath: '/jenkins',
+    jenkinsContextPath: '/sonar',
     username: 'ces-admin',
     password: 'ecosystem2016',
-    firstname: 'admin',
+    firstname:'admin',
     lastname: 'admin',
-    displayName: 'admin',
+    displayName: 'ces-admin',
     email: 'ces-admin@cloudogu.com',
     webdriverType: webdriverType,
     debug: true,
-    adminGroup: 'CesAdministrators'
+    adminGroup: 'CesAdministrators',
+	testToken: 'testToken'
 };
