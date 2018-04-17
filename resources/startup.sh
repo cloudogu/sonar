@@ -21,7 +21,7 @@ DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 
 function create_user_for_importing_profiles {
-   # create extra user for importing quality profiles
+  # create extra user for importing quality profiles
   if ! doguctl config -e "qualityProfileAdd_password" > /dev/null ; then
     QUALITYPROFILEADD_PW=$(doguctl random)
     doguctl config -e "qualityProfileAdd_password" "${QUALITYPROFILEADD_PW}"
@@ -29,10 +29,32 @@ function create_user_for_importing_profiles {
 
   QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
 
-  curl -X POST -v -u admin:admin "http://$(doguctl config --global fqdn)/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER" --insecure
- # curl -X POST -v -u admin:admin "http://$(doguctl config --global fqdn)/sonar/api/permissions/add?permission=profileadmin&user=$QUALITYPROFILESADD_USER" --insecure
+  curl -X POST -v -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER" --insecure
+  curl -X POST -v -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER" --insecure
 
   echo "extra user for importing quality profiles is set"
+}
+
+function import_quality_profiles {
+
+  QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
+
+  echo "start importing quality profiles"
+  if ls -A /opt/sonar/qualityprofiles;
+  then
+    for file in /opt/sonar/qualityprofiles/*
+    do
+
+      if ! curl --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore;
+      then
+        echo "import of quality profile $file has not been successful"
+      else
+          rm -f "$file" && echo "import of quality profile $file was successful"
+          # delete file if import was successful
+          echo "removing $file"
+      fi;
+    done;
+  fi;
 }
 
 function move_sonar_dir(){
@@ -142,7 +164,7 @@ function firstSonarStart() {
 
   # create extra user for importing quality profiles
   create_user_for_importing_profiles
-
+  import_quality_profiles
 
   echo "write ces configurations into database"
 	# set base url
@@ -198,11 +220,11 @@ function firstSonarStart() {
     echo "wait for all java processes to end"
     sleep 5
   done
+
 }
 
 function subsequentSonarStart() {
-  # refresh base url
-  sql "UPDATE properties SET text_value='https://${FQDN}/sonar' WHERE prop_key='sonar.core.serverBaseURL';"
+
 
   # refresh FQDN
   sed -i "/sonar.cas.casServerLoginUrl=.*/c\sonar.cas.casServerLoginUrl=https://${FQDN}/cas/login" ${SONAR_PROPERTIESFILE}
@@ -211,6 +233,53 @@ function subsequentSonarStart() {
   sed -i "/sonar.cas.casServerLogoutUrl=.*/c\sonar.cas.casServerLogoutUrl=https://${FQDN}/cas/logout" ${SONAR_PROPERTIESFILE}
 
   setProxyConfiguration
+
+
+  # start sonar in background
+  su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+
+  END=$((SECONDS+120))
+  SONAR_IS_HEALTHY=false
+  while [ $SECONDS -lt $END ]; do
+    CURL_HEALTH_STATUS=$(curl --silent --head http://localhost:9000/sonar/api/system/status)|| true #-u ?
+    HEALTH_STATUS_CODE=$(echo "$CURL_HEALTH_STATUS"|head -n 1|cut -d$' ' -f2)
+    if [[ ${HEALTH_STATUS_CODE} != 200 ]]; then
+      sleep 1
+    else
+      echo "Sonar is healthy now"
+      SONAR_IS_HEALTHY=true
+      break
+    fi
+  done
+  if [[ "${SONAR_IS_HEALTHY}" == "false" ]]; then
+    echo "Sonar did not reach healthy state in 120 seconds"
+    exit 1
+  fi
+
+  import_quality_profiles
+
+ echo "restarting sonar to account for configuration changes"
+  # kill process (sonar) in background
+  kill $!
+  # kill CeServer process which is started by sonar
+  kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
+
+  # wait for killed processes to disappear
+  for i in $(seq 1 10);
+  do
+    JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
+    # 1 instead of 0 because the 'grep java' command itself
+    if [ "$JAVA_PROCESSES" -eq 1 ] ; then
+      echo "all java processes ended. Starting sonar again"
+      break
+    fi
+    if [ "$i" -eq 10 ] ; then
+      echo "java processes did not end in the allowed time. Dogu exits now"
+      exit 1
+    fi
+    echo "wait for all java processes to end"
+    sleep 5
+  done
 }
 
 ### End of declarations, work is done now
@@ -252,6 +321,7 @@ if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.se
 else
   subsequentSonarStart
 fi
+
 
 doguctl state "ready"
 # fire it up
