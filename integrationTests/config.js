@@ -1,7 +1,7 @@
 let cesFqdn = process.env.CES_FQDN;
 if (!cesFqdn) {
   // url from ecosystem with private network
-  cesFqdn = "192.168.42.2"
+  cesFqdn = "192.168.56.2" //"192.168.42.2"
 }
 
 let webdriverType = process.env.WEBDRIVER;
@@ -12,15 +12,15 @@ if (!webdriverType) {
 module.exports = {
     fqdn: cesFqdn,
     baseUrl: 'https://' + cesFqdn,
-    jenkinsContextPath: '/sonar',
-    username: 'ces-admin',
-    password: 'ecosystem2016',
+    sonarContextPath: '/sonar',
+    username: 'amukherjee',//'ces-admin',
+    password: 'admin',//'ecosystem2016',
     firstname:'admin',
     lastname: 'admin',
-    displayName: 'ces-admin',
+    displayName: 'amukherjee',//'ces-admin',
     email: 'ces-admin@cloudogu.com',
     webdriverType: webdriverType,
     debug: true,
-    adminGroup: 'CesAdministrators',
-	testToken: 'testToken'
+    adminGroup: 'ecosystemAdmins',//'CesAdministrators',
+	sonarqubeToken: 'sonarqubeToken'
 };

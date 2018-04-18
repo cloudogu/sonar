@@ -17,115 +17,38 @@ module.exports = class AdminFunctions{
         this.testuserEmail=testuserEmail;
         this.testuserPasswort=testuserPasswort;
     };
-
-    async createUser(driver){
-		
-		await driver.wait(until.elementLocated(By.id("username")),5000);
-		await driver.findElement(By.id('username')).sendKeys(this.testuserName);
-		await driver.findElement(By.id('givenname')).sendKeys(this.testuserFirstname);
-		await driver.findElement(By.id('surname')).sendKeys(this.testuserSurname);
-		await driver.findElement(By.id('displayName')).sendKeys(this.testuserName);
-		await driver.findElement(By.id('email')).sendKeys(this.testuserEmail);
-		await driver.findElement(By.id('password')).sendKeys(this.testuserPasswort);
-		await driver.findElement(By.id('confirmPassword')).sendKeys(this.testuserPasswort);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button")).click();
+	
+    async createUser(){
+		await request(config.baseUrl)
+            .post('/usermgt/api/users/')
+            .auth(config.username, config.password)
+            .set('Content-Type', 'application/json;charset=UTF-8')
+            .type('json')
+            .send({
+                'username': this.testuserName,
+                'givenname': this.testuserFirstname,
+                'surname': this.testuserSurname,
+                'displayName': this.testuserName,
+                'mail': this.testuserEmail,
+                'password': this.testuserPasswort,
+                'memberOf':[]
+            });
     };
 
     async removeUser(driver){
-		
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")).click(); // First click to remove
-		await driver.wait(until.elementLocated(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope")),5000);
-		await driver.findElement(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope > button.btn.btn-danger")).click(); // Confirmation
+		await request(config.baseUrl)
+            .del('/usermgt/api/users/' + this.testuserName)
+            .auth(config.username, config.password);
+			
+        await request(config.baseUrl)
+            .post('/api/users/deactivate')
+            .auth(config.username, config.password)
+			.set('Content-Type', 'application/json;charset=UTF-8')
+            .type('json')
+            .send({
+                'login': this.testuserName
+            });        
     };
-
-    async giveAdminRights(driver){
-		
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click(); //Click to edit user group
-		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
-		await driver.findElement(By.id('addGroup')).sendKeys(config.adminGroup);
-		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
-		await driver.findElement(By.id('addGroup')).sendKeys(webdriver.Key.ENTER);
-		await driver.sleep(3000);
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")).click(); //Click to edit user options
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button")).click(); // Saving changes
-		await driver.wait(until.elementLocated(By.css("body > div.navbar.navbar-default.navbar-fixed-top > div > div.collapse.navbar-collapse > ul > li:nth-child(4) > a")),5000);
-		await driver.findElement(By.css("body > div.navbar.navbar-default.navbar-fixed-top > div > div.collapse.navbar-collapse > ul > li:nth-child(4) > a")).click();  //Logging out
-		await driver.wait(until.elementLocated(By.className('success')), 5000);
-    };
-
-
-    async takeAdminRights(driver){
-		
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click();
-		await driver.sleep(3000);
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")).click(); // Deleting admin group
-		await driver.wait(until.elementLocated(By.css("body > div.navbar.navbar-default.navbar-fixed-top > div > div.collapse.navbar-collapse > ul > li:nth-child(4) > a")),5000);
-		await driver.findElement(By.css("body > div.navbar.navbar-default.navbar-fixed-top > div > div.collapse.navbar-collapse > ul > li:nth-child(4) > a")).click();  //Logging out
-		await driver.wait(until.elementLocated(By.className('success')), 5000);
-    };
-	
-	async testUser(driver,userName){
-		
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > table > tbody > tr:nth-child(2) > td.ng-binding")),5000)
-		.then(async function(){
-			if (await driver.findElement(By.css("body > div.container.ng-scope > table > tbody > tr:nth-child(2) > td.ng-binding")).getText() == userName){
-				await driver.get(utils.gettestUserUrl(driver,userName));
-				await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")),5000);
-				await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")).click(); // First click to remove
-				await driver.wait(until.elementLocated(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope")),5000);
-				await driver.findElement(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope > button.btn.btn-danger")).click(); // Confirmation
-				await driver.sleep(3000);
-				await driver.get(utils.maketestUserUrl(driver));
-				return;
-			} else {
-				await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > table > tbody > tr:nth-child(3) > td.ng-binding")),5000)
-				.then(async function(){
-					if (await driver.findElement(By.css("body > div.container.ng-scope > table > tbody > tr:nth-child(3) > td.ng-binding")).getText() == userName){
-						await driver.get(utils.gettestUserUrl(driver,userName));
-						await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")),5000);
-						await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")).click(); // First click to remove
-						await driver.wait(until.elementLocated(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope")),5000);
-						await driver.findElement(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope > button.btn.btn-danger")).click(); // Confirmation
-						await driver.sleep(3000);
-						await driver.get(utils.maketestUserUrl(driver));
-						return;
-					}else {
-						await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > table > tbody > tr:nth-child(4) > td.ng-binding")),5000)
-						.then(async function(){
-							if (await driver.findElement(By.css("body > div.container.ng-scope > table > tbody > tr:nth-child(4) > td.ng-binding")).getText() == userName){
-								await driver.get(utils.gettestUserUrl(driver,userName));
-								await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")),5000);
-								await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > form > button.btn.btn-warning.ng-scope")).click(); // First click to remove
-								await driver.wait(until.elementLocated(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope")),5000);
-								await driver.findElement(By.css("body > div.modal.fade.ng-isolate-scope.in > div > div > div.modal-footer.ng-scope > button.btn.btn-danger")).click(); // Confirmation
-								await driver.sleep(3000);
-								await driver.get(utils.maketestUserUrl(driver));
-								return;
-							}
-							else {
-								console.log("DID NOT MATCH!!");
-							}
-						},function(err){
-							driver.get(utils.maketestUserUrl(driver));
-							return;
-						});
-					}
-				},function(err){
-						driver.get(utils.maketestUserUrl(driver));
-						return;
-				});
-			}
-		},function(err){
-				driver.get(utils.maketestUserUrl(driver));
-				return;
-		});
-	};
 
     async testUserLogin(driver) {
 		
@@ -144,34 +67,67 @@ module.exports = class AdminFunctions{
 		await driver.wait(until.elementLocated(By.className('success')), 5000);
     };
 	
-	async accessUserAPI(isAdmin){
-        const response = await request(config.baseUrl)
-			.get(config.jenkinsContextPath + "/account/api/json")
-			.auth(this.testuserName, this.testuserPasswort)
-			.expect('Content-Type', "text/html;charset=utf-8")
-            .expect(200);
+	async giveAdminRights(driver){
+
+		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
+		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click(); //Click to edit user group
+		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
+		await driver.findElement(By.id('addGroup')).sendKeys(config.adminGroup);
+		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
+		await driver.findElement(By.id('addGroup')).sendKeys(webdriver.Key.ENTER);
+		await driver.sleep(200);
+		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
+		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")).click(); //Click to go back and save changes		
+		await driver.findElement(By.className("btn btn-primary")).click(); // Saving changes
+		await driver.findElement(By.linkText("Logout")).click();  //Logging out
+		await driver.wait(until.elementLocated(By.className('success')), 5000);
+    };	
+	
+	async takeAdminRights(driver){
 		
-		var templateName = 'amukherjee';
-		var templateEmail = 'ces-admin@cloudogu.com';
-		var l1 = templateName.length;
-		var l2 = this.testuserName.length;
-		var l3 = templateEmail.length;
-		var l4 = this.testuserEmail.length;
-		var indexstart = 2430;
-		var indexend = 2451;
-		//Getting text embedded as HTML in webpage api
-		var testObj = response["request"]["req"]["res"]["text"];
-		testObj = testObj.replace(/\s/g,'');
-		indexstart = (indexstart-((l1-l2)*2))-(l3-l4);
-		indexend = (indexend-((l1-l2)*2))-(l3-l4);
-		// Search for "is Administrator" true condition
-		var adminField = testObj.substring(indexstart,indexend);
-		var isTrue = testObj.substring(indexstart+22,indexend+5);
-		expect(adminField).toBe('window.SS.isUserAdmin');
-		if (isAdmin == 'true'){
-			expect(isTrue).toBe('true');
-		} else {
-			expect(isTrue).toBe('fals');
-		}		
+		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
+		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click();
+		await driver.sleep(200);
+		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")),5000);
+		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")).click(); // Deleting admin group
+		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
+		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")).click(); //Click to go back and save changes
+		await driver.findElement(By.className("btn btn-primary")).click(); // Saving changes
+		await driver.findElement(By.linkText("Logout")).click();  //Logging out
+		await driver.wait(until.elementLocated(By.className('success')), 5000);
+    };
+	
+	async giveAdminRightsApi(){
+		
+		await request(config.baseUrl)
+            .put('/usermgt/api/users/' + this.testuserName)
+            .auth(config.username, config.password)
+            .set('Content-Type', 'application/json;charset=UTF-8')
+            .type('json')
+            .send({'memberOf':[config.adminGroup],
+                'username':this.testuserName,
+                'givenname':this.testuserFirstname,
+                'surname': this.testuserSurname,
+                'displayName':this.testuserName,
+                'mail':this.testuserEmail,
+                'password':this.testuserPasswort})
+            .expect(204);
+    };	
+	
+	async takeAdminRightsApi(driver){
+		
+		await request(config.baseUrl)
+            .put('/usermgt/api/users/' + this.testuserName)
+            .auth(config.username, config.password)
+            .set('Content-Type', 'application/json;charset=UTF-8')
+            .type('json')
+            .send({'memberOf':[],
+                'username':this.testuserName,
+                'givenname':this.testuserFirstname,
+                'surname': this.testuserSurname,
+                'displayName':this.testuserName,
+                'mail':this.testuserEmail,
+                'password':this.testuserPasswort})
+            .expect(204);
     };
 };

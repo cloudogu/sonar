@@ -24,12 +24,12 @@ afterEach(() => {
     driver.quit();
 });
 
+
 describe('cas browser login', () => {
 	
     test('automatic redirect to cas login', async () => {
-        await driver.get(config.baseUrl + config.jenkinsContextPath);
+        await driver.get(config.baseUrl + config.sonarContextPath);
         const url = await driver.getCurrentUrl();
-		await driver.sleep(500);
         expect(url).toMatch(loginUrl);
     });
 
@@ -37,7 +37,6 @@ describe('cas browser login', () => {
         await driver.get(utils.getCasUrl(driver));
 		await utils.login(driver);
 		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
-		await driver.sleep(500);
         expect(username).toContain(config.displayName);
     });
 	
@@ -48,7 +47,6 @@ describe('cas browser login', () => {
 		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
 		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
 		const url = await driver.getCurrentUrl();
-		await driver.sleep(500);
         expect(url).toMatch(logoutUrl);
     });
 	
@@ -56,10 +54,8 @@ describe('cas browser login', () => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
         await driver.get(config.baseUrl + logoutUrl);
-        await driver.get(config.baseUrl + config.jenkinsContextPath);
-		await driver.sleep(3000);
+        await driver.get(config.baseUrl + config.sonarContextPath);
 		const url = await driver.getCurrentUrl();
-		await driver.sleep(500);
         expect(url).toMatch(loginUrl);
     });
 
@@ -70,24 +66,19 @@ describe('browser attributes', () => {
     test('front channel user attributes', async () => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-		await driver.get(config.baseUrl + config.jenkinsContextPath + "/account/");
-		await driver.wait(until.elementLocated(By.css("#content > div > header")),5000);
-		const emailAddressInput = await driver.findElement(By.css("#email"));
-		const emailAddress = await emailAddressInput.getText();
-		const usernameInput= await driver.findElement(By.css('#login'));
-		const username = await usernameInput.getText();
-		await driver.sleep(500);
-        expect(username).toBe(config.displayName);
+		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
+		await driver.wait(until.elementLocated(By.id("email")),5000);
+		const emailAddress = await driver.findElement(By.id("email")).getText();
+		const username = await driver.findElement(By.id("login")).getText();
         expect(emailAddress).toBe(config.email);
+		expect(username).toBe(config.displayName);
     });
 
     test('front channel user administrator', async () => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-		await driver.get(config.baseUrl + config.jenkinsContextPath + "/account/");
-		await driver.wait(until.elementLocated(By.css("#content > div > div > div > div:nth-child(3)")),5000);
+		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
         const isAdministrator = await utils.isAdministrator(driver);
-		await driver.sleep(500);
         expect(isAdministrator).toBe(true);
     });
 });
