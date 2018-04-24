@@ -39,15 +39,16 @@ module.exports = class AdminFunctions{
 		await request(config.baseUrl)
             .del('/usermgt/api/users/' + this.testuserName)
             .auth(config.username, config.password);
-			
+
+
         await request(config.baseUrl)
-            .post('/api/users/deactivate')
+            .post('/sonar/api/users/deactivate')
             .auth(config.username, config.password)
 			.set('Content-Type', 'application/json;charset=UTF-8')
             .type('json')
             .send({
                 'login': this.testuserName
-            });        
+            });
     };
 
     async testUserLogin(driver) {
