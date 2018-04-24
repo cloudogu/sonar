@@ -1,5 +1,4 @@
 FROM registry.cloudogu.com/official/java:8u121-4
-MAINTAINER Sebastian Sdorra <sebastian.sdorra@cloudogu.com>
 
 LABEL NAME="official/sonar";
 LABEL VERSION="5.6.6-2"
