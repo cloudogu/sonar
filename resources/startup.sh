@@ -20,8 +20,10 @@ DATABASE_USER=$(doguctl config -e sa-postgresql/username)
 DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 
+# create extra user for importing quality profiles
 function create_user_for_importing_profiles {
-  # create extra user for importing quality profiles
+
+  # add random password for extra user
   if ! doguctl config -e "qualityProfileAdd_password" > /dev/null ; then
     QUALITYPROFILEADD_PW=$(doguctl random)
     doguctl config -e "qualityProfileAdd_password" "${QUALITYPROFILEADD_PW}"
@@ -29,22 +31,24 @@ function create_user_for_importing_profiles {
 
   QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
 
+  # create extra user and set him to an admin that can update quality profiles
   curl -X POST -v -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER" --insecure
   curl -X POST -v -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER" --insecure
 
   echo "extra user for importing quality profiles is set"
 }
 
+# import quality profiles
 function import_quality_profiles {
 
-  QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
+  QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
 
   echo "start importing quality profiles"
-  if ls -A /opt/sonar/qualityprofiles;
+  if ls -A /opt/sonar/qualityprofiles; # only try to import profiles if directory is not empty
   then
-    for file in /opt/sonar/qualityprofiles/*
+    for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
     do
-
+      # check if import is successful
       if ! curl --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore;
       then
         echo "import of quality profile $file has not been successful"
@@ -164,6 +168,7 @@ function firstSonarStart() {
 
   # create extra user for importing quality profiles
   create_user_for_importing_profiles
+  # import quality profiles
   import_quality_profiles
 
   echo "write ces configurations into database"
@@ -235,7 +240,7 @@ function subsequentSonarStart() {
   setProxyConfiguration
 
 
-  # start sonar in background
+  # start sonar in background to have the possibility to import quality profiles
   su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
 
   END=$((SECONDS+120))
@@ -256,8 +261,10 @@ function subsequentSonarStart() {
     exit 1
   fi
 
+  # import quality profiles
   import_quality_profiles
 
+  # stop/kill sonar after importing quality profiles
  echo "restarting sonar to account for configuration changes"
   # kill process (sonar) in background
   kill $!
@@ -292,7 +299,7 @@ move_sonar_dir data
 move_sonar_dir logs
 move_sonar_dir temp
 
-
+# move qualityprofile directory
 echo "Directory qualityprofiles"
 if [ ! -d "/var/lib/qualityprofiles" ]; then
   mv "/opt/sonar/qualityprofiles" /var/lib/qualityprofiles
