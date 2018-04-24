@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "ci-test": "jest --ci --testResultsProcessor='jest-junit'",
+    "ci-test": "jest --runInBand --ci --testResultsProcessor='jest-junit'",
     "test": "jest --runInBand"
   },
   "dependencies": {
