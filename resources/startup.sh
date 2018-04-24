@@ -41,23 +41,38 @@ function create_user_for_importing_profiles {
 # import quality profiles
 function import_quality_profiles {
 
-  QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
+  RESPONSE_USER=$(curl localhost:9000/sonar/api/users/search?q=$QUALITYPROFILESADD_USER --insecure);
 
-  echo "start importing quality profiles"
-  if ls -A /opt/sonar/qualityprofiles; # only try to import profiles if directory is not empty
+  if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ]; #check if extra user is still there
   then
-    for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
-    do
-      # check if import is successful
-      if ! curl --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore;
-      then
-        echo "import of quality profile $file has not been successful"
+    echo "ERROR - user for importing quality profiles seems to be deleted"
+    #create_user_for_importing_profiles #does not work since admin user is deleted
+  else
+
+    QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
+
+    echo "start importing quality profiles"
+    if test "$(ls -A /opt/sonar/qualityprofiles)"; # only try to import profiles if directory is not empty
+    then
+      for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
+      do
+        RESPONSE_IMPORT=$(curl -s --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore)
+        # check if import is successful
+
+        if ! ( echo $RESPONSE_IMPORT | grep -o errors);
+        then
+           rm -f "$file" && echo "import of quality profile $file was successful"
+           # delete file if import was successful
+           echo "removing $file"
+        else
+           echo "import of quality profile $file has not been successful"
+           echo $RESPONSE_IMPORT
+        fi;
+      done;
       else
-          rm -f "$file" && echo "import of quality profile $file was successful"
-          # delete file if import was successful
-          echo "removing $file"
-      fi;
-    done;
+          echo "no quality profiles to import"
+    fi;
+
   fi;
 }
 
