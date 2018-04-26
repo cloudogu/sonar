@@ -15,9 +15,9 @@ exports.expectStateAdmin = function(user) {
 }
 
 exports.expectCasLogin = function(url) {
-    expect(url).toBe(config.baseUrl + '/cas/login?TARGET=https%3A%2F%2F192.168.56.2%2Fsonar%2Fcas%2Fvalidate');
+    expect(url).toBe(config.baseUrl + '/cas/login?TARGET=https%3A%2F%2F' +config.fqdn+'%2Fsonar%2Fcas%2Fvalidate');
 }
 
 exports.expectCasLogout = function(url) {
-    expect(url).toBe(config.baseUrl + '/cas/logout?service=https%3A%2F%2F192.168.56.2%2Fsonar');
+    expect(url).toBe(config.baseUrl + '/cas/logout?service=https%3A%2F%2F'+config.fqdn+'%2Fsonar');
 }
