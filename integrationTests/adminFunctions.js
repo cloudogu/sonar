@@ -36,11 +36,12 @@ module.exports = class AdminFunctions{
     };
 
     async removeUser(driver){
+        //remove in usermanagement
 		await request(config.baseUrl)
             .del('/usermgt/api/users/' + this.testuserName)
             .auth(config.username, config.password);
 
-
+        //remove in sonar (reason: a user that logged in sonar is still in sonar after removing it from usermanagement)
         await request(config.baseUrl)
             .post('/sonar/api/users/deactivate')
             .auth(config.username, config.password)
@@ -51,8 +52,9 @@ module.exports = class AdminFunctions{
             });
     };
 
+
     async testUserLogin(driver) {
-		
+
         await driver.wait(until.elementLocated(By.id('password')), 5000);
         await driver.findElement(By.id('username')).sendKeys(this.testuserName);
         await driver.findElement(By.id('password')).sendKeys(this.testuserPasswort);
@@ -60,7 +62,7 @@ module.exports = class AdminFunctions{
     };
 
     async testUserLogout(driver) {
-		
+
 		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
 		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
 		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")),5000);
