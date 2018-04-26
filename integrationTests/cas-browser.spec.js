@@ -1,15 +1,12 @@
 const config = require('./config');
 const utils = require('./utils');
+const expectations = require('./expectations');
 
 
 require('chromedriver');
 const webdriver = require('selenium-webdriver');
 const By = webdriver.By;
 const until = webdriver.until;
-
-const logoutUrl = '/cas/logout';
-const loginUrl = '/cas/login';
-
 
 jest.setTimeout(30000);
 
@@ -30,10 +27,10 @@ describe('cas browser login', () => {
     test('automatic redirect to cas login', async () => {
         await driver.get(config.baseUrl + config.sonarContextPath);
         const url = await driver.getCurrentUrl();
-        expect(url).toMatch(loginUrl);
+        expectations.expectCasLogin(url);
     });
 
-    test('login', async() => {
+    test('cas authentication', async() => {
         await driver.get(utils.getCasUrl(driver));
 		await utils.login(driver);
 		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
@@ -47,16 +44,16 @@ describe('cas browser login', () => {
 		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
 		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
 		const url = await driver.getCurrentUrl();
-        expect(url).toMatch(logoutUrl);
+        expectations.expectCasLogout(url);
     });
 	
     test('logout back channel', async() => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-        await driver.get(config.baseUrl + logoutUrl);
+        await driver.get(config.baseUrl + '/cas/logout');
         await driver.get(config.baseUrl + config.sonarContextPath);
 		const url = await driver.getCurrentUrl();
-        expect(url).toMatch(loginUrl);
+        expectations.expectCasLogin(url);
     });
 
 });
