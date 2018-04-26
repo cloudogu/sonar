@@ -55,6 +55,7 @@ module.exports = class AdminFunctions{
 
     async testUserLogin(driver) {
 
+        await driver.get(config.baseUrl + config.sonarContextPath);
         await driver.wait(until.elementLocated(By.id('password')), 5000);
         await driver.findElement(By.id('username')).sendKeys(this.testuserName);
         await driver.findElement(By.id('password')).sendKeys(this.testuserPasswort);
@@ -69,36 +70,8 @@ module.exports = class AdminFunctions{
 		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
 		await driver.wait(until.elementLocated(By.className('success')), 5000);
     };
-	
-	async giveAdminRights(driver){
 
-        await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click(); //Click to edit user group
-		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
-		await driver.findElement(By.id('addGroup')).sendKeys(config.adminGroup);
-		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
-		await driver.findElement(By.id('addGroup')).sendKeys(webdriver.Key.ENTER);
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")).click(); //Click to go back and save changes		
-		await driver.findElement(By.className("btn btn-primary")).click(); // Saving changes
-		await driver.findElement(By.linkText("Logout")).click();  //Logging out
-		await driver.wait(until.elementLocated(By.className('success')), 5000);
-    };	
-	
-	async takeAdminRights(driver){
-		
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click();
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")).click(); // Deleting admin group
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")).click(); //Click to go back and save changes
-		await driver.findElement(By.className("btn btn-primary")).click(); // Saving changes
-		await driver.findElement(By.linkText("Logout")).click();  //Logging out
-		await driver.wait(until.elementLocated(By.className('success')), 5000);
-    };
-	
-	async giveAdminRightsApi(){
+	async giveAdminRightsUsermgt(){
 		
 		await request(config.baseUrl)
             .put('/usermgt/api/users/' + this.testuserName)
@@ -115,7 +88,7 @@ module.exports = class AdminFunctions{
             .expect(204);
     };	
 	
-	async takeAdminRightsApi(){
+	async takeAdminRightsUsermgt(){
 		
 		await request(config.baseUrl)
             .put('/usermgt/api/users/' + this.testuserName)
@@ -130,5 +103,15 @@ module.exports = class AdminFunctions{
                 'mail':this.testuserEmail,
                 'password':this.testuserPasswort})
             .expect(204);
+    };
+
+    async accessUsersJson(expectStatus){
+
+        await request(config.baseUrl)
+            .get(config.sonarContextPath + "/api/permissions/search_global_permissions")
+            .auth(this.testuserName, this.testuserPasswort)
+            .expect('Content-Type', 'application/json;charset=utf-8')
+            .type('json')
+            .expect(expectStatus);//403 = "Forbidden", 200 = "OK"
     };
 };

@@ -1,6 +1,7 @@
 const config = require('./config');
 const utils = require('./utils');
 const request = require('supertest');
+const expectations = require('./expectations');
 
 require('chromedriver');
 const webdriver = require('selenium-webdriver');
@@ -26,7 +27,7 @@ describe('cas rest basic authentication', () => {
 
     test('authentication with username password', async () => {
         await request(config.baseUrl)
-            .get(config.sonarContextPath + "/api/users/search/json")
+            .get(config.sonarContextPath + "/api/users/search")
             .auth(config.username, config.password)
             .expect(200);
     });
@@ -37,12 +38,12 @@ describe('cas rest basic authentication', () => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
-		await driver.sleep(250);
         await driver.wait(until.elementLocated(By.className("js-generate-token-form")), 5000);
 		await driver.findElement(By.css("#content > div > div > div > div > div > form > input[type='text']")).sendKeys(config.sonarqubeToken);
 		await driver.findElement(By.css("#content > div > div > div > div > div > form > button")).click(); //Click to create Token
 		await driver.sleep(200);
-		const apikey = await driver.findElement(By.className("monospaced text-success")).getText(); //Saving Token
+        await driver.wait(until.elementLocated(By.className("text-success")), 5000);
+        const apikey = await driver.findElement(By.className("text-success")).getText(); //Saving Token
 		//Checking login with Token
         await request(config.baseUrl)
 			.get(config.sonarContextPath + "/api/users/search/json")
@@ -50,8 +51,8 @@ describe('cas rest basic authentication', () => {
             .expect(200);
 		//Deleting user Token
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
-		await driver.sleep(200);
-		await driver.findElement(By.className("js-revoke-token-form")).click(); // Click to delete
+        await driver.wait(until.elementLocated(By.className("js-revoke-token-form")), 5000);
+        await driver.findElement(By.className("js-revoke-token-form")).click(); // Click to delete
 		await driver.findElement(By.className("js-revoke-token-form")).click(); // Click to confirm deletion
     });
 
@@ -65,12 +66,13 @@ describe('rest attributes', () => {
 		const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
-            .expect('Content-Type', /json/)
+            .expect('Content-Type', 'application/json;charset=utf-8')
+			.type('json')
+            .send({'q': config.username})
             .expect(200);
-		
-		const result = await utils.isUser(response);
-		expect(result).toBe(true);
-        
+
+        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
+        expectations.expectStateUser(userObject);
     });
 
     test('rest - user is administrator', async () => {
@@ -78,10 +80,12 @@ describe('rest attributes', () => {
 		const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
-            .expect('Content-Type', /json/)
+            .expect('Content-Type', 'application/json;charset=utf-8')
+			.type('json')
+            .send({'q': config.username})
             .expect(200);
-			
-		const result = await utils.isUserAdmin(response);
-		expect(result).toBe(true);
+
+        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
+        expectations.expectStateAdmin(userObject);
     });
 });

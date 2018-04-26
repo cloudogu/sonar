@@ -6,6 +6,7 @@ const By = webdriver.By;
 const until = webdriver.until;
 const userName = 'testUser';
 require('chromedriver');
+const request = require('supertest');
 
 jest.setTimeout(30000);
 let driver;
@@ -21,7 +22,6 @@ beforeEach(async() => {
 });
 
 afterEach(async() => {
-    await adminFunctions.testUserLogout(driver);
 	await adminFunctions.removeUser(driver);
 	await driver.quit();
 });
@@ -30,43 +30,32 @@ afterEach(async() => {
 describe('administration rest tests', () => {
 	
 	test('rest - user (testUser) has admin privileges', async() => {
-        await driver.get(utils.getCasUrl(driver));
-        await adminFunctions.giveAdminRightsApi();
-		await adminFunctions.testUserLogin(driver);
-		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
-        expect(username).toContain(userName);
-		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
-        const isAdministrator = await utils.isAdministrator(driver);
-        expect(isAdministrator).toBe(true);
-        
+
+        await adminFunctions.giveAdminRightsUsermgt(driver);
+
+        await adminFunctions.accessUsersJson(200);
+
     });
 	
 	test('rest - user (testUser) has no admin privileges', async() => {
-        await driver.get(utils.getCasUrl(driver));
-        await adminFunctions.testUserLogin(driver);
-		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
-        expect(username).toContain(userName);
-		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
-        adminPermissions = await utils.isAdministrator(driver);
-		expect(adminPermissions).toBe(false);
+        await adminFunctions.accessUsersJson(403);
+
     });
 
 	
 	test('rest - user (testUser) remove admin privileges', async() => {
-        await driver.get(utils.getCasUrl(driver));
-        await adminFunctions.giveAdminRightsApi();
+
+        await adminFunctions.giveAdminRightsUsermgt(driver);
+
         await adminFunctions.testUserLogin(driver);
-		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
-        expect(username).toContain(userName);
-		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
-        expect(await utils.isAdministrator(driver)).toBe(true);
         await adminFunctions.testUserLogout(driver);
-        await driver.wait(until.elementLocated(By.className('success')), 5000);
-		await adminFunctions.takeAdminRightsApi();
-        await driver.get(utils.getCasUrl(driver));
+
+		await adminFunctions.takeAdminRightsUsermgt();
+
         await adminFunctions.testUserLogin(driver);
-		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
-        const adminPermissions = await utils.isAdministrator(driver);
-        expect(adminPermissions).toBe(false);
+        await adminFunctions.testUserLogout(driver);
+
+        await adminFunctions.accessUsersJson(403);
+
     });	
 });

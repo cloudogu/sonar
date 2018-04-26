@@ -1,13 +1,17 @@
 
 const config = require('./config');
 
-exports.expectState = function(state) {
-    const user = state.user;
+exports.expectStateUser = function(user) {
     expect(user.login).toBe(config.username);
-    expect(user.firstname).toBe(config.firstname);
-    expect(user.lastname).toBe(config.lastname);
-    expect(user.mail).toBe(config.email);
+    expect(user.email).toBe(config.email);
+    expect(user.name).toBe(config.displayName);
+    expect(user.externalIdentity).toBe(config.username);
+}
 
+exports.expectStateAdmin = function(user) {
+    const groups = user.groups;
+    expect(user.login).toBe(config.username);
+    expect(groups).toContain(config.adminGroup);
 }
 
 exports.expectCasLogin = function(url) {
