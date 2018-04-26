@@ -51,7 +51,7 @@ describe('user permissions', () => {
 		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
         expect(username).toContain(userName);
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
-        adminPermissions = await utils.isAdministrator(driver);
+        var adminPermissions = await utils.isAdministrator(driver);
 		expect(adminPermissions).toBe(false);
     });
 	
