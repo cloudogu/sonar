@@ -72,13 +72,12 @@ module.exports = class AdminFunctions{
 	
 	async giveAdminRights(driver){
 
-		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
+        await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
 		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click(); //Click to edit user group
 		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
 		await driver.findElement(By.id('addGroup')).sendKeys(config.adminGroup);
 		await driver.wait(until.elementLocated(By.id('addGroup')), 5000);
 		await driver.findElement(By.id('addGroup')).sendKeys(webdriver.Key.ENTER);
-		await driver.sleep(200);
 		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
 		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")).click(); //Click to go back and save changes		
 		await driver.findElement(By.className("btn btn-primary")).click(); // Saving changes
@@ -90,7 +89,6 @@ module.exports = class AdminFunctions{
 		
 		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2)")),5000);
 		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(2) > a")).click();
-		await driver.sleep(200);
 		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")),5000);
 		await driver.findElement(By.css("body > div.container.ng-scope > div.ng-isolate-scope > div > div.tab-pane.ng-scope.active > table > tbody > tr > td.text-right > span")).click(); // Deleting admin group
 		await driver.wait(until.elementLocated(By.css("body > div.container.ng-scope > div.ng-isolate-scope > ul > li:nth-child(1) > a")),5000);
@@ -117,7 +115,7 @@ module.exports = class AdminFunctions{
             .expect(204);
     };	
 	
-	async takeAdminRightsApi(driver){
+	async takeAdminRightsApi(){
 		
 		await request(config.baseUrl)
             .put('/usermgt/api/users/' + this.testuserName)
