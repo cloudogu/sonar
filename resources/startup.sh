@@ -55,7 +55,7 @@ function import_quality_profiles {
     then
       for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
       do
-        RESPONSE_IMPORT=$(curl --silent --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore)
+        RESPONSE_IMPORT=$(curl --silent --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
         if ! ( echo $RESPONSE_IMPORT | grep -o errors);
         then
@@ -176,7 +176,7 @@ function firstSonarStart() {
     fi
   done
 
-  # sleep 10 seconds more to sure migration has finished
+  # sleep 10 seconds more to make sure migration has finished
   sleep 10
 
   # create extra user for importing quality profiles
@@ -254,32 +254,20 @@ function subsequentSonarStart() {
 
   # start sonar in background to have the possibility to import quality profiles
   su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+  SONAR_PROCESS_ID=$!
 
-  END=$((SECONDS+120))
-  SONAR_IS_HEALTHY=false
-  while [ $SECONDS -lt $END ]; do
-    CURL_HEALTH_STATUS=$(curl --silent --head http://localhost:9000/sonar/api/system/status)|| true #-u ?
-    HEALTH_STATUS_CODE=$(echo "$CURL_HEALTH_STATUS"|head -n 1|cut -d$' ' -f2)
-    if [[ ${HEALTH_STATUS_CODE} != 200 ]]; then
-      sleep 1
-    else
-      echo "Sonar is healthy now"
-      SONAR_IS_HEALTHY=true
-      break
-    fi
-  done
-  if [[ "${SONAR_IS_HEALTHY}" == "false" ]]; then
-    echo "Sonar did not reach healthy state in 120 seconds"
+  # waiting for sonar to get healthy
+  if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
+    echo "timeout reached while waiting for sonar to get healthy"
     exit 1
   fi
 
-  # import quality profiles
   import_quality_profiles
 
   # stop/kill sonar after importing quality profiles
  echo "restarting sonar to account for configuration changes"
   # kill process (sonar) in background
-  kill $!
+  kill ${SONAR_PROCESS_ID}
   # kill CeServer process which is started by sonar
   kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
 
