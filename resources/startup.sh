@@ -32,15 +32,16 @@ function create_user_for_importing_profiles {
   QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
 
   # create extra user and grant admin permissions so that updating quality profiles is possible
-  curl -X POST -v -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER" --insecure
-  curl -X POST -v -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER" --insecure
+  echo "Add ${QUALITYPROFILESADD_USER} user and grant qualityprofile permissions"
+  curl --silent --insecure -X POST -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER"
+  curl --silent --insecure -X POST -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
 
   echo "extra user for importing quality profiles is set"
 }
 
 function import_quality_profiles {
 
-  RESPONSE_USER=$(curl localhost:9000/sonar/api/users/search?q=$QUALITYPROFILESADD_USER --insecure);
+  RESPONSE_USER=$(curl --silent --insecure localhost:9000/sonar/api/users/search?q=$QUALITYPROFILESADD_USER);
 
   if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ]; #check if extra user is still there
   then
@@ -54,7 +55,7 @@ function import_quality_profiles {
     then
       for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
       do
-        RESPONSE_IMPORT=$(curl -s --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore)
+        RESPONSE_IMPORT=$(curl --silent --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
         if ! ( echo $RESPONSE_IMPORT | grep -o errors);
         then
