@@ -31,48 +31,45 @@ function create_user_for_importing_profiles {
 
   QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
 
-  # create extra user and set him to an admin that can update quality profiles
+  # create extra user and grant admin permissions so that updating quality profiles is possible
   curl -X POST -v -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER" --insecure
   curl -X POST -v -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER" --insecure
 
   echo "extra user for importing quality profiles is set"
 }
 
-# import quality profiles
 function import_quality_profiles {
 
   RESPONSE_USER=$(curl localhost:9000/sonar/api/users/search?q=$QUALITYPROFILESADD_USER --insecure);
 
   if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ]; #check if extra user is still there
   then
-    echo "ERROR - user for importing quality profiles seems to be deleted"
-    #create_user_for_importing_profiles #does not work since admin user is deleted
+	  echo "ERROR - user for importing quality profiles ($QUALITYPROFILESADD_USER) is not present any more"
   else
 
     QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
 
     echo "start importing quality profiles"
-    if test "$(ls -A /opt/sonar/qualityprofiles)"; # only try to import profiles if directory is not empty
+    if [ "$(ls -A /opt/sonar/qualityprofiles)" ]; # only try to import profiles if directory is not empty
     then
       for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
       do
         RESPONSE_IMPORT=$(curl -s --insecure -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" -v localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
-
         if ! ( echo $RESPONSE_IMPORT | grep -o errors);
         then
-           rm -f "$file" && echo "import of quality profile $file was successful"
-           # delete file if import was successful
-           echo "removing $file"
+          echo "import of quality profile $file was successful"
+          # delete file if import was successful
+          rm -f "$file"
+          echo "removed $file file"
         else
-           echo "import of quality profile $file has not been successful"
-           echo $RESPONSE_IMPORT
+          echo "import of quality profile $file has not been successful"
+          echo $RESPONSE_IMPORT
         fi;
       done;
       else
           echo "no quality profiles to import"
     fi;
-
   fi;
 }
 
@@ -240,7 +237,6 @@ function firstSonarStart() {
     echo "wait for all java processes to end"
     sleep 5
   done
-
 }
 
 function subsequentSonarStart() {
