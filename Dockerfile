@@ -14,7 +14,6 @@ RUN set -x \
     && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     && rm -rf /var/cache/apk/* \
-
     # create user
     && addgroup -S -g 1000 sonar \
     && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar \
