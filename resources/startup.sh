@@ -9,6 +9,7 @@ SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
 ADMINGROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
+MAIL_ADDRESS=$(doguctl config -d "sonar@${DOMAIN}" --global mail_address)
 # shellcheck disable=SC2034
 DATABASE_TYPE=postgresql
 DATABASE_IP=postgresql
@@ -135,7 +136,7 @@ function firstSonarStart() {
   # set email settings
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_host.secured', 'postfix');"
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_port.secured', '25');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', 'sonar@${DOMAIN}');"
+  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', '${MAIL_ADDRESS}');"
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
 
 
@@ -191,12 +192,17 @@ function subsequentSonarStart() {
   setProxyConfiguration
 }
 
-### End of declarations, work is done now:
+### End of declarations, work is done now
+
+doguctl state "internalPreparations"
+
 move_sonar_dir conf
 move_sonar_dir extensions
 move_sonar_dir data
 move_sonar_dir logs
 move_sonar_dir temp
+
+doguctl state "waitingForPostgreSQL"
 
 echo "wait until postgresql passes all health checks"
 if ! doguctl healthy --wait --timeout 120 postgresql; then
