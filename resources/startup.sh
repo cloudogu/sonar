@@ -33,6 +33,7 @@ function create_user_for_importing_profiles {
 
   # create extra user and grant admin permissions so that updating quality profiles is possible
   echo "Add ${QUALITYPROFILESADD_USER} user and grant qualityprofile permissions"
+  # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
   curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER"
   curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
 
@@ -55,6 +56,7 @@ function import_quality_profiles {
     then
       for file in /var/lib/qualityprofiles/* # import all quality profiles that are in the suitable directory
       do
+        # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
         RESPONSE_IMPORT=$(curl --silent -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
         if ! ( echo $RESPONSE_IMPORT | grep -o errors);
