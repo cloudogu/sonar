@@ -3,7 +3,6 @@ FROM registry.cloudogu.com/official/java:8u121-4
 LABEL NAME="official/sonar";
 LABEL VERSION="5.6.6-2"
 
-
 ENV SONAR_VERSION=5.6.6 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
@@ -17,7 +16,6 @@ RUN set -x \
     && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     && rm -rf /var/cache/apk/* \
-
     # create user
     && addgroup -S -g 1000 sonar \
     && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar \
