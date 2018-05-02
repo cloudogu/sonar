@@ -76,7 +76,6 @@ function import_quality_profiles {
 
 function move_sonar_dir(){
   DIR="$1"
-echo "Directory $DIR"
   if [ ! -d "/var/lib/sonar/$DIR" ]; then
     mv "/opt/sonar/$DIR" /var/lib/sonar
     ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
@@ -300,7 +299,6 @@ move_sonar_dir logs
 move_sonar_dir temp
 
 # move qualityprofile directory
-echo "Directory qualityprofiles"
 if [ ! -d "/var/lib/qualityprofiles" ]; then
   mv "/opt/sonar/qualityprofiles" /var/lib/qualityprofiles
   ln -s "/var/lib/qualityprofiles" "/opt/sonar/qualityprofiles"
