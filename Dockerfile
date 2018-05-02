@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/java:8u151-2
+FROM registry.cloudogu.com/official/java:8u151-3
 MAINTAINER Sebastian Sdorra <sebastian.sdorra@cloudogu.com>
 
 ENV SONAR_VERSION=5.6.6 \
@@ -14,7 +14,6 @@ RUN set -x \
     && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     && rm -rf /var/cache/apk/* \
-
     # create user
     && addgroup -S -g 1000 sonar \
     && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar \
