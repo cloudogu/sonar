@@ -37,7 +37,7 @@ function create_user_for_importing_profiles {
   curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
 
   echo "extra user for importing quality profiles is set"
-}
+}ls
 
 function import_quality_profiles {
 
@@ -51,9 +51,9 @@ function import_quality_profiles {
     QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
 
     echo "start importing quality profiles"
-    if [ "$(ls -A /opt/sonar/qualityprofiles)" ]; # only try to import profiles if directory is not empty
+    if [ "$(ls -A /var/lib/qualityprofiles)" ]; # only try to import profiles if directory is not empty
     then
-      for file in /opt/sonar/qualityprofiles/* # import all quality profiles that are in the suitable directory
+      for file in /var/lib/qualityprofiles/* # import all quality profiles that are in the suitable directory
       do
         RESPONSE_IMPORT=$(curl --silent -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
@@ -299,15 +299,6 @@ move_sonar_dir extensions
 move_sonar_dir data
 move_sonar_dir logs
 move_sonar_dir temp
-
-# move qualityprofile directory
-if [ ! -d "/var/lib/qualityprofiles" ]; then
-  mv "/opt/sonar/qualityprofiles" /var/lib/qualityprofiles
-  ln -s "/var/lib/qualityprofiles" "/opt/sonar/qualityprofiles"
-elif [ ! -L "/opt/sonar/qualityprofiles" ] && [ -d "/var/lib/qualityprofiles" ]; then
-  rm -rf "/opt/sonar/qualityprofiles"
-  ln -s "/var/lib/qualityprofiles" "/opt/sonar/qualityprofiles"
-fi
 
 doguctl state "waitingForPostgreSQL"
 
