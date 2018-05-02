@@ -241,6 +241,8 @@ function firstSonarStart() {
 
 function subsequentSonarStart() {
 
+  # refresh base url
+  sql "UPDATE properties SET text_value='https://${FQDN}/sonar' WHERE prop_key='sonar.core.serverBaseURL';"
 
   # refresh FQDN
   sed -i "/sonar.cas.casServerLoginUrl=.*/c\sonar.cas.casServerLoginUrl=https://${FQDN}/cas/login" ${SONAR_PROPERTIESFILE}
