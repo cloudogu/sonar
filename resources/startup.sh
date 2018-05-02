@@ -37,7 +37,7 @@ function create_user_for_importing_profiles {
   curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
 
   echo "extra user for importing quality profiles is set"
-}ls
+}
 
 function import_quality_profiles {
 
