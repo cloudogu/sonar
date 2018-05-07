@@ -33,7 +33,7 @@ describe('cas rest basic authentication', () => {
     });
 
     /*login -> click on username -> configure -> show api token*/
-    xtest('authentication with API key', async () => {
+    test('authentication with API key', async () => {
 		//Create user Token
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
@@ -76,12 +76,12 @@ describe('rest attributes', () => {
     });
 
     test('rest - user is administrator', async () => {
-			
-		const response = await request(config.baseUrl)
+
+        const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
             .expect('Content-Type', 'application/json;charset=utf-8')
-			.type('json')
+            .type('json')
             .send({'q': config.username})
             .expect(200);
 
