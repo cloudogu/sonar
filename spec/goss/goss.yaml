@@ -28,7 +28,7 @@ package:
   procps:
     installed: true
     versions:
-    - 3.3.12-r1
+    - 3.3.12-r3
 user:
   sonar:
     exists: true
