@@ -74,7 +74,6 @@ describe('browser attributes', () => {
     test('front channel user administrator', async () => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-		await driver.get(config.baseUrl + config.sonarContextPath + "/account/");
         const isAdministrator = await utils.isAdministrator(driver);
         expect(isAdministrator).toBe(true);
     });
