@@ -29,7 +29,7 @@ afterEach(async() => {
 
 describe('administration rest tests', () => {
 	
-	test('rest - user (testUser) has admin privileges', async() => {
+	xtest('rest - user (testUser) has admin privileges', async() => {
 
         await adminFunctions.giveAdminRightsUsermgt(driver);
 
