@@ -1,7 +1,7 @@
 FROM registry.cloudogu.com/official/java:8u151-3
 
 LABEL NAME="official/sonar";
-LABEL VERSION="5.6.6-2";
+LABEL VERSION="5.6.6-4";
 
 ENV SONAR_VERSION=5.6.6 \
     SONARQUBE_HOME=/opt/sonar \
