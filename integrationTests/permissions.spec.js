@@ -29,7 +29,7 @@ afterEach(async() => {
 });
 
 
-describe('user permissions', () => {
+xdescribe('user permissions', () => {
 	
 	test('user (testUser) has admin privileges', async() => {
 

@@ -27,7 +27,7 @@ afterEach(async() => {
 });
 
 
-describe('administration rest tests', () => {
+xdescribe('administration rest tests', () => {
 	
 	test('rest - user (testUser) has admin privileges', async() => {
 
