@@ -9,6 +9,7 @@ exports.expectStateUser = function(user) {
 }
 
 exports.expectStateAdmin = function(user) {
+    console.log(user);
     const groups = user.groups;
     expect(user.login).toBe(config.username);
     expect(groups).toContain(config.adminGroup);
