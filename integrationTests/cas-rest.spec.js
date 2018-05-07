@@ -77,7 +77,7 @@ describe('rest attributes', () => {
 
     test('rest - user is administrator', async () => {
 			
-		const response = await request(config.baseUrl)
+		/*const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
             .expect('Content-Type', 'application/json;charset=utf-8')
@@ -86,6 +86,12 @@ describe('rest attributes', () => {
             .expect(200);
 
         const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
-        expectations.expectStateAdmin(userObject);
+        expectations.expectStateAdmin(userObject);*/
+        await request(config.baseUrl)
+            .get(config.sonarContextPath + "/api/permissions/search_global_permissions")
+            .auth(config.username, config.password)
+            .expect('Content-Type', 'application/json;charset=utf-8')
+            .type('json')
+            .expect(200);//403 = "Forbidden", 200 = "OK"
     });
 });
