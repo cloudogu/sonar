@@ -18,7 +18,7 @@ let adminFunctions;
 
 beforeEach(async() => {
 	driver = await utils.createDriver(webdriver);
-    adminFunctions = new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
+    adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
 	await adminFunctions.createUser();
 });
 
@@ -31,7 +31,7 @@ afterEach(async() => {
 
 describe('user permissions', () => {
 	
-	xtest('user (testUser) has admin privileges', async() => {
+	test('user (testUser) has admin privileges', async() => {
 
 		await adminFunctions.giveAdminRightsUsermgt(driver);
 		await driver.get(utils.getCasUrl(driver));
