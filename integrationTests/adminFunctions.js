@@ -108,7 +108,7 @@ module.exports = class AdminFunctions{
     async accessUsersJson(expectStatus){
 
         await request(config.baseUrl)
-            .get(config.sonarContextPath + "/api/permissions/search_global_permissions")
+            .get(config.sonarContextPath + "/api/users/groups?login="+this.testuserName)
             .auth(this.testuserName, this.testuserPasswort)
             .expect('Content-Type', 'application/json;charset=utf-8')
             .type('json')
