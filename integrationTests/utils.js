@@ -39,6 +39,7 @@ exports.login = async function login(driver) {
 };
 
 exports.isAdministrator = async function isAdministrator(driver){
+    await driver.wait(until.elementLocated(By.className('dropdown')), 5000);
     await driver.sleep(200);
 
 	return await driver.findElement(By.className('navbar-admin-link')).then(function() {
