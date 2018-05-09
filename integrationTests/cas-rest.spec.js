@@ -38,8 +38,9 @@ describe('cas rest basic authentication', () => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
-        await driver.wait(until.elementLocated(By.className("js-generate-token-form")), 5000);
-		await driver.findElement(By.css("#content > div > div > div > div > div > form > input[type='text']")).sendKeys(config.sonarqubeToken);
+        await driver.sleep(200);
+        await driver.wait(until.elementLocated(By.css("form.js-generate-token-form input")), 5000);
+		await driver.findElement(By.css("form.js-generate-token-form input")).sendKeys(config.sonarqubeToken);
 		await driver.findElement(By.css("#content > div > div > div > div > div > form > button")).click(); //Click to create Token
 		await driver.sleep(200);
         await driver.wait(until.elementLocated(By.className("text-success")), 5000);
