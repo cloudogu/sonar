@@ -33,7 +33,7 @@ describe('cas rest basic authentication', () => {
     });
 
     /*login -> click on username -> configure -> show api token*/
-    test('authentication with API key', async () => {
+    xtest('authentication with API key', async () => {
 		//Create user Token
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
@@ -43,7 +43,7 @@ describe('cas rest basic authentication', () => {
 		await driver.findElement(By.css("form.js-generate-token-form input")).sendKeys(config.sonarqubeToken);
 		await driver.findElement(By.css("#content > div > div > div > div > div > form > button")).click(); //Click to create Token
 		await driver.sleep(200);
-        await driver.wait(until.elementLocated(By.className("text-success")), 5000);
+        await driver.wait(until.elementLocated(By.css("text-success")), 5000);
         const apikey = await driver.findElement(By.className("text-success")).getText(); //Saving Token
 		//Checking login with Token
         await request(config.baseUrl)
