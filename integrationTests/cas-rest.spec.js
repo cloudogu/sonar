@@ -33,7 +33,7 @@ describe('cas rest basic authentication', () => {
     });
 
     /*login -> click on username -> configure -> show api token*/
-    xtest('authentication with API key', async () => {
+    test('authentication with API key', async () => {
 		//Create user Token
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
