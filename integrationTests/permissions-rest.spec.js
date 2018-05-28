@@ -5,10 +5,11 @@ const webdriver = require('selenium-webdriver');
 const By = webdriver.By;
 const until = webdriver.until;
 const userName = 'testUser';
+const waitInterval = 3000;
 require('chromedriver');
 const request = require('supertest');
 
-jest.setTimeout(30000);
+jest.setTimeout(60000);
 let driver;
 let adminFunctions;
 
@@ -32,7 +33,7 @@ describe('administration rest tests', () => {
 	test('rest - user (testUser) has admin privileges', async() => {
 
         await adminFunctions.giveAdminRightsUsermgt(driver);
-        await driver.sleep(200);
+        await driver.sleep(waitInterval);
         await adminFunctions.accessUsersJson(200);
 
     });
