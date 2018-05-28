@@ -85,7 +85,7 @@ node('vagrant') {
                     dir('integrationTests') {
 
                         docker.image('node:8-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${cesIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${seleniumChromeIP}:4444/wd/hub") {
-                            sh 'sleep 100'
+                            sh "while [[ \$(curl -s -o /dev/null --insecure -w ''%{http_code}'' https://${cesIP}/sonar/api/system/status) != \"200\" ]];  do echo \"Could not reach sonar health endpoint yet\"; sleep 1; done"
                             sh 'yarn install'
                             sh 'yarn run ci-test'
                         }
