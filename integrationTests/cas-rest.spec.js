@@ -61,7 +61,6 @@ describe('cas rest basic authentication', () => {
     });
 
     test('rest - user attributes', async () => {
-
         const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
@@ -75,7 +74,7 @@ describe('cas rest basic authentication', () => {
     });
 
     test('rest - user is administrator', async () => {
-
+        await driver.sleep(waitInterval);
         const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
