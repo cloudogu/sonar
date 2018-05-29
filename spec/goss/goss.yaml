@@ -42,3 +42,6 @@ group:
   sonar:
     exists: true
     gid: 1000
+process:
+  java:
+    running: true
