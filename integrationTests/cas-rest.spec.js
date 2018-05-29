@@ -60,18 +60,13 @@ describe('cas rest basic authentication', () => {
 		await driver.findElement(By.className("js-revoke-token-form")).click(); // Click to confirm deletion
     });
 
-
-});
-
-describe('rest attributes', () => {
-
     test('rest - user attributes', async () => {
-		
-		const response = await request(config.baseUrl)
+
+        const response = await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/search/json")
             .auth(config.username, config.password)
             .expect('Content-Type', 'application/json;charset=utf-8')
-			.type('json')
+            .type('json')
             .send({'q': config.username})
             .expect(200);
 
@@ -92,4 +87,5 @@ describe('rest attributes', () => {
         const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
         expectations.expectStateAdmin(userObject);
     });
+
 });
