@@ -1,7 +1,7 @@
 let cesFqdn = process.env.CES_FQDN;
 if (!cesFqdn) {
   // url from ecosystem with private network
-  cesFqdn = "192.168.42.2"
+  cesFqdn = "192.168.56.2"
 }
 
 let webdriverType = process.env.WEBDRIVER;
