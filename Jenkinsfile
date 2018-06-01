@@ -29,6 +29,7 @@ timestamps{
             timeout(5) {
                 writeVagrantConfiguration()
                 //sh 'rm -f setup.staging.json setup.json'
+                sh 'mkdir logs || true'
                 sh 'vagrant up'
             }
         }
