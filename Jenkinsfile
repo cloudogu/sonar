@@ -120,16 +120,17 @@ void writeVagrantConfiguration() {
     Vagrant.configure("2") do |config|
     config.vm.box = "cloudogu/ecosystem-basebox"
     config.vm.hostname = "ces"
-    config.vm.box_version = "0.5.1"
+    config.vm.box_version = "0.6.2"
     # Mount ecosystem and local dogu
     config.vm.synced_folder ".", "/vagrant", disabled: true
     config.vm.synced_folder "ecosystem", "/vagrant"
+    config.vm.synced_folder "logs", "/var/log/docker", owner: "syslog", group: "root"
     config.vm.synced_folder ".", "/dogu"
     # Auto correct ssh, so parallel builds are possible
     config.vm.network "forwarded_port", guest: 22, host: 2222, id: 'ssh', auto_correct: true
     config.vm.network "private_network", type: "dhcp"
-    config.vm.provision "shell",
-    inline: "mkdir /etc/ces && echo 'vagrant' > /etc/ces/type && /vagrant/install.sh"
+    config.vm.provision "shell", inline: "systemctl restart syslog"
+    config.vm.provision "shell", inline: "mkdir /etc/ces && echo 'vagrant' > /etc/ces/type && /vagrant/install.sh"
     config.vm.provider "virtualbox" do |v|
         v.memory = 4096
         # v.cpus = 2
