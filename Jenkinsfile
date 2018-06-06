@@ -80,19 +80,22 @@ timestamps{
             }
 
             timeout(time: 15, unit: 'MINUTES') {
+                def seleniumChromeContainer = docker.image('selenium/standalone-chrome:3.12.0').run()
 
                 try {
+                    def seleniumChromeIP = containerIP(seleniumChromeContainer)
                     def cesIP = getCesIP()
 
                     dir('integrationTests') {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'zalenium_build.cloudogu.com', usernameVariable: 'TOKEN_ID', passwordVariable: 'TOKEN_SECRET']]) {
-                            docker.image('node:8-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${cesIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${env.TOKEN_ID}:${env.TOKEN_SECRET}@build.cloudogu.com:4444/wd/hub") {
+                            docker.image('node:8-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${cesIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${seleniumChromeIP}:4444/wd/hub") {
                                 sh 'yarn install'
                                 sh 'yarn run ci-test'
                             }
                         }
                     }
                 } finally {
+                    seleniumChromeContainer.stop()
                     // archive test results
                     junit 'integrationTests/it-results.xml'
                 }
