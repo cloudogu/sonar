@@ -88,7 +88,7 @@ timestamps{
 
                     dir('integrationTests') {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'zalenium_build.cloudogu.com', usernameVariable: 'TOKEN_ID', passwordVariable: 'TOKEN_SECRET']]) {
-                            docker.image('node:8-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${cesIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${seleniumChromeIP}:4444/wd/hub") {
+                            docker.image('node:8.9.0-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${cesIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${seleniumChromeIP}:4444/wd/hub") {
                                 sh 'yarn install'
                                 sh 'yarn run ci-test'
                             }
