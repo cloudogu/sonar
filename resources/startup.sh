@@ -147,6 +147,7 @@ function sql(){
 }
 
 function firstSonarStart() {
+  echo "first start of SonarQube dogu"
 	# prepare config
   # shellcheck disable=SC2034
 	REALM="cas"
@@ -164,6 +165,7 @@ function firstSonarStart() {
 
   # start sonar in background
   su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+  SONAR_PROCESS_ID=$!
 
   echo "wait until sonarqube has finished database migration"
   N=0
@@ -177,8 +179,27 @@ function firstSonarStart() {
     fi
   done
 
-  # sleep 10 seconds more to make sure migration has finished
-  sleep 10
+  # waiting for sonar to get healthy
+  if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
+    echo "timeout reached while waiting for sonar to get healthy"
+    exit 1
+  fi
+
+  # Waiting for SonarQube to be started based on the log file
+  # Could not work if old log file is already present, e.g. after upgrade of dogu
+  for i in $(seq 1 10);
+  do
+    # starting compute engine is the last thing sonar does on startup
+    if grep -s "Compute Engine is up" /opt/sonar/logs/sonar.log > /dev/null; then
+      break
+    fi
+    if [ "$i" -eq 10 ] ; then
+      echo "compute engine did not start in the allowed time. Dogu exits now"
+      exit 1
+    fi
+    echo "wait for compute engine to be up"
+    sleep 5
+  done
 
   # create extra user for importing quality profiles
   create_user_for_importing_profiles
@@ -201,25 +222,9 @@ function firstSonarStart() {
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', '${MAIL_ADDRESS}');"
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
 
-
-  # we are using this because checking for port is not enough
-  for i in $(seq 1 10);
-  do
-    # starting compute engine is the last thing sonar does on startup
-    if grep -s "Compute Engine is up" /opt/sonar/logs/sonar.log > /dev/null; then
-      break
-    fi
-    if [ "$i" -eq 10 ] ; then
-      echo "compute engine did not start in the allowed time. Dogu exits now"
-      exit 1
-    fi
-    echo "wait for compute engine to be up"
-    sleep 5
-  done
-
   echo "restarting sonar to account for configuration changes"
   # kill process (sonar) in background
-  kill $!
+  kill ${SONAR_PROCESS_ID}
   # kill CeServer process which is started by sonar
   kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
 
@@ -242,7 +247,7 @@ function firstSonarStart() {
 }
 
 function subsequentSonarStart() {
-
+  echo "subsequent start of SonarQube dogu"
   # refresh base url
   sql "UPDATE properties SET text_value='https://${FQDN}/sonar' WHERE prop_key='sonar.core.serverBaseURL';"
 
