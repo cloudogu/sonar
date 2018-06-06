@@ -29,7 +29,7 @@ timestamps{
             timeout(5) {
                 writeVagrantConfiguration()
                 //sh 'rm -f setup.staging.json setup.json'
-                sh 'mkdir logs || true'
+                sh 'mkdir -p logs'
                 sh 'vagrant up'
             }
         }
@@ -48,13 +48,13 @@ timestamps{
 
         stage('Wait for dependencies') {
             timeout(15) {
-                sh 'vagrant ssh -c "sudo cesapp healthy --wait --timeout 600 --fail-fast cas"'
-                sh 'vagrant ssh -c "sudo cesapp healthy --wait --timeout 600 --fail-fast usermgt"'
+                sh 'vagrant ssh -c "sudo cesapp --log-level debug healthy --wait --timeout 600 --fail-fast cas"'
+                sh 'vagrant ssh -c "sudo cesapp --log-level debug healthy --wait --timeout 600 --fail-fast usermgt"'
             }
         }
 
         stage('Build') {
-            sh 'vagrant ssh -c "sudo cesapp build /dogu"'
+            sh 'vagrant ssh -c "sudo cesapp --log-level debug build /dogu"'
         }
 
         stage('Verify') {
@@ -64,7 +64,7 @@ timestamps{
                 sh 'rm -f reports/goss_official/*.xml'
             }
             try {
-                sh 'vagrant ssh -c "sudo cesapp verify --health-timeout 600 --keep-container --ci --report-directory=/dogu/reports /dogu"'
+                sh 'vagrant ssh -c "sudo cesapp --log-level debug verify --health-timeout 600 --keep-container --ci --report-directory=/dogu/reports /dogu"'
             } finally {
                 junit allowEmptyResults: true, testResults: 'reports/goss_official/*.xml'
             }
