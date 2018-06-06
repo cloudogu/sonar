@@ -72,6 +72,9 @@ timestamps{
 
         stage('Integration Tests') {
 
+            // Due to a faulty health check, sonar may not be fully up at this point
+            sleep 40
+
             if (fileExists('integrationTests/it-results.xml')) {
                 sh 'rm -f integrationTests/it-results.xml'
             }
