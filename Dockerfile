@@ -1,5 +1,8 @@
 FROM registry.cloudogu.com/official/java:8u151-3
-MAINTAINER Sebastian Sdorra <sebastian.sdorra@cloudogu.com>
+
+LABEL NAME="official/sonar" \
+    VERSION="5.6.6-4" \
+    maintainer="sebastian.sdorra@cloudogu.com"
 
 ENV SONAR_VERSION=5.6.6 \
     SONARQUBE_HOME=/opt/sonar \
