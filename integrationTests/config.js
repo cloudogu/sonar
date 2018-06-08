@@ -13,14 +13,14 @@ module.exports = {
     fqdn: cesFqdn,
     baseUrl: 'https://' + cesFqdn,
     sonarContextPath: '/sonar',
-    username: 'cwolfes',
-    password: 'Trio-123',
-    firstname:'Christoph',
-    lastname: 'Wolfes',
-    displayName: 'cwolfes',
-    email: 'cwolfes@triology.de',
+    username: 'ces-admin',
+    password: 'ecosystem2016',
+    firstname:'admin',
+    lastname: 'admin',
+    displayName: 'ces-admin',
+    email: 'ces-admin@cloudogu.com',
     webdriverType: webdriverType,
     debug: true,
-    adminGroup: 'Ces-Admin',
-	sonarqubeToken: 'blabla'
+    adminGroup: 'CesAdministrators',
+	sonarqubeToken: 'sonarqubeToken'
 };
