@@ -5,7 +5,7 @@ const webdriver = require('selenium-webdriver');
 const chromeCapabilities = webdriver.Capabilities.chrome();
 //setting chrome options to start the browser fully maximized
 const chromeOptions = {
-    'args': ['--test-type', '--start-maximized','--ignore-certificate-errors','--disable-popup-blocking','--dns-prefetch-disable','--disable-impl-side-painting']
+    'args': ['--test-type', '--start-maximized']
 };
 chromeCapabilities.set('chromeOptions', chromeOptions);
 chromeCapabilities.set('name', "Sonar ITs");

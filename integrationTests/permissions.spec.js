@@ -37,15 +37,15 @@ describe('user permissions', () => {
         const isAdministrator = await utils.isAdministrator(driver);
         expect(isAdministrator).toBe(true);
     });
-	
-	test('user (testUser) has no admin privileges', async() => {
+
+	xtest('user (testUser) has no admin privileges', async() => {
         await driver.get(utils.getCasUrl(driver));
         await adminFunctions.testUserLogin(driver);
 
         const adminPermissions = await utils.isAdministrator(driver);
 		expect(adminPermissions).toBe(false);
     });
-	
+
 	test('user (testUser) remove admin privileges', async() => {
 
         await adminFunctions.giveAdminRightsUsermgt(driver);
