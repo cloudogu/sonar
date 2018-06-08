@@ -1,13 +1,9 @@
-const config = require('./config');
 const AdminFunctions = require('./adminFunctions');
 const utils = require('./utils');
 const webdriver = require('selenium-webdriver');
-const By = webdriver.By;
-const until = webdriver.until;
 const userName = 'testUser';
 const waitInterval = 3000;
 require('chromedriver');
-const request = require('supertest');
 
 jest.setTimeout(60000);
 let driver;
@@ -17,14 +13,16 @@ let adminFunctions;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 beforeEach(async() => {
-    driver = await utils.createDriver(webdriver);
+    driver = utils.createDriver(webdriver);
+    await driver.manage().window().maximize();
     adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
 	await adminFunctions.createUser();
 });
 
 afterEach(async() => {
-	await adminFunctions.removeUser(driver);
-	await driver.quit();
+    await adminFunctions.removeUser(driver);
+    await driver.quit();
+
 });
 
 

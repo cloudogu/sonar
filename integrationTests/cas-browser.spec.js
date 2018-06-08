@@ -13,12 +13,13 @@ jest.setTimeout(30000);
 let driver;
 
 
-beforeEach(() => {
+beforeEach(async () => {
     driver = utils.createDriver(webdriver);
+    await driver.manage().window().maximize();
 });
 
-afterEach(() => {
-    driver.quit();
+afterEach(async () => {
+    await driver.quit();
 });
 
 

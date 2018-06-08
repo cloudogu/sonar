@@ -1,11 +1,8 @@
-const config = require('./config');
 const utils = require('./utils');
 const AdminFunctions = require('./adminFunctions');
 
 require('chromedriver');
 const webdriver = require('selenium-webdriver');
-const By = webdriver.By;
-const until = webdriver.until;
 const userName = 'testUser';
 
 jest.setTimeout(60000);
@@ -16,16 +13,16 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 let driver;
 let adminFunctions;
 
-beforeEach(async() => {
-	driver = await utils.createDriver(webdriver);
+beforeEach(async () => {
+    driver = utils.createDriver(webdriver);
+    await driver.manage().window().maximize();
     adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
 	await adminFunctions.createUser();
 });
 
 afterEach(async() => {
-	await adminFunctions.testUserLogout(driver);
-	await adminFunctions.removeUser(driver);
-	await driver.quit();
+    await adminFunctions.testUserLogout(driver);
+    await driver.quit();
 });
 
 
@@ -45,7 +42,7 @@ describe('user permissions', () => {
         await driver.get(utils.getCasUrl(driver));
         await adminFunctions.testUserLogin(driver);
 
-        var adminPermissions = await utils.isAdministrator(driver);
+        const adminPermissions = await utils.isAdministrator(driver);
 		expect(adminPermissions).toBe(false);
     });
 	
