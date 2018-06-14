@@ -22,6 +22,7 @@ beforeEach(async () => {
 
 afterEach(async() => {
     await adminFunctions.testUserLogout(driver);
+    await adminFunctions.removeUser(driver);
     await driver.quit();
 });
 
@@ -38,7 +39,7 @@ describe('user permissions', () => {
         expect(isAdministrator).toBe(true);
     });
 
-	xtest('user (testUser) has no admin privileges', async() => {
+	test('user (testUser) has no admin privileges', async() => {
         await driver.get(utils.getCasUrl(driver));
         await adminFunctions.testUserLogin(driver);
 
