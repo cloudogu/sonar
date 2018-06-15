@@ -20,7 +20,7 @@
 
 ## Installation Ecosystem
 ```
-cesapp install official/redmine
+cesapp install official/sonar
 
-cesapp start redmine
+cesapp start sonar
 ```
