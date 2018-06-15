@@ -26,7 +26,7 @@ function createLocalDriver() {
 }
 
 function createRemoteDriver() {
-    return new webdriver.Builder()
+    return new webdriver.Builder().forBrowser('chrome').withCapabilities(chromeCapabilities)
     .build();
 }
 
