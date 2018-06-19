@@ -14,8 +14,6 @@
 
 **Website:** https://www.sonarqube.org/
 
-**Size:** ~390MB
-
 **Dependencies:** postgresql, cas, nginx, postfix
 
 ## Installation Ecosystem
