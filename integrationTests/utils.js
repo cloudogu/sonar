@@ -2,25 +2,31 @@ const config = require('./config');
 
 require('chromedriver');
 const webdriver = require('selenium-webdriver');
-var chromeCapabilities = webdriver.Capabilities.chrome();
+const chromeCapabilities = webdriver.Capabilities.chrome();
 //setting chrome options to start the browser fully maximized
-var chromeOptions = {
+const chromeOptions = {
     'args': ['--test-type', '--start-maximized']
 };
 chromeCapabilities.set('chromeOptions', chromeOptions);
+chromeCapabilities.set('name', "Sonar ITs");
 const By = webdriver.By;
 const until = webdriver.until;
 
 exports.createDriver = function(){
     if (config.webdriverType === 'local') {
-		var driver = new webdriver.Builder().forBrowser('chrome').withCapabilities(chromeCapabilities).build();
-		return driver;
+        return createLocalDriver();
     }
     return createRemoteDriver();
 };
 
+function createLocalDriver() {
+    return new webdriver.Builder().forBrowser('chrome').withCapabilities(chromeCapabilities)
+        .usingServer('http://localhost:4444/wd/hub')
+        .build();
+}
+
 function createRemoteDriver() {
-    return new webdriver.Builder()
+    return new webdriver.Builder().forBrowser('chrome').withCapabilities(chromeCapabilities)
     .build();
 }
 
