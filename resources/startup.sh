@@ -42,11 +42,13 @@ function create_user_for_importing_profiles {
 
 function import_quality_profiles {
 
-  RESPONSE_USER=$(curl --silent localhost:9000/sonar/api/users/search?q=$QUALITYPROFILESADD_USER);
+  RESPONSE_USER=$(curl --silent localhost:9000/sonar/api/users/search?q=${QUALITYPROFILESADD_USER});
 
-  if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ]; #check if extra user is still there
+  #check if extra user is still there
+  if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ];
   then
-    echo "ERROR - user for importing quality profiles ($QUALITYPROFILESADD_USER) is not present any more"
+    echo "ERROR - user for importing quality profiles ($QUALITYPROFILESADD_USER) is not present"
+    exit 1
   else
 
     QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
