@@ -1,10 +1,10 @@
 FROM registry.cloudogu.com/official/java:8u151-3
 
 LABEL NAME="official/sonar" \
-    VERSION="5.6.6-4" \
+    VERSION="5.6.7-1" \
     maintainer="sebastian.sdorra@cloudogu.com"
 
-ENV SONAR_VERSION=5.6.6 \
+ENV SONAR_VERSION=5.6.7 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp
