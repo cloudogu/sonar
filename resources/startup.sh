@@ -21,6 +21,7 @@ DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 
 # create extra user for importing quality profiles
+# parameter: username for sonar REST API access
 function create_user_for_importing_profiles {
 
   # add random password for extra user
@@ -34,10 +35,35 @@ function create_user_for_importing_profiles {
   # create extra user and grant admin permissions so that updating quality profiles is possible
   echo "Add ${QUALITYPROFILESADD_USER} user and grant qualityprofile permissions"
   # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-  curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER"
-  curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
+  curl --silent -X POST -u $1:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER"
+  curl --silent -X POST -u $1:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
 
   echo "extra user for importing quality profiles is set"
+}
+
+function create_user_for_importing_quality_profiles_at_subsequent_start {
+  echo "Check if quality profile import user exists"
+  RESPONSE_USER=$(curl --silent localhost:9000/sonar/api/users/search?q=${QUALITYPROFILESADD_USER});
+  if [ "$(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2)" -eq 0 ];
+  then
+    echo "User for importing quality profiles ($QUALITYPROFILESADD_USER) is not present. Will be created now..."
+
+    # temporarily create admin user and add to admin groups
+    TEMPORARY_ADMIN_USER=$(doguctl random)
+    sql "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local)
+    VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', 'a373a0e667abb2604c1fd571eb4ad47fe8cc0878', '48bc4b0d93179b5103fd3885ea9119498e9d161b', true, '${TEMPORARY_ADMIN_USER}', true);"
+    ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
+    ADMIN_ID=$(echo ${ADMIN_ID_PSQL_OUTPUT} | cut -d " " -f 3)
+    sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
+    sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
+
+    create_user_for_importing_profiles ${TEMPORARY_ADMIN_USER}
+
+    # remove temporary admin user
+    sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
+  else
+    echo "Quality profile import user exists"
+  fi
 }
 
 function import_quality_profiles {
@@ -45,7 +71,7 @@ function import_quality_profiles {
   RESPONSE_USER=$(curl --silent localhost:9000/sonar/api/users/search?q=${QUALITYPROFILESADD_USER});
 
   #check if extra user is still there
-  if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ];
+  if [ "$(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2)" -eq 0 ];
   then
     echo "ERROR - user for importing quality profiles ($QUALITYPROFILESADD_USER) is not present"
     exit 1
@@ -204,7 +230,8 @@ function firstSonarStart() {
   done
 
   # create extra user for importing quality profiles
-  create_user_for_importing_profiles
+  # using 'admin' does only work if the default admin user is present
+  create_user_for_importing_profiles admin
   # import quality profiles
   import_quality_profiles
 
@@ -261,7 +288,6 @@ function subsequentSonarStart() {
 
   setProxyConfiguration
 
-
   # start sonar in background to have the possibility to import quality profiles
   su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
   SONAR_PROCESS_ID=$!
@@ -271,6 +297,8 @@ function subsequentSonarStart() {
     echo "timeout reached while waiting for sonar to get healthy"
     exit 1
   fi
+
+  create_user_for_importing_quality_profiles_at_subsequent_start
 
   import_quality_profiles
 
