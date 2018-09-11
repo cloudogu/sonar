@@ -6,7 +6,6 @@ set -o pipefail
 SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
 
 # get variables for templates
-QUALITYPROFILESADD_USER="qualityProfilesAdd"
 ADMINGROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
@@ -19,45 +18,25 @@ DATABASE_PORT=5432
 DATABASE_USER=$(doguctl config -e sa-postgresql/username)
 DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-
-# create extra user for importing quality profiles
-function create_user_for_importing_profiles {
-
-  # add random password for extra user
-  if ! doguctl config -e "qualityProfileAdd_password" > /dev/null ; then
-    QUALITYPROFILEADD_PW=$(doguctl random)
-    doguctl config -e "qualityProfileAdd_password" "${QUALITYPROFILEADD_PW}"
-  fi
-
-  QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password")
-
-  # create extra user and grant admin permissions so that updating quality profiles is possible
-  echo "Add ${QUALITYPROFILESADD_USER} user and grant qualityprofile permissions"
-  # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-  curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/users/create?login=$QUALITYPROFILESADD_USER&password=$QUALITYPROFILEADD_PW&password_confirmation=$QUALITYPROFILEADD_PW&name=$QUALITYPROFILESADD_USER"
-  curl --silent -X POST -u admin:admin "localhost:9000/sonar/api/permissions/add_user?permission=profileadmin&login=$QUALITYPROFILESADD_USER"
-
-  echo "extra user for importing quality profiles is set"
-}
+QUALITYPROFILE_DIR="/var/lib/qualityprofiles"
 
 function import_quality_profiles {
 
-  RESPONSE_USER=$(curl --silent localhost:9000/sonar/api/users/search?q=$QUALITYPROFILESADD_USER);
-
-  if [ $(echo ${RESPONSE_USER%%,*} | cut -d ':' -f2) -eq 0 ]; #check if extra user is still there
-  then
-    echo "ERROR - user for importing quality profiles ($QUALITYPROFILESADD_USER) is not present any more"
-  else
-
-    QUALITYPROFILEADD_PW=$(doguctl config -e "qualityProfileAdd_password") # get password
-
     echo "start importing quality profiles"
-    if [ "$(ls -A /var/lib/qualityprofiles)" ]; # only try to import profiles if directory is not empty
+    if [ "$(ls -A "${QUALITYPROFILE_DIR}")" ]; # only try to import profiles if directory is not empty
     then
-      for file in /var/lib/qualityprofiles/* # import all quality profiles that are in the suitable directory
+      # temporarily create admin user and add to admin groups
+      TEMPORARY_ADMIN_USER=$(doguctl random)
+      sql "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local)
+      VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', 'a373a0e667abb2604c1fd571eb4ad47fe8cc0878', '48bc4b0d93179b5103fd3885ea9119498e9d161b', true, '${TEMPORARY_ADMIN_USER}', true);"
+      ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
+      ADMIN_ID=$(echo ${ADMIN_ID_PSQL_OUTPUT} | cut -d " " -f 3)
+      sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
+      sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
+      for file in "${QUALITYPROFILE_DIR}"/* # import all quality profiles that are in the suitable directory
       do
         # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-        RESPONSE_IMPORT=$(curl --silent -X POST -u $QUALITYPROFILESADD_USER:$QUALITYPROFILEADD_PW -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
+        RESPONSE_IMPORT=$(curl --silent -X POST -u $TEMPORARY_ADMIN_USER:admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
         if ! ( echo $RESPONSE_IMPORT | grep -o errors);
         then
@@ -70,10 +49,10 @@ function import_quality_profiles {
           echo $RESPONSE_IMPORT
         fi;
       done;
+      sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
     else
       echo "no quality profiles to import"
     fi;
-  fi;
 }
 
 function move_sonar_dir(){
@@ -201,8 +180,6 @@ function firstSonarStart() {
     sleep 5
   done
 
-  # create extra user for importing quality profiles
-  create_user_for_importing_profiles
   # import quality profiles
   import_quality_profiles
 
@@ -223,27 +200,32 @@ function firstSonarStart() {
   sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
 
   echo "restarting sonar to account for configuration changes"
-  # kill process (sonar) in background
-  kill ${SONAR_PROCESS_ID}
-  # kill CeServer process which is started by sonar
-  kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
+  stopSonar ${SONAR_PROCESS_ID}
+}
 
-  # wait for killed processes to disappear
-  for i in $(seq 1 10);
-  do
-    JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
-    # 1 instead of 0 because the 'grep java' command itself
-    if [ "$JAVA_PROCESSES" -eq 1 ] ; then
-      echo "all java processes ended. Starting sonar again"
-      break
-    fi
-    if [ "$i" -eq 10 ] ; then
-      echo "java processes did not end in the allowed time. Dogu exits now"
-      exit 1
-    fi
-    echo "wait for all java processes to end"
-    sleep 5
-  done
+# parameter: process-id of sonar
+function stopSonar() {
+    # kill process (sonar) in background
+    kill ${1}
+    # kill CeServer process which is started by sonar
+    kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
+
+    # wait for killed processes to disappear
+    for i in $(seq 1 10);
+    do
+      JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
+      # 1 instead of 0 because the 'grep java' command itself
+      if [ "$JAVA_PROCESSES" -eq 1 ] ; then
+        echo "all java processes ended. Starting sonar again"
+        break
+      fi
+      if [ "$i" -eq 10 ] ; then
+        echo "java processes did not end in the allowed time. Dogu exits now"
+        exit 1
+      fi
+      echo "wait for all java processes to end"
+      sleep 5
+    done
 }
 
 function subsequentSonarStart() {
@@ -259,42 +241,23 @@ function subsequentSonarStart() {
 
   setProxyConfiguration
 
+  if [ "$(ls -A "${QUALITYPROFILE_DIR}")" ]; # only try to import profiles if directory is not empty
+  then
+    # start sonar in background to have the possibility to import quality profiles
+    su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+    SONAR_PROCESS_ID=$!
 
-  # start sonar in background to have the possibility to import quality profiles
-  su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
-  SONAR_PROCESS_ID=$!
-
-  # waiting for sonar to get healthy
-  if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
-    echo "timeout reached while waiting for sonar to get healthy"
-    exit 1
-  fi
-
-  import_quality_profiles
-
-  # stop/kill sonar after importing quality profiles
- echo "restarting sonar to account for configuration changes"
-  # kill process (sonar) in background
-  kill ${SONAR_PROCESS_ID}
-  # kill CeServer process which is started by sonar
-  kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
-
-  # wait for killed processes to disappear
-  for i in $(seq 1 10);
-  do
-    JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
-    # 1 instead of 0 because the 'grep java' command itself
-    if [ "$JAVA_PROCESSES" -eq 1 ] ; then
-      echo "all java processes ended. Starting sonar again"
-      break
-    fi
-    if [ "$i" -eq 10 ] ; then
-      echo "java processes did not end in the allowed time. Dogu exits now"
+    # waiting for sonar to get healthy
+    if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
+      echo "timeout reached while waiting for sonar to get healthy"
       exit 1
     fi
-    echo "wait for all java processes to end"
-    sleep 5
-  done
+
+    import_quality_profiles
+
+    echo "stop sonar after importing quality profiles"
+    stopSonar ${SONAR_PROCESS_ID}
+  fi
 }
 
 ### End of declarations, work is done now

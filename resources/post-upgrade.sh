@@ -4,7 +4,7 @@ set -o nounset
 set -o pipefail
 
 echo "wait until sonar passes all health checks"
-if ! doguctl healthy --wait --timeout 120 sonar; then
+if ! doguctl healthy --wait --timeout 300 sonar; then
   echo "timeout reached by waiting of sonar to get healthy"
   exit 1
 fi
