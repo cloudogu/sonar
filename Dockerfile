@@ -13,7 +13,7 @@ RUN set -x \
     && apk add --no-cache procps postgresql-client \
     && mkdir /opt \
     && cd /tmp \
-    && curl -L -O https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-${SONAR_VERSION}.zip \
+    && curl -L -O https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONAR_VERSION}.zip \
     && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     && rm -rf /var/cache/apk/* \
