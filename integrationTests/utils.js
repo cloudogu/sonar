@@ -9,14 +9,38 @@ const chromeOptions = {
 };
 chromeCapabilities.set('chromeOptions', chromeOptions);
 chromeCapabilities.set('name', "Sonar ITs");
+// set filename pattern for zalenium videos
+chromeCapabilities.set("testFileNameTemplate", "{testName}_{testStatus}");
+
 const By = webdriver.By;
 const until = webdriver.until;
 
+let driver = null;
+const zaleniumReporter = {
+    specStarted: function(test) {
+        // set testname for zalenium
+        chromeCapabilities.set("name", test.fullName);
+    },
+    // does not work on jasmine 2, we have to wait until jest updates jasmine to v3
+    // set status to success or failed, currently all tests have status completed
+    xspecDone: function(result, done) {
+        driver.manage().addCookie({
+            name: "zaleniumTestPassed", 
+            value: result.status === "passed"
+        });
+        driver.quit().then(done);
+    }
+};
+jasmine.getEnv().addReporter(zaleniumReporter);
+
 exports.createDriver = function(){
     if (config.webdriverType === 'local') {
-        return createLocalDriver();
+        driver = createLocalDriver();
+    } else {
+        driver = createRemoteDriver();
     }
-    return createRemoteDriver();
+    
+    return driver;
 };
 
 function createLocalDriver() {
