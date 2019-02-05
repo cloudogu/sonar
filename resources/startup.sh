@@ -125,6 +125,17 @@ function sql(){
   return $?
 }
 
+function configureUpdatecenterUrl() {
+# remove updatecenter url configuration, if existent
+sed -i '/sonar.updatecenter.url=/d' ${SONAR_PROPERTIESFILE}
+# set updatecenter url if configured in registry
+if doguctl config sonar.updatecenter.url > /dev/null; then
+  updatecenterUrl=$(doguctl config sonar.updatecenter.url)
+  echo "Setting sonar.updatecenter.url to ${updatecenterUrl}"
+  echo sonar.updatecenter.url="${updatecenterUrl}" >> ${SONAR_PROPERTIESFILE}
+fi
+}
+
 function firstSonarStart() {
   echo "first start of SonarQube dogu"
 	# prepare config
@@ -290,6 +301,7 @@ else
   subsequentSonarStart
 fi
 
+configureUpdatecenterUrl
 
 doguctl state "ready"
 # fire it up

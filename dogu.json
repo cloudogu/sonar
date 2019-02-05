@@ -30,6 +30,13 @@
   "ServiceAccounts": [{
     "Type": "postgresql"
   }],
+  "Configuration": [
+    {
+    "Name": "sonar.updatecenter.url",
+    "Description": "Set UpdateCenter URL",
+    "Optional": true
+    }
+  ],
   "HealthChecks": [{
     "Type": "tcp",
     "Port": 9000
