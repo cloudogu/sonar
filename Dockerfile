@@ -4,7 +4,7 @@ LABEL NAME="official/sonar" \
     VERSION="5.6.7-2" \
     maintainer="sebastian.sdorra@cloudogu.com"
 
-ENV SONAR_VERSION=5.6.7 \
+ENV SONAR_VERSION=6.7.6 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp

@@ -168,15 +168,14 @@ function firstSonarStart() {
   # Could not work if old log file is already present, e.g. after upgrade of dogu
   for i in $(seq 1 10);
   do
-    # starting compute engine is the last thing sonar does on startup
-    if grep -s "Compute Engine is up" /opt/sonar/logs/sonar.log > /dev/null; then
+    if grep -s "SonarQube is up" /opt/sonar/logs/sonar.log > /dev/null; then
       break
     fi
     if [ "$i" -eq 10 ] ; then
-      echo "compute engine did not start in the allowed time. Dogu exits now"
+      echo "SonarQube did not start in the allowed time. Dogu exits now"
       exit 1
     fi
-    echo "wait for compute engine to be up"
+    echo "wait for SonarQube to be up"
     sleep 5
   done
 
