@@ -183,20 +183,25 @@ function firstSonarStart() {
   import_quality_profiles
 
   echo "write ces configurations into database"
-	# set base url
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('sonar.core.serverBaseURL', 'https://${FQDN}/sonar');"
-  # remove default admin
+	echo "setting base url"
+  TIMESTAMP=$(date +%s)
+  # TODO: find out correct value for is_empty
+  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('sonar.core.serverBaseURL', 'https://${FQDN}/sonar', 'false', '${TIMESTAMP}');"
+  echo "removing default admin"
   sql "DELETE FROM users WHERE login='admin';"
-  # add admin group
-  sql "INSERT INTO groups (name, description, created_at) VALUES ('${ADMINGROUP}', 'CES Administrator Group', now());"
-  # add admin privileges to admin group
-  sql "INSERT INTO group_roles (group_id, role) VALUES((SELECT id FROM groups WHERE name='${ADMINGROUP}'), 'admin');"
+  echo  "adding admin group"
+  # TODO: find out correct value for organization_uuid
+  sql "INSERT INTO groups (name, description, created_at, organization_uuid) VALUES ('${ADMINGROUP}', 'CES Administrator Group', now(), '1234');"
+  echo "adding admin privileges to admin group"
+  # TODO: find out correct value for organization_uuid
+  sql "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES((SELECT id FROM groups WHERE name='${ADMINGROUP}'), 'admin', '1234');"
 
-  # set email settings
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_host.secured', 'postfix');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_port.secured', '25');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', '${MAIL_ADDRESS}');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
+  echo "setting email settings"
+  # TODO: find out correct value for is_empty
+  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.smtp_host.secured', 'postfix', false, '${TIMESTAMP}');"
+  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.smtp_port.secured', '25', false, '${TIMESTAMP}');"
+  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.from', '${MAIL_ADDRESS}', false, '${TIMESTAMP}');"
+  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.prefix', '[SONARQUBE]', false, '${TIMESTAMP}');"
 
   echo "restarting sonar to account for configuration changes"
   stopSonar ${SONAR_PROCESS_ID}
