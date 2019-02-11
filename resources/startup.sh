@@ -66,6 +66,24 @@ function move_sonar_dir(){
   fi
 }
 
+function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
+  # wait for max. 120 seconds
+  for i in $(seq 1 24);
+  do
+    SONAR_HEALTH_STATUS=$(curl -s -u admin:admin http://localhost:9000/sonar/api/system/health | jq -r '.health')
+    if [ "${SONAR_HEALTH_STATUS}" = "GREEN" ]; then
+      echo "SonarQube health status is ${SONAR_HEALTH_STATUS}"
+      break
+    fi
+    if [ "$i" -eq 120 ] ; then
+      echo "SonarQube did not start in the allowed time. Dogu exits now"
+      exit 1
+    fi
+    echo "waiting for SonarQube to get healthy..."
+    sleep 5
+  done
+}
+
 function render_template(){
   FILE="$1"
   if [ ! -f "$FILE.tpl" ]; then
@@ -158,34 +176,20 @@ function firstSonarStart() {
     fi
   done
 
-  # waiting for sonar to get healthy
+  # waiting for sonar status endpoint to be up
   if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
-    echo "timeout reached while waiting for sonar to get healthy"
+    echo "timeout reached while waiting for sonar status endpoint to be up"
     exit 1
   fi
 
-  # Waiting for SonarQube to be started based on the log file
-  # Could not work if old log file is already present, e.g. after upgrade of dogu
-  for i in $(seq 1 10);
-  do
-    if grep -s "SonarQube is up" /opt/sonar/logs/sonar.log > /dev/null; then
-      break
-    fi
-    if [ "$i" -eq 10 ] ; then
-      echo "SonarQube did not start in the allowed time. Dogu exits now"
-      exit 1
-    fi
-    echo "wait for SonarQube to be up"
-    sleep 5
-  done
+  wait_for_sonar_to_get_healthy_with_default_admin_credentials
 
   # import quality profiles
   import_quality_profiles
 
   echo "write ces configurations into database"
 	echo "setting base url"
-  TIMESTAMP=$(date +%s)
-  # TODO: find out correct value for is_empty
+  TIMESTAMP=$(date +%s)000
   sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('sonar.core.serverBaseURL', 'https://${FQDN}/sonar', 'false', '${TIMESTAMP}');"
   echo "removing default admin"
   sql "DELETE FROM users WHERE login='admin';"
@@ -197,7 +201,6 @@ function firstSonarStart() {
   sql "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES((SELECT id FROM groups WHERE name='${ADMINGROUP}'), 'admin', '1234');"
 
   echo "setting email settings"
-  # TODO: find out correct value for is_empty
   sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.smtp_host.secured', 'postfix', false, '${TIMESTAMP}');"
   sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.smtp_port.secured', '25', false, '${TIMESTAMP}');"
   sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.from', '${MAIL_ADDRESS}', false, '${TIMESTAMP}');"
