@@ -143,6 +143,24 @@ function sql(){
   return $?
 }
 
+function set_property_with_default_admin_credentials() {
+  PROPERTY=$1
+  VALUE=$2
+  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
+}
+
+function create_user_group_with_default_admin_credentials() {
+  NAME=$1
+  DESCRIPTION=$2
+  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+}
+
+function grant_permission_to_group_with_default_admin_credentials() {
+  GROUPNAME=$1
+  PERMISSION=$2
+  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+}
+
 function firstSonarStart() {
   echo "first start of SonarQube dogu"
 	# prepare config
@@ -187,24 +205,23 @@ function firstSonarStart() {
   # import quality profiles
   import_quality_profiles
 
-  echo "write ces configurations into database"
 	echo "setting base url"
-  TIMESTAMP=$(date +%s)000
-  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('sonar.core.serverBaseURL', 'https://${FQDN}/sonar', 'false', '${TIMESTAMP}');"
-  echo "removing default admin"
-  sql "DELETE FROM users WHERE login='admin';"
+  set_property_with_default_admin_credentials "sonar.core.serverBaseURL" "https://${FQDN}/sonar"
+
   echo  "adding admin group"
-  # TODO: find out correct value for organization_uuid
-  sql "INSERT INTO groups (name, description, created_at, organization_uuid) VALUES ('${ADMINGROUP}', 'CES Administrator Group', now(), '1234');"
+  create_user_group_with_default_admin_credentials "${ADMINGROUP}" "CESAdministratorGroup"
+
   echo "adding admin privileges to admin group"
-  # TODO: find out correct value for organization_uuid
-  sql "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES((SELECT id FROM groups WHERE name='${ADMINGROUP}'), 'admin', '1234');"
+  grant_permission_to_group_with_default_admin_credentials "${ADMINGROUP}" "admin"
 
   echo "setting email settings"
-  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.smtp_host.secured', 'postfix', false, '${TIMESTAMP}');"
-  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.smtp_port.secured', '25', false, '${TIMESTAMP}');"
-  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.from', '${MAIL_ADDRESS}', false, '${TIMESTAMP}');"
-  sql "INSERT INTO properties (prop_key, text_value, is_empty, created_at) VALUES ('email.prefix', '[SONARQUBE]', false, '${TIMESTAMP}');"
+  set_property_with_default_admin_credentials "email.smtp_host.secured" "postfix"
+  set_property_with_default_admin_credentials "email.smtp_port.secured" "25"
+  set_property_with_default_admin_credentials "email.from" "${MAIL_ADDRESS}"
+  set_property_with_default_admin_credentials "email.prefix" "[SONARQUBE]"
+
+  echo "removing default admin"
+  sql "DELETE FROM users WHERE login='admin';"
 
   echo "restarting sonar to account for configuration changes"
   stopSonar ${SONAR_PROCESS_ID}
