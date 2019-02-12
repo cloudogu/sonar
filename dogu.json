@@ -39,5 +39,12 @@
   "ExposedCommands": [{
     "Name": "post-upgrade",
     "Command": "/post-upgrade.sh"
-  }]
+  }],
+  "Configuration": [
+    {
+      "Name": "sonar.updatecenter.url",
+      "Description": "Set custom SonarQube UpdateCenter URL",
+      "Optional": true
+    }
+  ]
 }
