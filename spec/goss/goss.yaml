@@ -2,8 +2,8 @@ file:
   /opt/sonar/conf/sonar.properties:
     exists: true
     mode: "0644"
-    owner: root
-    group: root
+    owner: sonar
+    group: sonar
     filetype: file
     contains: []
   /startup.sh:
