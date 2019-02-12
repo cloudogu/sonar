@@ -5,7 +5,7 @@ set -o pipefail
 
 SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
-# get variables for templates
+# get variables
 ADMIN_GROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
@@ -17,7 +17,6 @@ DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 
 function import_quality_profiles {
-
     echo "start importing quality profiles"
     if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]]; # only try to import profiles if directory is not empty
     then
@@ -64,8 +63,7 @@ function move_sonar_dir(){
 
 function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
   WAIT_TIMEOUT=${1}
-  for i in $(seq 1 ${WAIT_TIMEOUT});
-  do
+  for i in $(seq 1 "${WAIT_TIMEOUT}"); do
     SONAR_HEALTH_STATUS=$(curl -s -u admin:admin http://localhost:9000/sonar/api/system/health | jq -r '.health')
     if [[ "${SONAR_HEALTH_STATUS}" = "GREEN" ]]; then
       echo "SonarQube health status is ${SONAR_HEALTH_STATUS}"
@@ -82,8 +80,7 @@ function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
 
 function wait_for_sonar_to_get_up() {
   WAIT_TIMEOUT=${1}
-  for i in $(seq 1 ${WAIT_TIMEOUT});
-  do
+  for i in $(seq 1 "${WAIT_TIMEOUT}"); do
     SONAR_STATUS=$(curl -s http://localhost:9000/sonar/api/system/status | jq -r '.status')
     if [[ "${SONAR_STATUS}" = "UP" ]]; then
       echo "SonarQube status is ${SONAR_STATUS}"
@@ -249,9 +246,10 @@ function subsequentSonarStart() {
 
   setProxyConfiguration
 
-  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]]; # only try to import profiles if directory is not empty
+  # import quality profiles if directory is not empty
+  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
   then
-    # start SonarQube in background to have the possibility to import quality profiles
+    echo "starting SonarQube for importing quality profiles..."
     su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
     SONAR_PROCESS_ID=$!
 
@@ -261,9 +259,10 @@ function subsequentSonarStart() {
       exit 1
     fi
 
-    echo "Waiting for SonarQube to get up (max. 120 seconds)..."
+    echo "waiting for SonarQube to get up (max. 120 seconds)..."
     wait_for_sonar_to_get_up 120
 
+    echo "importing quality profiles..."
     import_quality_profiles
 
     echo "stopping SonarQube after importing quality profiles"
@@ -271,7 +270,9 @@ function subsequentSonarStart() {
   fi
 }
 
-### End of declarations, work is done now
+
+
+### End of function declarations, work is done now
 
 doguctl state "internalPreparations"
 
@@ -300,10 +301,10 @@ doguctl state "installing..."
 if [[ "$(grep sonar.security.realm ${SONAR_PROPERTIES_FILE})" != "sonar.security.realm=cas" ]]; then
   firstSonarStart # starts SonarQube, configures it and shuts it down afterwards
 else
-  subsequentSonarStart # may start the server, import quality profiles and stop it afterwards
+  subsequentSonarStart # may start SonarQube, import quality profiles and stop it afterwards
 fi
 
 doguctl state "ready"
-# fire it up
+
 echo "Starting SonarQube..."
 exec su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar"

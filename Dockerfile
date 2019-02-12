@@ -23,8 +23,8 @@ RUN set -x \
     && chown -R sonar:sonar ${SONARQUBE_HOME}
 
 # Copy resources
-# Includes copying sonar-cas plugin (into wrong folder; correct folder would be: /var/lib/sonar/extensions/plugins/)
-# is moved to right folder via startup.sh
+# Includes copying sonar-cas plugin (into wrong folder; correct folder would be: /var/lib/sonar/extensions/plugins/, but this is inside data volume)
+# cas-plugin is moved to right folder via startup.sh
 COPY ./resources /
 
 EXPOSE 9000
