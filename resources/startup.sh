@@ -9,7 +9,7 @@ SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 ADMIN_GROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
-MAIL_ADDRESS=$(doguctl config -d "sonar@${DOMAIN}" --global mail_address)
+MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 DATABASE_IP=postgresql
 DATABASE_USER=$(doguctl config -e sa-postgresql/username)
 DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
@@ -95,6 +95,16 @@ function wait_for_sonar_to_get_up() {
   done
 }
 
+function wait_for_sonar_status_endpoint() {
+  WAIT_TIMEOUT=${1}
+  if ! doguctl wait-for-http --timeout ${WAIT_TIMEOUT} --method GET http://localhost:9000/sonar/api/system/status; then
+    echo "timeout reached while waiting for SonarQube status endpoint to be available"
+    exit 1
+  else
+    echo "SonarQube status endpoint is available"
+  fi
+}
+
 function setProxyConfiguration(){
   removeProxyRelatedEntriesFrom ${SONAR_PROPERTIES_FILE}
   # Write proxy settings if enabled in etcd
@@ -166,13 +176,13 @@ function change_password_with_default_admin_credentials() {
 
 function firstSonarStart() {
   echo "first start of SonarQube dogu"
-	# prepare config
+  echo "rendering sonar properties template "${SONAR_PROPERTIES_FILE}.tpl"..."
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 	# move cas plugin to right folder
 	if [[ -f "/opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar" ]]; then
 		mv /opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar /var/lib/sonar/extensions/plugins/
 	fi
-  # move german language pack to correct folder
+  echo "move german language pack to correct folder"
   if [[ -f "/opt/sonar/sonar-l10n-de-plugin-1.2.jar" ]]; then
     mv /opt/sonar/sonar-l10n-de-plugin-1.2.jar /var/lib/sonar/extensions/plugins/
   fi
@@ -183,11 +193,8 @@ function firstSonarStart() {
   su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
   SONAR_PROCESS_ID=$!
 
-  # waiting for sonar status endpoint to be up
-  if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
-    echo "timeout reached while waiting for SonarQube status endpoint to be up"
-    exit 1
-  fi
+  echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
+  wait_for_sonar_status_endpoint 120
 
   echo "Waiting for SonarQube to get up (max. 120 seconds)..."
   wait_for_sonar_to_get_up 120
@@ -253,11 +260,8 @@ function subsequentSonarStart() {
     su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
     SONAR_PROCESS_ID=$!
 
-    # waiting for SonarQube status endpoint to show up
-    if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
-      echo "timeout reached while waiting for SonarQube status endpoint to show up"
-      exit 1
-    fi
+    echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
+    wait_for_sonar_status_endpoint 120
 
     echo "waiting for SonarQube to get up (max. 120 seconds)..."
     wait_for_sonar_to_get_up 120
