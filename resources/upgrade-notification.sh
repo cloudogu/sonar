@@ -11,4 +11,6 @@ if [[ ${FROM_VERSION} == *"5.6.6"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "Please upgrade to 5.6.7 LTS before upgrading to 6.7 LTS!"
   echo "See https://docs.sonarqube.org/latest/setup/upgrading/"
   exit 1
+elif [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
+  echo "You are upgrading your SonarQube instance from 5.6.7 to 6.7.x LTS. Please consider backing up your SonarQube database. Upgrade problems are rare, but you'll want the backup if anything does happen."
 fi
