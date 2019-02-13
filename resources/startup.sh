@@ -175,21 +175,21 @@ function change_password_with_default_admin_credentials() {
 }
 
 function firstSonarStart() {
-  echo "first start of SonarQube dogu"
-  echo "rendering sonar properties template "${SONAR_PROPERTIES_FILE}.tpl"..."
+  echo "First start of SonarQube dogu"
+  echo "Rendering sonar properties template "${SONAR_PROPERTIES_FILE}.tpl"..."
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 	# move cas plugin to right folder
 	if [[ -f "/opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar" ]]; then
 		mv /opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar /var/lib/sonar/extensions/plugins/
 	fi
-  echo "move german language pack to correct folder"
+  echo "Moving german language pack to correct folder..."
   if [[ -f "/opt/sonar/sonar-l10n-de-plugin-1.2.jar" ]]; then
     mv /opt/sonar/sonar-l10n-de-plugin-1.2.jar /var/lib/sonar/extensions/plugins/
   fi
 
   setProxyConfiguration
 
-  echo "starting SonarQube... "
+  echo "Starting SonarQube... "
   su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
   SONAR_PROCESS_ID=$!
 
@@ -213,7 +213,7 @@ function firstSonarStart() {
   echo  "adding admin group"
   create_user_group_with_default_admin_credentials "${ADMIN_GROUP}" "CESAdministratorGroup"
 
-  echo "adding admin privileges to admin group"
+  printf "\nadding admin privileges to admin group\n"
   grant_permission_to_group_with_default_admin_credentials "${ADMIN_GROUP}" "admin"
 
   echo "setting email configuration"
