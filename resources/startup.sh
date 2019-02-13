@@ -97,7 +97,7 @@ function wait_for_sonar_to_get_up() {
 
 function wait_for_sonar_status_endpoint() {
   WAIT_TIMEOUT=${1}
-  if ! doguctl wait-for-http --timeout ${WAIT_TIMEOUT} --method GET http://localhost:9000/sonar/api/system/status; then
+  if ! doguctl wait-for-http --timeout "${WAIT_TIMEOUT}" --method GET http://localhost:9000/sonar/api/system/status; then
     echo "timeout reached while waiting for SonarQube status endpoint to be available"
     exit 1
   else
@@ -172,6 +172,17 @@ function change_password_with_default_admin_credentials() {
   PREVIOUS_PASSWORD=$2
   NEW_PASSWORD=$3
   curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/users/change_password?login=${LOGIN}&password=${NEW_PASSWORD}&previousPassword=${PREVIOUS_PASSWORD}"
+}
+
+function configureUpdatecenterUrl() {
+  # remove updatecenter url configuration, if existent
+  sed -i '/sonar.updatecenter.url=/d' ${SONAR_PROPERTIES_FILE}
+  # set updatecenter url if configured in registry
+  if doguctl config sonar.updatecenter.url > /dev/null; then
+    updatecenterUrl=$(doguctl config sonar.updatecenter.url)
+    echo "Setting sonar.updatecenter.url to ${updatecenterUrl}"
+    echo sonar.updatecenter.url="${updatecenterUrl}" >> ${SONAR_PROPERTIES_FILE}
+  fi
 }
 
 function firstSonarStart() {
@@ -307,6 +318,8 @@ if [[ "$(grep sonar.security.realm ${SONAR_PROPERTIES_FILE})" != "sonar.security
 else
   subsequentSonarStart # may start SonarQube, import quality profiles and stop it afterwards
 fi
+
+configureUpdatecenterUrl
 
 doguctl state "ready"
 
