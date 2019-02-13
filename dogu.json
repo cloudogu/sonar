@@ -49,6 +49,9 @@
   },{
     "Name": "upgrade-notification",
     "Command": "/upgrade-notification.sh"
+  },{
+    "Name": "pre-upgrade",
+    "Command": "/pre-upgrade.sh"
   }],
   "Configuration": [
     {
