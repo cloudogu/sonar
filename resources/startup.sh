@@ -3,6 +3,12 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# import util functions:
+# sql()
+# add_temporary_admin_user()
+# remove_temporary_admin_user functions()
+source util.sh
+
 SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
 # get variables
@@ -16,19 +22,16 @@ DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 
-function import_quality_profiles {
-    echo "start importing quality profiles"
-    if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]]; # only try to import profiles if directory is not empty
+function import_quality_profiles_if_present {
+    echo "check for quality profiles to import..."
+    # only import profiles if quality profiles are present
+    if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
     then
-      # temporarily create admin user and add to admin groups
+      # temporarily create admin user
       TEMPORARY_ADMIN_USER=$(doguctl random)
-      sql "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local)
-      VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', 'a373a0e667abb2604c1fd571eb4ad47fe8cc0878', '48bc4b0d93179b5103fd3885ea9119498e9d161b', true, '${TEMPORARY_ADMIN_USER}', true);"
-      ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
-      ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | cut -d " " -f 3)
-      sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
-      sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
-      for file in "${QUALITY_PROFILE_DIR}"/* # import all quality profiles that are in the suitable directory
+      add_temporary_admin_user ${TEMPORARY_ADMIN_USER}
+      # import all quality profiles that are in the suitable directory
+      for file in "${QUALITY_PROFILE_DIR}"/*
       do
         # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
         RESPONSE_IMPORT=$(curl --silent -X POST -u "${TEMPORARY_ADMIN_USER}":admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
@@ -44,7 +47,7 @@ function import_quality_profiles {
           echo "${RESPONSE_IMPORT}"
         fi;
       done;
-      sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
+      remove_temporary_admin_user ${TEMPORARY_ADMIN_USER}
     else
       echo "no quality profiles to import"
     fi;
@@ -144,11 +147,6 @@ function writeProxyAuthenticationCredentialsTo(){
   echo http.proxyPassword="${PROXYPASSWORD}" >> ${SONAR_PROPERTIES_FILE}
 }
 
-function sql(){
-  PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
-  return $?
-}
-
 function set_property_with_default_admin_credentials() {
   PROPERTY=$1
   VALUE=$2
@@ -214,9 +212,7 @@ function firstSonarStart() {
   wait_for_sonar_to_get_healthy_with_default_admin_credentials 120
 
   # import quality profiles if directory is not empty
-  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]]; then
-    import_quality_profiles
-  fi
+  import_quality_profiles_if_present
 
   echo "setting base url"
   set_property_with_default_admin_credentials "sonar.core.serverBaseURL" "https://${FQDN}/sonar"
@@ -278,7 +274,7 @@ function subsequentSonarStart() {
     wait_for_sonar_to_get_up 120
 
     echo "importing quality profiles..."
-    import_quality_profiles
+    import_quality_profiles_if_present
 
     echo "stopping SonarQube after importing quality profiles"
     stopSonarQube ${SONAR_PROCESS_ID}
