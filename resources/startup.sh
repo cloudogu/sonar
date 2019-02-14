@@ -7,6 +7,8 @@ set -o pipefail
 # sql()
 # add_temporary_admin_user()
 # remove_temporary_admin_user functions()
+# wait_for_sonar_status_endpoint()
+# wait_for_sonar_to_get_up()
 source util.sh
 
 SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
@@ -29,7 +31,7 @@ function import_quality_profiles_if_present {
     then
       # temporarily create admin user
       TEMPORARY_ADMIN_USER=$(doguctl random)
-      add_temporary_admin_user ${TEMPORARY_ADMIN_USER}
+      add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
       # import all quality profiles that are in the suitable directory
       for file in "${QUALITY_PROFILE_DIR}"/*
       do
@@ -47,7 +49,7 @@ function import_quality_profiles_if_present {
           echo "${RESPONSE_IMPORT}"
         fi;
       done;
-      remove_temporary_admin_user ${TEMPORARY_ADMIN_USER}
+      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
     else
       echo "no quality profiles to import"
     fi;
@@ -79,33 +81,6 @@ function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
     # waiting for SonarQube to get healthy
     sleep 1
   done
-}
-
-function wait_for_sonar_to_get_up() {
-  WAIT_TIMEOUT=${1}
-  for i in $(seq 1 "${WAIT_TIMEOUT}"); do
-    SONAR_STATUS=$(curl -s http://localhost:9000/sonar/api/system/status | jq -r '.status')
-    if [[ "${SONAR_STATUS}" = "UP" ]]; then
-      echo "SonarQube status is ${SONAR_STATUS}"
-      break
-    fi
-    if [[ "$i" -eq ${WAIT_TIMEOUT} ]] ; then
-      echo "SonarQube did not get up within ${WAIT_TIMEOUT} seconds; status is ${SONAR_STATUS}. Dogu exits now"
-      exit 1
-    fi
-    # waiting for SonarQube to get up
-    sleep 1
-  done
-}
-
-function wait_for_sonar_status_endpoint() {
-  WAIT_TIMEOUT=${1}
-  if ! doguctl wait-for-http --timeout "${WAIT_TIMEOUT}" --method GET http://localhost:9000/sonar/api/system/status; then
-    echo "timeout reached while waiting for SonarQube status endpoint to be available"
-    exit 1
-  else
-    echo "SonarQube status endpoint is available"
-  fi
 }
 
 function setProxyConfiguration(){
@@ -220,7 +195,7 @@ function firstSonarStart() {
   echo  "adding admin group"
   create_user_group_with_default_admin_credentials "${ADMIN_GROUP}" "CESAdministratorGroup"
 
-  printf "\nadding admin privileges to admin group\n"
+  printf "\\nadding admin privileges to admin group\\n"
   grant_permission_to_group_with_default_admin_credentials "${ADMIN_GROUP}" "admin"
 
   echo "setting email configuration"

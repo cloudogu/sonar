@@ -15,7 +15,7 @@
   ],
   "Volumes": [{
     "Name": "data",
-    "Path": "/var/lib/sonar/",
+    "Path": "/var/lib/sonar/data/",
     "Owner": "1000",
     "Group": "1000",
     "NeedsBackup": true
@@ -33,7 +33,7 @@
   "Configuration": [
     {
     "Name": "sonar.updatecenter.url",
-    "Description": "Set UpdateCenter URL",
+    "Description": "Set SonarQube UpdateCenter URL",
     "Optional": true
     }
   ],
