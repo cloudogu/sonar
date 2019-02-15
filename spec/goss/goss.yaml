@@ -12,12 +12,12 @@ file:
     group: root
     filetype: file
     contains: []
-  /var/lib/sonar/extensions/plugins/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar:
+  /opt/sonar/extensions/plugins/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar:
     exists: true
     size: 512981
     filetype: file
     contains: []
-  /var/lib/sonar/extensions/plugins/sonar-l10n-de-plugin-1.2.jar:
+  /opt/sonar/extensions/plugins/sonar-l10n-de-plugin-1.2.jar:
     exists: true
     size: 34576
     filetype: file
