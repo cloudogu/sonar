@@ -54,6 +54,10 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
 
   # remove temporary admin user
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+
+  # Changing owner of data folder, because SonarQube 6.7 dogu user is 'sonar' and not root any more
+  echo "Setting correct owner for data folder"
+  chown -R sonar:sonar "/var/lib/sonar"
 fi
 
 

@@ -55,17 +55,6 @@ function import_quality_profiles_if_present {
     fi;
 }
 
-function move_sonar_dir(){
-  DIR="$1"
-  if [[ ! -d "/var/lib/sonar/$DIR" ]]; then
-    mv "/opt/sonar/$DIR" /var/lib/sonar
-    ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
-  elif [[ ! -L "/opt/sonar/$DIR" ]] && [[ -d "/opt/sonar/$DIR" ]]; then
-    rm -rf "/opt/sonar/$DIR"
-    ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
-  fi
-}
-
 function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
   WAIT_TIMEOUT=${1}
   for i in $(seq 1 "${WAIT_TIMEOUT}"); do
@@ -162,19 +151,11 @@ function firstSonarStart() {
   echo "First start of SonarQube dogu"
   echo "Rendering sonar properties template "${SONAR_PROPERTIES_FILE}.tpl"..."
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
-	# move cas plugin to right folder
-	if [[ -f "/opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar" ]]; then
-		mv /opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar /var/lib/sonar/extensions/plugins/
-	fi
-  echo "Moving german language pack to correct folder..."
-  if [[ -f "/opt/sonar/sonar-l10n-de-plugin-1.2.jar" ]]; then
-    mv /opt/sonar/sonar-l10n-de-plugin-1.2.jar /var/lib/sonar/extensions/plugins/
-  fi
 
   setProxyConfiguration
 
   echo "Starting SonarQube... "
-  su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+  java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar &
   SONAR_PROCESS_ID=$!
 
   echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
@@ -239,7 +220,7 @@ function subsequentSonarStart() {
   if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
   then
     echo "starting SonarQube for importing quality profiles..."
-    su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
+    java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar &
     SONAR_PROCESS_ID=$!
 
     echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
@@ -259,14 +240,6 @@ function subsequentSonarStart() {
 
 
 ### End of function declarations, work is done now
-
-doguctl state "internalPreparations"
-
-move_sonar_dir conf
-move_sonar_dir extensions
-move_sonar_dir data
-move_sonar_dir logs
-move_sonar_dir temp
 
 doguctl state "waitingForPostgreSQL"
 
@@ -295,4 +268,4 @@ configureUpdatecenterUrl
 doguctl state "ready"
 
 echo "Starting SonarQube..."
-exec su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar"
+exec java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar

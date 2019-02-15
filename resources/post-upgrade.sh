@@ -24,13 +24,13 @@ if [[ ${FROM_VERSION} == *"5.6.6"* ]]; then
   echo "See https://docs.sonarqube.org/latest/setup/upgrading/"
 fi
 
-# At LTS upgrade from 5.6.7 to 6.7.6, the data volume has been switched from /var/lib/sonar/ to /var/lib/sonar/data/
+# At LTS upgrade from 5.6.7 to 6.7.6, the data volume has been switched from /var/lib/sonar/ to ${SONARQUBE_HOME}/data/
 # Move data from old 5.6.7 data volume to new 6.7.x data volume
 if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "Moving old SonarQube 5.6.7 data to current data folder"
-  mv /var/lib/sonar/data/data/* /var/lib/sonar/data
+  mv ${SONARQUBE_HOME}/data/data/* ${SONARQUBE_HOME}/data
   echo "Removing old SonarQube 5.6.7 files and folders"
-  rm -rf /var/lib/sonar/data/conf /var/lib/sonar/data/extensions /var/lib/sonar/data/logs /var/lib/sonar/data/temp /var/lib/sonar/data/data
+  rm -rf ${SONARQUBE_HOME}/data/conf ${SONARQUBE_HOME}/data/extensions ${SONARQUBE_HOME}/data/logs ${SONARQUBE_HOME}/data/temp ${SONARQUBE_HOME}/data/data
 fi
 
 echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."

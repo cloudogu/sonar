@@ -15,7 +15,7 @@
   ],
   "Volumes": [{
     "Name": "data",
-    "Path": "/var/lib/sonar/data/",
+    "Path": "/opt/sonar/data/",
     "Owner": "1000",
     "Group": "1000",
     "NeedsBackup": true
