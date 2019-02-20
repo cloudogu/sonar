@@ -373,7 +373,7 @@ sonar.notifications.delay=60
 sonar.security.realm=cas
 sonar.authenticator.createUsers=true
 sonar.cas.forceCasLogin=true
-sonar.cas.protocol=saml11
+sonar.cas.protocol=cas2
 sonar.cas.casServerLoginUrl=https://{{ .GlobalConfig.Get "fqdn" }}/cas/login
 sonar.cas.casServerUrlPrefix=https://{{ .GlobalConfig.Get "fqdn" }}/cas
 sonar.cas.sonarServerUrl=https://{{ .GlobalConfig.Get "fqdn" }}/sonar
@@ -382,6 +382,14 @@ sonar.cas.rolesAttributes=groups,roles
 sonar.cas.eMailAttribute=mail
 sonar.cas.disableCertValidation=false
 sonar.cas.fullNameAttribute=displayName
+# Sets the expiration time for the cookie. An integer specifying the maximum age of the cookie in seconds
+# # if negative, means the cookie is only stored until the browser exits; if zero, deletes the cookie
+sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
+# Stores the path to the volume where session blacklists/whitelists are persistently stored. This store must be
+# persistent across server or container restarts or even container recreations in order to properly handle issued
+# authentications. Administrators may want to mount this as its own volume in order to scale with number of unexpired
+# sessions.
+sonar.cas.sessionStorePath = /opt/sonar/cas/sessionstore
 
 # log to console
 sonar.log.console=true
