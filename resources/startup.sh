@@ -11,7 +11,8 @@ set -o pipefail
 # wait_for_sonar_to_get_up()
 source util.sh
 
-SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
+# export so cas-plugin can use this env variable
+export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
 # get variables
 ADMIN_GROUP=$(doguctl config --global admin_group)
@@ -36,7 +37,7 @@ function import_quality_profiles_if_present {
       for file in "${QUALITY_PROFILE_DIR}"/*
       do
         # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-        RESPONSE_IMPORT=$(curl --silent -X POST -u "${TEMPORARY_ADMIN_USER}":admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
+        RESPONSE_IMPORT=$(curl --silent --fail -X POST -u "${TEMPORARY_ADMIN_USER}":admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
         if ! ( echo "${RESPONSE_IMPORT}" | grep -o errors);
         then
@@ -58,7 +59,7 @@ function import_quality_profiles_if_present {
 function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
   WAIT_TIMEOUT=${1}
   for i in $(seq 1 "${WAIT_TIMEOUT}"); do
-    SONAR_HEALTH_STATUS=$(curl -s -u admin:admin http://localhost:9000/sonar/api/system/health | jq -r '.health')
+    SONAR_HEALTH_STATUS=$(curl --silent --fail -u admin:admin http://localhost:9000/sonar/api/system/health | jq -r '.health')
     if [[ "${SONAR_HEALTH_STATUS}" = "GREEN" ]]; then
       echo "SonarQube health status is ${SONAR_HEALTH_STATUS}"
       break
@@ -114,26 +115,26 @@ function writeProxyAuthenticationCredentialsTo(){
 function set_property_with_default_admin_credentials() {
   PROPERTY=$1
   VALUE=$2
-  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
+  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
 function create_user_group_with_default_admin_credentials() {
   NAME=$1
   DESCRIPTION=$2
-  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
 }
 
 function grant_permission_to_group_with_default_admin_credentials() {
   GROUPNAME=$1
   PERMISSION=$2
-  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
 function change_password_with_default_admin_credentials() {
   LOGIN=$1
   PREVIOUS_PASSWORD=$2
   NEW_PASSWORD=$3
-  curl -s -u admin:admin -X POST "http://localhost:9000/sonar/api/users/change_password?login=${LOGIN}&password=${NEW_PASSWORD}&previousPassword=${PREVIOUS_PASSWORD}"
+  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/users/change_password?login=${LOGIN}&password=${NEW_PASSWORD}&previousPassword=${PREVIOUS_PASSWORD}"
 }
 
 function configureUpdatecenterUrl() {
@@ -220,7 +221,7 @@ function subsequentSonarStart() {
   if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
   then
     echo "starting SonarQube for importing quality profiles..."
-    java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar &
+    java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
     SONAR_PROCESS_ID=$!
 
     echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
