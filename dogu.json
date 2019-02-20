@@ -35,6 +35,10 @@
     "Name": "sonar.updatecenter.url",
     "Description": "Set SonarQube UpdateCenter URL",
     "Optional": true
+    },{
+      "Name": "sonar.updatecenter.url",
+      "Description": "Set custom SonarQube UpdateCenter URL",
+      "Optional": true
     }
   ],
   "HealthChecks": [{
@@ -52,12 +56,5 @@
   },{
     "Name": "pre-upgrade",
     "Command": "/pre-upgrade.sh"
-  }],
-  "Configuration": [
-    {
-      "Name": "sonar.updatecenter.url",
-      "Description": "Set custom SonarQube UpdateCenter URL",
-      "Optional": true
-    }
-  ]
+  }]
 }
