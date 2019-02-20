@@ -190,6 +190,9 @@ function firstSonarStart() {
 
   echo "stopping SonarQube to account for configuration changes"
   stopSonarQube ${SONAR_PROCESS_ID}
+
+  echo "Setting successfulFirstStart registry key..."
+  doguctl config successfulFirstStart true
 }
 
 # parameter: process-id of sonar
@@ -250,8 +253,8 @@ create_truststore.sh > /dev/null
 
 doguctl state "installing..."
 
-# check whether initialization has already been performed
-if [[ "$(grep sonar.security.realm ${SONAR_PROPERTIES_FILE})" != "sonar.security.realm=cas" ]]; then
+# check whether firstSonarStart has already been performed
+if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
   firstSonarStart # starts SonarQube, configures it and shuts it down afterwards
 else
   subsequentSonarStart # may start SonarQube, import quality profiles and stop it afterwards
