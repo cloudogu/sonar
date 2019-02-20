@@ -37,13 +37,13 @@ echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT
 wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
 
 echo "Checking if db migration is needed..."
-DB_MIGRATION_STATUS=$(curl --silent -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
+DB_MIGRATION_STATUS=$(curl --silent --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
 if [[ "${DB_MIGRATION_STATUS}" = "MIGRATION_REQUIRED" ]]; then
   echo "Database migration is required. Migrating database now..."
-  curl --silent -X POST http://localhost:9000/sonar/api/system/migrate_db
+  curl --silent --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
   printf "\\nwaiting for db migration to succeed (max. %s seconds)...\\n" ${WAIT_TIMEOUT}
   for i in $(seq 1 "${WAIT_TIMEOUT}"); do
-    DB_MIGRATION_STATE=$(curl --silent -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
+    DB_MIGRATION_STATE=$(curl --silent --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
     if [[ "${DB_MIGRATION_STATE}" = "MIGRATION_SUCCEEDED" ]]; then
       echo "db migration has been successful: ${DB_MIGRATION_STATE}"
       break
@@ -71,9 +71,12 @@ if doguctl config install_plugins > /dev/null; then
   while IFS=',' read -ra ADDR; do
     for PLUGIN in "${ADDR[@]}"; do
       printf "\\nInstalling plugin %s...\\n" "${PLUGIN}"
-      curl --silent -u "${TEMPORARY_ADMIN_USER}":admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}"
+      curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}"
     done
   done <<< "$(doguctl config install_plugins)"
+
+  # clear install_plugins key
+  doguctl config install_plugins ""
 
   # remove temporary admin user
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
