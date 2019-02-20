@@ -19,10 +19,6 @@ ADMIN_GROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
-DATABASE_IP=postgresql
-DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 
 function import_quality_profiles_if_present {
@@ -156,7 +152,7 @@ function firstSonarStart() {
   setProxyConfiguration
 
   echo "Starting SonarQube... "
-  java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar &
+  java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
   SONAR_PROCESS_ID=$!
 
   echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
@@ -186,8 +182,8 @@ function firstSonarStart() {
   set_property_with_default_admin_credentials "email.from" "${MAIL_ADDRESS}"
   set_property_with_default_admin_credentials "email.prefix" "[SONARQUBE]"
 
-  echo "setting random password for default admin login"
-  change_password_with_default_admin_credentials admin admin "$(doguctl random)"
+  echo "removing default admin..."
+  sql "DELETE FROM users WHERE login='admin';"
 
   echo "waiting for configuration changes to be internally executed"
   sleep 3
@@ -266,4 +262,4 @@ configureUpdatecenterUrl
 doguctl state "ready"
 
 echo "Starting SonarQube..."
-exec java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar
+exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar

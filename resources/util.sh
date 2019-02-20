@@ -3,6 +3,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+DATABASE_IP=postgresql
+DATABASE_USER=$(doguctl config -e sa-postgresql/username)
+DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
+DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+
 function sql(){
   PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
   return $?
