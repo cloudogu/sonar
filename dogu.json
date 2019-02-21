@@ -33,12 +33,8 @@
   "Configuration": [
     {
     "Name": "sonar.updatecenter.url",
-    "Description": "Set SonarQube UpdateCenter URL",
+    "Description": "Set custom SonarQube UpdateCenter URL",
     "Optional": true
-    },{
-      "Name": "sonar.updatecenter.url",
-      "Description": "Set custom SonarQube UpdateCenter URL",
-      "Optional": true
     }
   ],
   "HealthChecks": [{
