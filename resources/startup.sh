@@ -100,7 +100,7 @@ function writeProxyCredentialsTo(){
 
 function writeProxyAuthenticationCredentialsTo(){
   # Check for java option and add it if not existent
-  if [[ -z "$(grep sonar.web.javaAdditionalOpts= "$1" | grep Djdk.http.auth.tunneling.disabledSchemes=)" ]]; then
+  if ! grep sonar.web.javaAdditionalOpts= "$1" | grep -q Djdk.http.auth.tunneling.disabledSchemes= ; then
     sed -i '/^sonar.web.javaAdditionalOpts=/ s/$/ -Djdk.http.auth.tunneling.disabledSchemes=/' "$1"
   fi
   # Add proxy authentication credentials
