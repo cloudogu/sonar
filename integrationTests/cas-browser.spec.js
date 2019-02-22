@@ -1,7 +1,8 @@
 const config = require('./config');
 const utils = require('./utils');
 const expectations = require('./expectations');
-
+const AdminFunctions = require('./adminFunctions');
+const userName = 'testUser';
 
 require('chromedriver');
 const webdriver = require('selenium-webdriver');
@@ -11,10 +12,11 @@ const until = webdriver.until;
 jest.setTimeout(30000);
 
 let driver;
-
+let adminFunctions;
 
 beforeEach(async () => {
     driver = utils.createDriver(webdriver);
+    adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
     await driver.manage().window().maximize();
 });
 
@@ -33,17 +35,20 @@ describe('cas browser login', () => {
 
     test('cas authentication', async() => {
         await driver.get(utils.getCasUrl(driver));
-		await utils.login(driver);
-		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
+        await utils.login(driver);
+        await adminFunctions.showUserMenu(driver)
+        const username = await driver.findElement(By.className("text-ellipsis text-muted")).getText();
         expect(username).toContain(config.displayName);
     });
 	
 	test('logout front channel', async() => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
+        await adminFunctions.testUserLogout(driver)
+        await driver.sleep(1000)
+		//await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
+		//await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
+		//await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
 		const url = await driver.getCurrentUrl();
         expectations.expectCasLogout(url);
     });

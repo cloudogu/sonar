@@ -63,12 +63,18 @@ module.exports = class AdminFunctions{
     };
 
     async testUserLogout(driver) {
+        await this.showUserMenu(driver);
+        // wait for dropdown menu
+        await driver.wait(until.elementLocated(By.className("dropdown-menu dropdown-menu-right")),5000);
+        // click logout link
+		await driver.findElement(By.xpath("//a[@href='#']")).click();
+    };
 
-		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
-		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")),5000);
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
-		await driver.wait(until.elementLocated(By.className('success')), 5000);
+    async showUserMenu(driver) {
+        // wait for user button
+        await driver.wait(until.elementLocated(By.className("dropdown-toggle navbar-avatar")),5000);
+        // click user button
+        await driver.findElement(By.className("dropdown-toggle navbar-avatar")).click();
     };
 
 	async giveAdminRightsUsermgt(){
@@ -110,7 +116,7 @@ module.exports = class AdminFunctions{
         await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/groups?login="+this.testuserName)
             .auth(this.testuserName, this.testuserPasswort)
-            .expect('Content-Type', 'application/json;charset=utf-8')
+            .expect('Content-Type', 'application/json')
             .type('json')
             .expect(expectStatus);//403 = "Forbidden", 200 = "OK"
     };
