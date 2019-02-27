@@ -46,9 +46,6 @@ describe('cas browser login', () => {
         await utils.login(driver);
         await adminFunctions.testUserLogout(driver)
         await driver.sleep(1000)
-		//await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
-		//await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
-		//await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
 		const url = await driver.getCurrentUrl();
         expectations.expectCasLogout(url);
     });

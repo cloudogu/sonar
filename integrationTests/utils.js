@@ -69,10 +69,11 @@ exports.login = async function login(driver) {
 };
 
 exports.isAdministrator = async function isAdministrator(driver){
-    await driver.wait(until.elementLocated(By.className('dropdown')), 5000);
+    // wait for navbar to show up
+    await driver.wait(until.elementLocated(By.className('global-navbar-menu pull-left')), 5000);
     await driver.sleep(200);
-
-	return await driver.findElement(By.className('navbar-admin-link')).then(function() {
+    // return true if "settings" navbar item exists
+	return await driver.findElement(By.className('global-navbar-menu pull-left')).findElement(By.css("a[href*='/sonar/admin']")).then(function() {
 		return true;//element was found
     }, function(err) {
         if (err instanceof webdriver.error.NoSuchElementError) {
