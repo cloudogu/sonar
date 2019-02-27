@@ -12,7 +12,7 @@ file:
     group: root
     filetype: file
     contains: []
-  /opt/sonar/extensions/plugins/sonar-cas-plugin-1.0.1.jar:
+  /opt/sonar/extensions/plugins/sonar-cas-plugin-1.0.2.jar:
     exists: true
     size: 5077069
     filetype: file
