@@ -19,5 +19,5 @@ exports.expectCasLogin = function(url) {
 }
 
 exports.expectCasLogout = function(url) {
-    expect(url).toBe(config.baseUrl + '/cas/logout?service=https%3A%2F%2F'+config.fqdn+'%2Fsonar');
+    expect(url).toBe(config.baseUrl + '/cas/logout');
 }

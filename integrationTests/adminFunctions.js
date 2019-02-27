@@ -54,15 +54,19 @@ module.exports = class AdminFunctions{
 
 
     async testUserLogin(driver) {
-
+        // getting sonar login page
         await driver.get(config.baseUrl + config.sonarContextPath);
+        // waiting for cas login page to show up
         await driver.wait(until.elementLocated(By.id('password')), 5000);
+        // inserting username and password
         await driver.findElement(By.id('username')).sendKeys(this.testuserName);
         await driver.findElement(By.id('password')).sendKeys(this.testuserPasswort);
+        // clicking login button
         await driver.findElement(By.css('input[name="submit"]')).click();
     };
 
     async testUserLogout(driver) {
+        // opening user dropdown menu
         await this.showUserMenu(driver);
         // wait for dropdown menu
         await driver.wait(until.elementLocated(By.className("dropdown-menu dropdown-menu-right")),5000);
