@@ -390,10 +390,7 @@ sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
 # authentications. Administrators may want to mount this as its own volume in order to scale with number of unexpired
 # sessions.
 sonar.cas.sessionStorePath = /opt/sonar/cas/sessionstore
-email.smtp_host.secured=postfix
-email.smtp_port.secured=25
-email.from={{ .Config.GetOrDefault "mail_address" "sonar@ces.local" }}
-email.prefix=[SONARQUBE]
+
 # log to console
 sonar.log.console=true
 

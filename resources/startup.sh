@@ -167,22 +167,28 @@ function firstSonarStart() {
   # import quality profiles if directory is not empty
   import_quality_profiles_if_present
 
-  echo "setting base url..."
+  echo "setting base url"
   set_property_with_default_admin_credentials "sonar.core.serverBaseURL" "https://${FQDN}/sonar"
 
-  echo  "adding admin group..."
+  echo  "adding admin group"
   create_user_group_with_default_admin_credentials "${ADMIN_GROUP}" "CESAdministratorGroup"
 
-  printf "\\nadding admin privileges to admin group...\\n"
+  printf "\\nadding admin privileges to admin group\\n"
   grant_permission_to_group_with_default_admin_credentials "${ADMIN_GROUP}" "admin"
+
+  echo "setting email configuration"
+  set_property_with_default_admin_credentials "email.smtp_host.secured" "postfix"
+  set_property_with_default_admin_credentials "email.smtp_port.secured" "25"
+  set_property_with_default_admin_credentials "email.from" "${MAIL_ADDRESS}"
+  set_property_with_default_admin_credentials "email.prefix" "[SONARQUBE]"
 
   echo "removing default admin..."
   sql "DELETE FROM users WHERE login='admin';"
 
-  echo "waiting for configuration changes to be internally executed..."
+  echo "waiting for configuration changes to be internally executed"
   sleep 3
 
-  echo "stopping SonarQube to account for configuration changes..."
+  echo "stopping SonarQube to account for configuration changes"
   stopSonarQube ${SONAR_PROCESS_ID}
 
   echo "Setting successfulFirstStart registry key..."
