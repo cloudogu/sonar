@@ -14,7 +14,6 @@ file:
     contains: []
   /opt/sonar/extensions/plugins/sonar-cas-plugin-1.0.2.jar:
     exists: true
-    size: 5077069
     filetype: file
     contains: []
   /opt/sonar/extensions/plugins/sonar-l10n-de-plugin-1.2.jar:
