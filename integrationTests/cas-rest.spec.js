@@ -64,11 +64,11 @@ describe('cas rest basic authentication', () => {
 
     test('rest - user is administrator', async () => {
         const response = await request(config.baseUrl)
-            .get(config.sonarContextPath + "/api/users/groups")
+            .get(config.sonarContextPath + "/api/users/search")
             .auth(config.username, config.password)
             .expect('Content-Type', 'application/json')
             .type('json')
-            .send({'login': config.username})
+            .send({'q': config.username})
             .expect(200);
         const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
         expectations.expectStateAdmin(userObject);
