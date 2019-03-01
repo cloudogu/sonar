@@ -28,9 +28,9 @@ fi
 # Move data from old 5.6.7 data volume to new 6.7.x data volume
 if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "Moving old SonarQube 5.6.7 data to current data folder"
-  mv ${SONARQUBE_HOME}/data/data/* ${SONARQUBE_HOME}/data
+  mv "${SONARQUBE_HOME}"/data/data/* "${SONARQUBE_HOME}"/data
   echo "Removing old SonarQube 5.6.7 files and folders"
-  rm -rf ${SONARQUBE_HOME}/data/conf ${SONARQUBE_HOME}/data/extensions ${SONARQUBE_HOME}/data/logs ${SONARQUBE_HOME}/data/temp ${SONARQUBE_HOME}/data/data
+  rm -rf "${SONARQUBE_HOME}"/data/conf "${SONARQUBE_HOME}"/data/extensions "${SONARQUBE_HOME}"/data/logs "${SONARQUBE_HOME}"/data/temp "${SONARQUBE_HOME}"/data/data
 fi
 
 echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
