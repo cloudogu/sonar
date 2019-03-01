@@ -185,11 +185,12 @@ function firstSonarStart() {
   # default admin credentials (admin, admin) are used
   wait_for_sonar_to_get_healthy 120 admin admin
 
-  echo "Creating SonarQubeDoguAdmin..."
+  echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
   DOGU_ADMIN_PASSWORD=$(doguctl random)
   # default admin credentials (admin, admin) are used
   create_user "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" admin admin
   add_user_to_group "${DOGU_ADMIN}" sonar-administrators admin admin
+  # saving dogu admin password in registry
   doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
   printf "\\n"
 
