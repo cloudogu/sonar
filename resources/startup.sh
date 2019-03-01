@@ -4,9 +4,7 @@ set -o nounset
 set -o pipefail
 
 # import util functions:
-# sql()
-# add_temporary_admin_user()
-# remove_temporary_admin_user functions()
+# execute_sql_statement_on_database()
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
 source util.sh
@@ -213,7 +211,7 @@ function firstSonarStart() {
   set_property "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   echo "Removing default admin account..."
-  sql "DELETE FROM users WHERE login='admin';"
+  execute_sql_statement_on_database "DELETE FROM users WHERE login='admin';"
 
   echo "Waiting for configuration changes to be internally executed..."
   sleep 3
