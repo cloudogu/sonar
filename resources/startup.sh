@@ -112,7 +112,7 @@ function render_properties_template() {
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 }
 
-function create_user() {
+function create_user_via_rest_api() {
   LOGIN=$1
   NAME=$2
   PASSWORD=$3
@@ -121,7 +121,7 @@ function create_user() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/create?login=${LOGIN}&name=${NAME}&password=${PASSWORD}&local=true"
 }
 
-function set_property() {
+function set_property_via_rest_api() {
   PROPERTY=$1
   VALUE=$2
   AUTH_USER=$3
@@ -129,7 +129,7 @@ function set_property() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
-function create_user_group() {
+function create_user_group_via_rest_api() {
   NAME=$1
   DESCRIPTION=$2
   AUTH_USER=$3
@@ -137,7 +137,7 @@ function create_user_group() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
 }
 
-function grant_permission_to_group() {
+function grant_permission_to_group_via_rest_api() {
   GROUPNAME=$1
   PERMISSION=$2
   AUTH_USER=$3
@@ -145,7 +145,7 @@ function grant_permission_to_group() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
-function add_user_to_group() {
+function add_user_to_group_via_rest_api() {
   USERNAME=$1
   GROUPNAME=$2
   AUTH_USER=$3
@@ -166,20 +166,6 @@ function configureUpdatecenterUrl() {
 
 function firstSonarStart() {
   echo "First start of SonarQube dogu"
-  echo "Rendering sonar properties template..."
-  render_properties_template
-
-  setProxyConfiguration
-
-  echo "Starting SonarQube... "
-  java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
-  SONAR_PROCESS_ID=$!
-
-  echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
-  wait_for_sonar_status_endpoint 120
-
-  echo "Waiting for SonarQube to get up (max. 120 seconds)..."
-  wait_for_sonar_to_get_up 120
 
   echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
   # default admin credentials (admin, admin) are used
@@ -188,37 +174,28 @@ function firstSonarStart() {
   echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
   DOGU_ADMIN_PASSWORD=$(doguctl random)
   # default admin credentials (admin, admin) are used
-  create_user "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" admin admin
-  add_user_to_group "${DOGU_ADMIN}" sonar-administrators admin admin
+  create_user_via_rest_api "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" admin admin
+  add_user_to_group_via_rest_api "${DOGU_ADMIN}" sonar-administrators admin admin
   # saving dogu admin password in registry
   doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
   printf "\\n"
 
-  import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  echo "Setting base url..."
-  set_property "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
   echo  "Adding CES admin group..."
-  create_user_group "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   printf "\\nAdding admin privileges to CES admin group...\\n"
-  grant_permission_to_group "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   echo "Setting email configuration..."
-  set_property "email.smtp_host.secured" "postfix" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property "email.smtp_port.secured" "25" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_port.secured" "25" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   echo "Removing default admin account..."
   execute_sql_statement_on_database "DELETE FROM users WHERE login='admin';"
 
   echo "Waiting for configuration changes to be internally executed..."
   sleep 3
-
-  echo "Stopping SonarQube to account for configuration changes..."
-  stopSonarQube ${SONAR_PROCESS_ID}
 
   echo "Setting successfulFirstStart registry key..."
   doguctl config successfulFirstStart true
@@ -236,37 +213,10 @@ function subsequentSonarStart() {
   echo "Subsequent start of SonarQube dogu"
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
-  echo "Rendering sonar properties template..."
-  render_properties_template
-
-  echo "Starting SonarQube... "
-  java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
-  SONAR_PROCESS_ID=$!
-
-  echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
-  wait_for_sonar_status_endpoint 120
-
-  echo "Waiting for SonarQube to get up (max. 120 seconds)..."
-  wait_for_sonar_to_get_up 120
+  # TODO: Restore sonarqubedoguadmin if it has been removed
 
   echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
   wait_for_sonar_to_get_healthy 120 "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  # TODO: Restore sonarqubedoguadmin if it has been removed
-
-  echo "Refreshing serverBaseUrl..."
-  set_property "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  echo "Setting proxy configuration, if existent..."
-  setProxyConfiguration
-
-  echo "Setting email configuration..."
-  set_property "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  echo "Configuration done, stopping SonarQube..."
-  stopSonarQube ${SONAR_PROCESS_ID}
 }
 
 
@@ -286,7 +236,23 @@ fi
 # create truststore, which is used in the sonar.properties file
 create_truststore.sh > /dev/null
 
-doguctl state "installing..."
+doguctl state "configuring..."
+
+echo "Rendering sonar properties template..."
+render_properties_template
+
+echo "Setting proxy configuration, if existent..."
+setProxyConfiguration
+
+echo "Starting SonarQube... "
+java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
+SONAR_PROCESS_ID=$!
+
+echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
+wait_for_sonar_status_endpoint 120
+
+echo "Waiting for SonarQube to get up (max. 120 seconds)..."
+wait_for_sonar_to_get_up 120
 
 # check whether firstSonarStart has already been performed
 if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
@@ -295,7 +261,18 @@ else
   subsequentSonarStart
 fi
 
+echo "Setting sonar.core.serverBaseURL..."
+set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
 configureUpdatecenterUrl
+
+echo "Setting email.from configuration..."
+set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+echo "Configuration done, stopping SonarQube..."
+stopSonarQube ${SONAR_PROCESS_ID}
 
 doguctl state "ready"
 
