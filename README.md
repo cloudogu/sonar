@@ -16,6 +16,10 @@
 
 **Dependencies:** postgresql, cas, nginx, postfix
 
+## Importing Quality Profiles
+
+To import quality profiles into the SonarQube dogu please follow the steps described here: https://github.com/cloudogu/ecosystem/blob/develop/docs/docs/user-guide/sonar.md
+
 ## Installation Ecosystem
 ```
 cesapp install official/sonar
