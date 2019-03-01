@@ -15,14 +15,16 @@ source util.sh
 export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
 # get variables
-ADMIN_GROUP=$(doguctl config --global admin_group)
+CES_ADMIN_GROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
+DOGU_ADMIN="sonarqubedoguadmin"
+CURL_LOG_LEVEL="--silent"
 
 function import_quality_profiles_if_present {
-    echo "check for quality profiles to import..."
+    echo "Check for quality profiles to import..."
     # only import profiles if quality profiles are present
     if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
     then
@@ -33,29 +35,31 @@ function import_quality_profiles_if_present {
       for file in "${QUALITY_PROFILE_DIR}"/*
       do
         # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-        RESPONSE_IMPORT=$(curl --silent --fail -X POST -u "${TEMPORARY_ADMIN_USER}":admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
+        RESPONSE_IMPORT=$(curl ${CURL_LOG_LEVEL} --fail -X POST -u "${TEMPORARY_ADMIN_USER}":admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
         # check if import is successful
         if ! ( echo "${RESPONSE_IMPORT}" | grep -o errors);
         then
-          echo "import of quality profile $file was successful"
+          echo "Import of quality profile $file was successful"
           # delete file if import was successful
           rm -f "$file"
-          echo "removed $file file"
+          echo "Removed $file file"
         else
-          echo "import of quality profile $file has not been successful"
+          echo "Import of quality profile $file has not been successful"
           echo "${RESPONSE_IMPORT}"
         fi;
       done;
       remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
     else
-      echo "no quality profiles to import"
+      echo "No quality profiles to import"
     fi;
 }
 
-function wait_for_sonar_to_get_healthy_with_default_admin_credentials() {
+function wait_for_sonar_to_get_healthy() {
   WAIT_TIMEOUT=${1}
+  USER=$2
+  PASSWORD=$3
   for i in $(seq 1 "${WAIT_TIMEOUT}"); do
-    SONAR_HEALTH_STATUS=$(curl --silent --fail -u admin:admin http://localhost:9000/sonar/api/system/health | jq -r '.health')
+    SONAR_HEALTH_STATUS=$(curl ${CURL_LOG_LEVEL} --fail -u "${USER}":"${PASSWORD}" http://localhost:9000/sonar/api/system/health | jq -r '.health')
     if [[ "${SONAR_HEALTH_STATUS}" = "GREEN" ]]; then
       echo "SonarQube health status is ${SONAR_HEALTH_STATUS}"
       break
@@ -108,29 +112,49 @@ function writeProxyAuthenticationCredentialsTo(){
   echo http.proxyPassword="${PROXYPASSWORD}" >> ${SONAR_PROPERTIES_FILE}
 }
 
-function set_property_with_default_admin_credentials() {
+function render_properties_template() {
+  doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
+}
+
+function create_user() {
+  LOGIN=$1
+  NAME=$2
+  PASSWORD=$3
+  AUTH_USER=$4
+  AUTH_PASSWORD=$5
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/create?login=${LOGIN}&name=${NAME}&password=${PASSWORD}&local=true"
+}
+
+function set_property() {
   PROPERTY=$1
   VALUE=$2
-  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
-function create_user_group_with_default_admin_credentials() {
+function create_user_group() {
   NAME=$1
   DESCRIPTION=$2
-  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
 }
 
-function grant_permission_to_group_with_default_admin_credentials() {
+function grant_permission_to_group() {
   GROUPNAME=$1
   PERMISSION=$2
-  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
-function change_password_with_default_admin_credentials() {
-  LOGIN=$1
-  PREVIOUS_PASSWORD=$2
-  NEW_PASSWORD=$3
-  curl --silent --fail -u admin:admin -X POST "http://localhost:9000/sonar/api/users/change_password?login=${LOGIN}&password=${NEW_PASSWORD}&previousPassword=${PREVIOUS_PASSWORD}"
+function add_user_to_group() {
+  USERNAME=$1
+  GROUPNAME=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/add_user?name=${GROUPNAME}&login=${USERNAME}"
 }
 
 function configureUpdatecenterUrl() {
@@ -146,8 +170,8 @@ function configureUpdatecenterUrl() {
 
 function firstSonarStart() {
   echo "First start of SonarQube dogu"
-  echo "Rendering sonar properties template "${SONAR_PROPERTIES_FILE}.tpl"..."
-  doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
+  echo "Rendering sonar properties template..."
+  render_properties_template
 
   setProxyConfiguration
 
@@ -162,33 +186,41 @@ function firstSonarStart() {
   wait_for_sonar_to_get_up 120
 
   echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
-  wait_for_sonar_to_get_healthy_with_default_admin_credentials 120
+  # default admin credentials (admin, admin) are used
+  wait_for_sonar_to_get_healthy 120 admin admin
 
-  # import quality profiles if directory is not empty
+  echo "Creating SonarQubeDoguAdmin..."
+  DOGU_ADMIN_PASSWORD=$(doguctl random)
+  # default admin credentials (admin, admin) are used
+  create_user "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" admin admin
+  add_user_to_group "${DOGU_ADMIN}" sonar-administrators admin admin
+  doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
+  printf "\\n"
+
   import_quality_profiles_if_present
 
-  echo "setting base url"
-  set_property_with_default_admin_credentials "sonar.core.serverBaseURL" "https://${FQDN}/sonar"
+  echo "Setting base url..."
+  set_property "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  echo  "adding admin group"
-  create_user_group_with_default_admin_credentials "${ADMIN_GROUP}" "CESAdministratorGroup"
+  echo  "Adding CES admin group..."
+  create_user_group "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  printf "\\nadding admin privileges to admin group\\n"
-  grant_permission_to_group_with_default_admin_credentials "${ADMIN_GROUP}" "admin"
+  printf "\\nAdding admin privileges to CES admin group...\\n"
+  grant_permission_to_group "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  echo "setting email configuration"
-  set_property_with_default_admin_credentials "email.smtp_host.secured" "postfix"
-  set_property_with_default_admin_credentials "email.smtp_port.secured" "25"
-  set_property_with_default_admin_credentials "email.from" "${MAIL_ADDRESS}"
-  set_property_with_default_admin_credentials "email.prefix" "[SONARQUBE]"
+  echo "Setting email configuration..."
+  set_property "email.smtp_host.secured" "postfix" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property "email.smtp_port.secured" "25" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  echo "removing default admin..."
+  echo "Removing default admin account..."
   sql "DELETE FROM users WHERE login='admin';"
 
-  echo "waiting for configuration changes to be internally executed"
+  echo "Waiting for configuration changes to be internally executed..."
   sleep 3
 
-  echo "stopping SonarQube to account for configuration changes"
+  echo "Stopping SonarQube to account for configuration changes..."
   stopSonarQube ${SONAR_PROCESS_ID}
 
   echo "Setting successfulFirstStart registry key..."
@@ -204,34 +236,40 @@ function stopSonarQube() {
 }
 
 function subsequentSonarStart() {
-  echo "subsequent start of SonarQube dogu"
-  # refresh base url
-  sql "UPDATE properties SET text_value='https://${FQDN}/sonar' WHERE prop_key='sonar.core.serverBaseURL';"
+  echo "Subsequent start of SonarQube dogu"
+  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
-  echo "Rendering sonar properties template "${SONAR_PROPERTIES_FILE}.tpl"..."
-  doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
+  echo "Rendering sonar properties template..."
+  render_properties_template
 
+  echo "Starting SonarQube... "
+  java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
+  SONAR_PROCESS_ID=$!
+
+  echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
+  wait_for_sonar_status_endpoint 120
+
+  echo "Waiting for SonarQube to get up (max. 120 seconds)..."
+  wait_for_sonar_to_get_up 120
+
+  echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
+  wait_for_sonar_to_get_healthy 120 "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+  # TODO: Restore sonarqubedoguadmin if it has been removed
+
+  echo "Refreshing serverBaseUrl..."
+  set_property "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+  echo "Setting proxy configuration, if existent..."
   setProxyConfiguration
 
-  # import quality profiles if directory is not empty
-  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
-  then
-    echo "starting SonarQube for importing quality profiles..."
-    java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
-    SONAR_PROCESS_ID=$!
+  echo "Setting email configuration..."
+  set_property "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-    echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
-    wait_for_sonar_status_endpoint 120
+  import_quality_profiles_if_present
 
-    echo "waiting for SonarQube to get up (max. 120 seconds)..."
-    wait_for_sonar_to_get_up 120
-
-    echo "importing quality profiles..."
-    import_quality_profiles_if_present
-
-    echo "stopping SonarQube after importing quality profiles"
-    stopSonarQube ${SONAR_PROCESS_ID}
-  fi
+  echo "Configuration done, stopping SonarQube..."
+  stopSonarQube ${SONAR_PROCESS_ID}
 }
 
 
@@ -240,12 +278,12 @@ function subsequentSonarStart() {
 
 doguctl state "waitingForPostgreSQL"
 
-echo "waiting until postgresql passes all health checks..."
+echo "Waiting until postgresql passes all health checks..."
 if ! doguctl healthy --wait --timeout 120 postgresql; then
-  echo "timeout reached by waiting of postgresql to get healthy"
+  echo "Timeout reached by waiting of postgresql to get healthy"
   exit 1
 else
-  echo "postgresql is healthy"
+  echo "Postgresql is healthy"
 fi
 
 # create truststore, which is used in the sonar.properties file
@@ -255,9 +293,9 @@ doguctl state "installing..."
 
 # check whether firstSonarStart has already been performed
 if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
-  firstSonarStart # starts SonarQube, configures it and shuts it down afterwards
+  firstSonarStart
 else
-  subsequentSonarStart # may start SonarQube, import quality profiles and stop it afterwards
+  subsequentSonarStart
 fi
 
 configureUpdatecenterUrl

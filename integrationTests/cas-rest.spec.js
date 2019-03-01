@@ -58,7 +58,7 @@ describe('cas rest basic authentication', () => {
             .send({'q': config.username})
             .expect(200);
 
-        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
+        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[1];
         expectations.expectStateUser(userObject);
     });
 
@@ -70,7 +70,7 @@ describe('cas rest basic authentication', () => {
             .type('json')
             .send({'q': config.username})
             .expect(200);
-        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
+        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[1];
         expectations.expectStateAdmin(userObject);
     });
 
