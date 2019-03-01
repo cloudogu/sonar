@@ -24,34 +24,32 @@ DOGU_ADMIN="sonarqubedoguadmin"
 CURL_LOG_LEVEL="--silent"
 
 function import_quality_profiles_if_present {
-    echo "Check for quality profiles to import..."
-    # only import profiles if quality profiles are present
-    if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
-    then
-      # temporarily create admin user
-      TEMPORARY_ADMIN_USER=$(doguctl random)
-      add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-      # import all quality profiles that are in the suitable directory
-      for file in "${QUALITY_PROFILE_DIR}"/*
-      do
-        # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-        RESPONSE_IMPORT=$(curl ${CURL_LOG_LEVEL} --fail -X POST -u "${TEMPORARY_ADMIN_USER}":admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
-        # check if import is successful
-        if ! ( echo "${RESPONSE_IMPORT}" | grep -o errors);
-        then
-          echo "Import of quality profile $file was successful"
-          # delete file if import was successful
-          rm -f "$file"
-          echo "Removed $file file"
-        else
-          echo "Import of quality profile $file has not been successful"
-          echo "${RESPONSE_IMPORT}"
-        fi;
-      done;
-      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-    else
-      echo "No quality profiles to import"
-    fi;
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  echo "Check for quality profiles to import..."
+  # only import profiles if quality profiles are present
+  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
+  then
+    # import all quality profiles that are in the suitable directory
+    for file in "${QUALITY_PROFILE_DIR}"/*
+    do
+      # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
+      RESPONSE_IMPORT=$(curl ${CURL_LOG_LEVEL} --fail -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
+      # check if import is successful
+      if ! ( echo "${RESPONSE_IMPORT}" | grep -o errors);
+      then
+        echo "Import of quality profile $file was successful"
+        # delete file if import was successful
+        rm -f "$file"
+        echo "Removed $file file"
+      else
+        echo "Import of quality profile $file has not been successful"
+        echo "${RESPONSE_IMPORT}"
+      fi;
+    done;
+  else
+    echo "No quality profiles to import"
+  fi;
 }
 
 function wait_for_sonar_to_get_healthy() {
@@ -197,7 +195,7 @@ function firstSonarStart() {
   doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
   printf "\\n"
 
-  import_quality_profiles_if_present
+  import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   echo "Setting base url..."
   set_property "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
@@ -266,7 +264,7 @@ function subsequentSonarStart() {
   echo "Setting email configuration..."
   set_property "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  import_quality_profiles_if_present
+  import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
