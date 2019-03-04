@@ -7,6 +7,12 @@ set -o pipefail
 # execute_sql_statement_on_database()
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
+# wait_for_sonar_to_get_healthy()
+# create_dogu_admin_user_and_save_password()
+# create_user_via_rest_api()
+# add_user_to_group_via_rest_api()
+# run_first_start_and_post_upgrade_tasks()
+# DOGU_ADMIN variable
 source util.sh
 
 # export so cas-plugin can use this env variable
@@ -18,7 +24,6 @@ FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
-DOGU_ADMIN="sonarqubedoguadmin"
 CURL_LOG_LEVEL="--silent"
 
 function import_quality_profiles_if_present {
@@ -48,25 +53,6 @@ function import_quality_profiles_if_present {
   else
     echo "No quality profiles to import"
   fi;
-}
-
-function wait_for_sonar_to_get_healthy() {
-  WAIT_TIMEOUT=${1}
-  USER=$2
-  PASSWORD=$3
-  for i in $(seq 1 "${WAIT_TIMEOUT}"); do
-    SONAR_HEALTH_STATUS=$(curl ${CURL_LOG_LEVEL} --fail -u "${USER}":"${PASSWORD}" http://localhost:9000/sonar/api/system/health | jq -r '.health')
-    if [[ "${SONAR_HEALTH_STATUS}" = "GREEN" ]]; then
-      echo "SonarQube health status is ${SONAR_HEALTH_STATUS}"
-      break
-    fi
-    if [[ "$i" -eq ${WAIT_TIMEOUT} ]] ; then
-      echo "SonarQube did not get healthy within ${WAIT_TIMEOUT} seconds; health status is ${SONAR_HEALTH_STATUS}. Dogu exits now"
-      exit 1
-    fi
-    # waiting for SonarQube to get healthy
-    sleep 1
-  done
 }
 
 function setProxyConfiguration(){
@@ -112,15 +98,6 @@ function render_properties_template() {
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 }
 
-function create_user_via_rest_api() {
-  LOGIN=$1
-  NAME=$2
-  PASSWORD=$3
-  AUTH_USER=$4
-  AUTH_PASSWORD=$5
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/create?login=${LOGIN}&name=${NAME}&password=${PASSWORD}&local=true"
-}
-
 function set_property_via_rest_api() {
   PROPERTY=$1
   VALUE=$2
@@ -145,14 +122,6 @@ function grant_permission_to_group_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
-function add_user_to_group_via_rest_api() {
-  USERNAME=$1
-  GROUPNAME=$2
-  AUTH_USER=$3
-  AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/add_user?name=${GROUPNAME}&login=${USERNAME}"
-}
-
 function configureUpdatecenterUrl() {
   # remove updatecenter url configuration, if existent
   sed -i '/sonar.updatecenter.url=/d' ${SONAR_PROPERTIES_FILE}
@@ -164,41 +133,18 @@ function configureUpdatecenterUrl() {
   fi
 }
 
-function firstSonarStart() {
-  echo "First start of SonarQube dogu"
-
-  echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
+function run_first_start_tasks() {
   # default admin credentials (admin, admin) are used
-  wait_for_sonar_to_get_healthy 120 admin admin
-
-  echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
-  DOGU_ADMIN_PASSWORD=$(doguctl random)
-  # default admin credentials (admin, admin) are used
-  create_user_via_rest_api "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" admin admin
-  add_user_to_group_via_rest_api "${DOGU_ADMIN}" sonar-administrators admin admin
-  # saving dogu admin password in registry
-  doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
-  printf "\\n"
-
   echo  "Adding CES admin group..."
-  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" admin admin
 
   printf "\\nAdding admin privileges to CES admin group...\\n"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" admin admin
 
   echo "Setting email configuration..."
-  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.smtp_port.secured" "25" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  echo "Removing default admin account..."
-  execute_sql_statement_on_database "DELETE FROM users WHERE login='admin';"
-
-  echo "Waiting for configuration changes to be internally executed..."
-  sleep 3
-
-  echo "Setting successfulFirstStart registry key..."
-  doguctl config successfulFirstStart true
+  set_property_via_rest_api "email.smtp_host.secured" "postfix" admin admin
+  set_property_via_rest_api "email.smtp_port.secured" "25" admin admin
+  set_property_via_rest_api "email.prefix" "[SONARQUBE]" admin admin
 }
 
 # parameter: process-id of sonar
@@ -209,6 +155,18 @@ function stopSonarQube() {
     wait "${1}" || true
 }
 
+function firstSonarStart() {
+  echo "First start of SonarQube dogu"
+  # default admin credentials (admin, admin) are used
+
+  echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
+  wait_for_sonar_to_get_healthy 120 admin admin ${CURL_LOG_LEVEL}
+
+  run_first_start_tasks
+
+  run_first_start_and_post_upgrade_tasks ${CURL_LOG_LEVEL}
+}
+
 function subsequentSonarStart() {
   echo "Subsequent start of SonarQube dogu"
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
@@ -216,7 +174,7 @@ function subsequentSonarStart() {
   # TODO: Restore sonarqubedoguadmin if it has been removed
 
   echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
-  wait_for_sonar_to_get_healthy 120 "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  wait_for_sonar_to_get_healthy 120 "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 }
 
 
@@ -253,6 +211,12 @@ wait_for_sonar_status_endpoint 120
 
 echo "Waiting for SonarQube to get up (max. 120 seconds)..."
 wait_for_sonar_to_get_up 120
+
+# check whether post-upgrade script is still running
+while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
+  echo "Post-upgrade script is running. Waiting..."
+  sleep 3
+done
 
 # check whether firstSonarStart has already been performed
 if [ "$(doguctl config successfulFirstStart)" != "true" ]; then

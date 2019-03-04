@@ -4,20 +4,20 @@ set -o nounset
 set -o pipefail
 
 # import util functions:
-# sql()
+# execute_sql_statement_on_database()
 # add_temporary_admin_user()
 # remove_temporary_admin_user functions()
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
+# wait_for_sonar_to_get_healthy()
 source util.sh
 
 FROM_VERSION="${1}"
 TO_VERSION="${2}"
-DATABASE_IP=postgresql
-DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 WAIT_TIMEOUT=120
+CURL_LOG_LEVEL="--silent"
+
+doguctl config post_upgrade_running true
 
 if [[ ${FROM_VERSION} == *"5.6.6"* ]]; then
   echo "You have upgraded from SonarQube 5.6.6. This may lead to unexpected behavior!"
@@ -37,19 +37,19 @@ echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT
 wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
 
 echo "Checking if db migration is needed..."
-DB_MIGRATION_STATUS=$(curl --silent --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
+DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
 if [[ "${DB_MIGRATION_STATUS}" = "MIGRATION_REQUIRED" ]]; then
   echo "Database migration is required. Migrating database now..."
-  curl --silent --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
-  printf "\\nwaiting for db migration to succeed (max. %s seconds)...\\n" ${WAIT_TIMEOUT}
+  curl "${CURL_LOG_LEVEL}" --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
+  printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" ${WAIT_TIMEOUT}
   for i in $(seq 1 "${WAIT_TIMEOUT}"); do
-    DB_MIGRATION_STATE=$(curl --silent --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
+    DB_MIGRATION_STATE=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
     if [[ "${DB_MIGRATION_STATE}" = "MIGRATION_SUCCEEDED" ]]; then
-      echo "db migration has been successful: ${DB_MIGRATION_STATE}"
+      echo "Database migration has been successful: ${DB_MIGRATION_STATE}"
       break
     fi
     if [[ "$i" -eq ${WAIT_TIMEOUT} ]] ; then
-      echo "db migration did not succeed within ${WAIT_TIMEOUT} seconds; status is ${DB_MIGRATION_STATE}."
+      echo "Database migration did not succeed within ${WAIT_TIMEOUT} seconds; status is ${DB_MIGRATION_STATE}."
       exit 1
     fi
     # waiting for db migration
@@ -59,25 +59,31 @@ else
   echo "No db migration is needed"
 fi
 
-# install missing plugins if there are any
-if doguctl config install_plugins > /dev/null; then
-  # temporarily create admin user
-  TEMPORARY_ADMIN_USER=$(doguctl random)
-  add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
+  # install missing plugins if there are any
+  if doguctl config install_plugins > /dev/null; then
 
-  echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
-  wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
+    echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
+    wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
 
-  while IFS=',' read -ra ADDR; do
-    for PLUGIN in "${ADDR[@]}"; do
-      printf "\\nInstalling plugin %s...\\n" "${PLUGIN}"
-      curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}"
-    done
-  done <<< "$(doguctl config install_plugins)"
+    echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
+    # default admin credentials (admin, admin) are used
+    wait_for_sonar_to_get_healthy 120 admin admin ${CURL_LOG_LEVEL}
 
-  # clear install_plugins key
-  doguctl config install_plugins ""
+    while IFS=',' read -ra ADDR; do
+      for PLUGIN in "${ADDR[@]}"; do
+        echo "Installing plugin ${PLUGIN}..."
+        curl "${CURL_LOG_LEVEL}" --fail -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}"
+        echo "Plugin ${PLUGIN} installed."
+      done
+    done <<< "$(doguctl config install_plugins)"
 
-  # remove temporary admin user
-  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+    # clear install_plugins key
+    doguctl config install_plugins ""
+  fi
+
+  # Do everything that needs to be done to get into a state that is equal to a successful first start
+  run_first_start_and_post_upgrade_tasks ${CURL_LOG_LEVEL}
 fi
+
+doguctl config post_upgrade_running false

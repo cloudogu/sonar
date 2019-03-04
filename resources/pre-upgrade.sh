@@ -34,30 +34,29 @@ function remove_temporary_admin_user() {
 
 if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   # temporarily create admin user
-  TEMPORARY_ADMIN_USER=$(doguctl random)
+  TEMPORARY_ADMIN_USER="admin"
   add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
 
   # get plugins which are not up to date
-  AVAILABLE_PLUGIN_UPDATES=$(curl --silent -u "${TEMPORARY_ADMIN_USER}":admin -X GET localhost:9000/sonar/api/plugins/updates | jq '.plugins' | jq '.[]' | jq -r '.key')
+  AVAILABLE_PLUGIN_UPDATES=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X GET localhost:9000/sonar/api/plugins/updates | jq '.plugins' | jq '.[]' | jq -r '.key')
   echo "The following plugins are not up-to-date. They will be removed and re-installed after dogu upgrade:"
   echo "${AVAILABLE_PLUGIN_UPDATES}"
   SAVED_PLUGIN_NAMES=""
   # remove them
   while read -r PLUGIN; do
     echo "Removing plugin ${PLUGIN}..."
-    curl --silent -u "${TEMPORARY_ADMIN_USER}":admin -X POST "localhost:9000/sonar/api/plugins/uninstall?key=${PLUGIN}"
+    curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X POST "localhost:9000/sonar/api/plugins/uninstall?key=${PLUGIN}"
     SAVED_PLUGIN_NAMES+=${PLUGIN},
   done <<< "${AVAILABLE_PLUGIN_UPDATES}"
 
   # save plugin names to registry
   doguctl config install_plugins "${SAVED_PLUGIN_NAMES}"
 
-  # remove temporary admin user
-  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-
   # Changing owner of data folder, because SonarQube 6.7 dogu user is 'sonar' and not root any more
   echo "Setting correct owner for data folder"
   chown -R sonar:sonar "/var/lib/sonar"
+
+  # The temporary admin user is not removed; this will be done at the end of firstSonarStart() in the sonar 6.7.x dogu
 fi
 
 
