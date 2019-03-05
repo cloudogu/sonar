@@ -395,4 +395,5 @@ sonar.cas.sessionStorePath = /opt/sonar/cas/sessionstore
 sonar.log.console=true
 
 # java opts
-sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStore=/etc/ssl/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit -Djdk.http.auth.tunneling.disabledSchemes=""
+# Always set javax.net.ssl.trustStore to SONARQUBE_HOME/truststore.jks
+sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit -Djdk.http.auth.tunneling.disabledSchemes=""

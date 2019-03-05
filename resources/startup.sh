@@ -191,8 +191,9 @@ else
   echo "Postgresql is healthy"
 fi
 
-# create truststore, which is used in the sonar.properties file
-create_truststore.sh > /dev/null
+echo "Creating truststore..."
+# Using non-default truststore, because sonar user has no write permissions to /etc/ssl
+create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks > /dev/null
 
 doguctl state "configuring..."
 

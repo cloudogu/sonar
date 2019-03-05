@@ -1,8 +1,8 @@
-FROM registry.cloudogu.com/official/java:8u171-1
+FROM registry.cloudogu.com/official/java:8u191-1
 
 LABEL NAME="official/sonar" \
     VERSION="5.6.7-2" \
-    maintainer="sebastian.sdorra@cloudogu.com"
+    maintainer="robert.auer@cloudogu.com"
 
 ENV SONAR_VERSION=6.7.6 \
     SONARQUBE_HOME=/opt/sonar \
