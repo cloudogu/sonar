@@ -43,6 +43,7 @@ function wait_for_sonar_to_get_up() {
 
 function add_temporary_admin_user() {
   # temporarily create admin user and add to admin groups
+  # the password is 'admin'
   TEMPORARY_ADMIN_USER=${1}
   execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local, is_root, onboarded)
   VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', 'a373a0e667abb2604c1fd571eb4ad47fe8cc0878', '48bc4b0d93179b5103fd3885ea9119498e9d161b', true, '${TEMPORARY_ADMIN_USER}', true, true, true);"
@@ -78,12 +79,13 @@ function wait_for_sonar_to_get_healthy() {
 }
 
 function create_dogu_admin_user_and_save_password() {
-  LOG_LEVEL=$1
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  LOG_LEVEL=$3
   echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
   DOGU_ADMIN_PASSWORD=$(doguctl random)
-  # default admin credentials (admin, admin) are used
-  create_user_via_rest_api "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" admin admin "${LOG_LEVEL}"
-  add_user_to_group_via_rest_api "${DOGU_ADMIN}" sonar-administrators admin admin "${LOG_LEVEL}"
+  create_user_via_rest_api "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
+  add_user_to_group_via_rest_api "${DOGU_ADMIN}" sonar-administrators "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
   # saving dogu admin password in registry
   doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
   printf "\\n"
@@ -111,7 +113,8 @@ function add_user_to_group_via_rest_api() {
 
 function run_first_start_and_post_upgrade_tasks() {
   LOG_LEVEL=$1
-  create_dogu_admin_user_and_save_password "${LOG_LEVEL}"
+  # default admin credentials (admin, admin) are used
+  create_dogu_admin_user_and_save_password admin admin "${LOG_LEVEL}"
 
   echo "Removing default admin account..."
   execute_sql_statement_on_database "DELETE FROM users WHERE login='admin';"

@@ -171,7 +171,15 @@ function subsequentSonarStart() {
   echo "Subsequent start of SonarQube dogu"
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
-  # TODO: Restore sonarqubedoguadmin if it has been removed
+  echo "Removing and re-creating ${DOGU_ADMIN} user..."
+  # Remove dogu admin user, because it may have been changed by logging in with the same name
+  execute_sql_statement_on_database "DELETE FROM users WHERE login='${DOGU_ADMIN}';"
+  # Re-create dogu admin user
+  TEMPORARY_ADMIN_USER=$(doguctl random)
+  add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+  create_dogu_admin_user_and_save_password "${TEMPORARY_ADMIN_USER}" admin ${CURL_LOG_LEVEL}
+  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
   echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
   wait_for_sonar_to_get_healthy 120 "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
