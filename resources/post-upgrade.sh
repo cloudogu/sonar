@@ -14,8 +14,10 @@ source util.sh
 
 FROM_VERSION="${1}"
 TO_VERSION="${2}"
-WAIT_TIMEOUT=120
+WAIT_TIMEOUT=300
 CURL_LOG_LEVEL="--silent"
+
+echo "Running post-upgrade script..."
 
 doguctl config post_upgrade_running true
 

@@ -25,6 +25,7 @@ DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
+HEALTH_TIMEOUT=300
 
 function import_quality_profiles_if_present {
   AUTH_USER=$1
@@ -159,8 +160,8 @@ function firstSonarStart() {
   echo "First start of SonarQube dogu"
   # default admin credentials (admin, admin) are used
 
-  echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
-  wait_for_sonar_to_get_healthy 120 admin admin ${CURL_LOG_LEVEL}
+  echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
 
   run_first_start_tasks
 
@@ -181,8 +182,8 @@ function subsequentSonarStart() {
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
-  echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
-  wait_for_sonar_to_get_healthy 120 "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+  echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 }
 
 
@@ -192,7 +193,7 @@ function subsequentSonarStart() {
 doguctl state "waitingForPostgreSQL"
 
 echo "Waiting until postgresql passes all health checks..."
-if ! doguctl healthy --wait --timeout 120 postgresql; then
+if ! doguctl healthy --wait --timeout ${HEALTH_TIMEOUT} postgresql; then
   echo "Timeout reached by waiting of postgresql to get healthy"
   exit 1
 else
@@ -215,11 +216,11 @@ echo "Starting SonarQube... "
 java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
 SONAR_PROCESS_ID=$!
 
-echo "Waiting for SonarQube status endpoint to be available (max. 120 seconds)..."
-wait_for_sonar_status_endpoint 120
+echo "Waiting for SonarQube status endpoint to be available (max. ${HEALTH_TIMEOUT} seconds)..."
+wait_for_sonar_status_endpoint ${HEALTH_TIMEOUT}
 
-echo "Waiting for SonarQube to get up (max. 120 seconds)..."
-wait_for_sonar_to_get_up 120
+echo "Waiting for SonarQube to get up (max. ${HEALTH_TIMEOUT} seconds)..."
+wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
 
 # check whether post-upgrade script is still running
 while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
