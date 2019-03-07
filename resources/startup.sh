@@ -25,7 +25,7 @@ DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
-HEALTH_TIMEOUT=300
+HEALTH_TIMEOUT=600
 
 function import_quality_profiles_if_present {
   AUTH_USER=$1

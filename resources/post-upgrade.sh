@@ -14,7 +14,7 @@ source util.sh
 
 FROM_VERSION="${1}"
 TO_VERSION="${2}"
-WAIT_TIMEOUT=300
+WAIT_TIMEOUT=600
 CURL_LOG_LEVEL="--silent"
 
 echo "Running post-upgrade script..."
