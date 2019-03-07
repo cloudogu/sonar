@@ -48,7 +48,11 @@ function add_temporary_admin_user() {
   execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local, is_root, onboarded)
   VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', 'a373a0e667abb2604c1fd571eb4ad47fe8cc0878', '48bc4b0d93179b5103fd3885ea9119498e9d161b', true, '${TEMPORARY_ADMIN_USER}', true, true, true);"
   ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
-  ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | cut -d " " -f 3)
+  ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
+  if [[ -z ${ADMIN_ID} ]]; then
+    # id has only one digit
+    ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
+  fi
   execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
   execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
 }
