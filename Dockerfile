@@ -8,7 +8,7 @@ ENV SONAR_VERSION=6.7.6 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    CAS_PLUGIN_VERSION=1.0.2
+    CAS_PLUGIN_VERSION=1.0.3
 
 RUN set -x \
     && apk add --no-cache procps postgresql-client \
@@ -20,7 +20,7 @@ RUN set -x \
     && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     # get sonar-cas-plugin
-    && curl --fail --location https://github.com/cloudogu/sonar-cas-plugin/releases/download/v${CAS_PLUGIN_VERSION}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar --output ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar \
+    && curl --fail --location https://github.com/cloudogu/sonar-cas-plugin/releases/download/${CAS_PLUGIN_VERSION}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar --output ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar \
     # create sonar user
     && addgroup -S -g 1000 sonar \
     && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar

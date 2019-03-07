@@ -156,7 +156,6 @@ function run_first_start_tasks() {
   get_out_of_date_plugins_via_rest_api admin admin
   echo "The following plugins are not up-to-date. They will be updated:"
   echo "${OUT_OF_DATE_PLUGINS}"
-  # remove them
   echo "Updating out-of-date plugins..."
   while read -r PLUGIN; do
     echo "Updating plugin ${PLUGIN}..."
