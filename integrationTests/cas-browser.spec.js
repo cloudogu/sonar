@@ -71,7 +71,7 @@ describe('browser attributes', () => {
 		const emailAddress = await driver.findElement(By.id("email")).getText();
 		const username = await driver.findElement(By.id("login")).getText();
         expect(emailAddress).toBe(config.email);
-		expect(username).toBe(config.displayName);
+		expect(username).toBe(config.username);
     });
 
     test('front channel user administrator', async () => {
