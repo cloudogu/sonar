@@ -39,6 +39,8 @@ function remove_temporary_admin_user() {
 echo "Running pre-upgrade script..."
 if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   TEMPORARY_ADMIN_USER="admin"
+  # remove user in case it already exists
+  sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
   echo "Creating temporary ${TEMPORARY_ADMIN_USER} user..."
   add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
 
