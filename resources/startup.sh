@@ -123,6 +123,12 @@ function grant_permission_to_group_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
+function get_out_of_date_plugins_via_rest_api() {
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  OUT_OF_DATE_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X GET "http://localhost:9000/sonar/api/plugins/updates" | jq '.plugins' | jq '.[]' | jq -r '.key')
+}
+
 function configureUpdatecenterUrl() {
   # remove updatecenter url configuration, if existent
   sed -i '/sonar.updatecenter.url=/d' ${SONAR_PROPERTIES_FILE}
@@ -146,6 +152,18 @@ function run_first_start_tasks() {
   set_property_via_rest_api "email.smtp_host.secured" "postfix" admin admin
   set_property_via_rest_api "email.smtp_port.secured" "25" admin admin
   set_property_via_rest_api "email.prefix" "[SONARQUBE]" admin admin
+
+  get_out_of_date_plugins_via_rest_api admin admin
+  echo "The following plugins are not up-to-date. They will be updated:"
+  echo "${OUT_OF_DATE_PLUGINS}"
+  # remove them
+  echo "Updating out-of-date plugins..."
+  while read -r PLUGIN; do
+    echo "Updating plugin ${PLUGIN}..."
+    curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
+    echo "Plugin ${PLUGIN} updated"
+  done <<< "${OUT_OF_DATE_PLUGINS}"
+
 }
 
 # parameter: process-id of sonar
