@@ -47,7 +47,7 @@ describe('cas browser login', () => {
         await adminFunctions.testUserLogout(driver)
         await driver.sleep(1000)
 		const url = await driver.getCurrentUrl();
-        expectations.expectCasLogout(url);
+        expectations.expectCasLogoutOrLoginSite(url);
     });
 	
     test('logout back channel', async() => {
