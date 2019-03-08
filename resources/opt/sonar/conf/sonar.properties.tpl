@@ -390,6 +390,13 @@ sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
 # authentications. Administrators may want to mount this as its own volume in order to scale with number of unexpired
 # sessions.
 sonar.cas.sessionStorePath = /opt/sonar/cas/sessionstore
+# The CAS session store stores JWT tokens which have an expiration date. These are kept for black- and whitelisting JWTs
+# from a user in order to prohibit attackers which gained access to a user's old JWT tokens. Once these JWTs are expired
+# they need to be removed from the store in a background ob. This property defines the interval in seconds between each
+# clean up run. Do not set the interval too short (this could lead to unnecessary CPU load) or too long (this could
+# lead to unnecessary filesystem load).
+# Default is 30 minutes, 0 disables the cleanup (this SHOULD NOT be done in a production environment)
+#sonar.cas.sessionStore.cleanUpIntervalInSeconds = 1800
 
 # log to console
 sonar.log.console=true
