@@ -68,9 +68,9 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
     echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
     wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
 
-    echo "Waiting for SonarQube to get healthy (max. 120 seconds)..."
+    echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
     # default admin credentials (admin, admin) are used
-    wait_for_sonar_to_get_healthy 120 admin admin ${CURL_LOG_LEVEL}
+    wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
 
     while IFS=',' read -ra ADDR; do
       for PLUGIN in "${ADDR[@]}"; do
