@@ -124,7 +124,7 @@ function deactivate_default_admin_user() {
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
 }
 
-function run_first_start_and_post_upgrade_tasks() {
+function create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag() {
   LOG_LEVEL=$1
   # default admin credentials (admin, admin) are used
   create_dogu_admin_user_and_save_password admin admin "${LOG_LEVEL}"

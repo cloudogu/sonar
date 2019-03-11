@@ -11,7 +11,7 @@ set -o pipefail
 # create_dogu_admin_user_and_save_password()
 # create_user_via_rest_api()
 # add_user_to_group_via_rest_api()
-# run_first_start_and_post_upgrade_tasks()
+# create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag()
 # DOGU_ADMIN variable
 source util.sh
 
@@ -183,7 +183,7 @@ function firstSonarStart() {
 
   run_first_start_tasks
 
-  run_first_start_and_post_upgrade_tasks ${CURL_LOG_LEVEL}
+  create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag ${CURL_LOG_LEVEL}
 }
 
 function subsequentSonarStart() {
