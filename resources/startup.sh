@@ -129,14 +129,13 @@ function get_out_of_date_plugins_via_rest_api() {
   OUT_OF_DATE_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X GET "http://localhost:9000/sonar/api/plugins/updates" | jq '.plugins' | jq '.[]' | jq -r '.key')
 }
 
-function configureUpdatecenterUrl() {
-  # remove updatecenter url configuration, if existent
-  sed -i '/sonar.updatecenter.url=/d' ${SONAR_PROPERTIES_FILE}
-  # set updatecenter url if configured in registry
+function set_updatecenter_url_if_configured_in_registry() {
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
   if doguctl config sonar.updatecenter.url > /dev/null; then
-    updatecenterUrl=$(doguctl config sonar.updatecenter.url)
-    echo "Setting sonar.updatecenter.url to ${updatecenterUrl}"
-    echo sonar.updatecenter.url="${updatecenterUrl}" >> ${SONAR_PROPERTIES_FILE}
+    UPDATECENTER_URL=$(doguctl config sonar.updatecenter.url)
+    echo "Setting sonar.updatecenter.url to ${UPDATECENTER_URL}"
+    set_property_via_rest_api "sonar.updatecenter.url" "${UPDATECENTER_URL}" "${AUTH_USER}" "${AUTH_PASSWORD}"
   fi
 }
 
@@ -147,6 +146,8 @@ function run_first_start_tasks() {
 
   printf "\\nAdding admin privileges to CES admin group...\\n"
   grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" admin admin
+
+  set_updatecenter_url_if_configured_in_registry admin admin
 
   echo "Setting email configuration..."
   set_property_via_rest_api "email.smtp_host.secured" "postfix" admin admin
@@ -201,6 +202,8 @@ function subsequentSonarStart() {
 
   echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
   wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+
+  set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 }
 
 
@@ -256,8 +259,6 @@ echo "Setting sonar.core.serverBaseURL..."
 set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
 import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-configureUpdatecenterUrl
 
 echo "Setting email.from configuration..."
 set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
