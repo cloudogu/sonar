@@ -204,6 +204,16 @@ function subsequentSonarStart() {
   wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
   set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+  # Creating CES admin group if not existent or if it has changed
+  ADMIN_GROUP_COUNT=$(curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search?q=${CES_ADMIN_GROUP}" | jq '.paging' | jq -r '.total')
+  if [[ ${ADMIN_GROUP_COUNT} == 0 ]]; then
+    echo  "Adding CES admin group..."
+    create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+    printf "\\nAdding admin privileges to CES admin group...\\n"
+    grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  fi
 }
 
 
