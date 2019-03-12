@@ -59,6 +59,22 @@ describe('cas browser login', () => {
         expectations.expectCasLogin(url);
     });
 
+    test('login and redirect', async() => {
+        // call a subpage of sonar without being logged in
+        const issues_subpage = config.baseUrl + config.sonarContextPath + '/issues?resolved=false'
+        await driver.get(issues_subpage);
+        // make sure you landed on cas login page
+        var url = await driver.getCurrentUrl();
+        expectations.expectCasLogin(url);
+        // login via cas
+        await utils.login(driver);
+        // wait for issues page to show up
+        await driver.wait(until.elementLocated(By.className("issues-my-issues-filter")), 5000);
+        // check that you have been redirected to the correct subpage
+        url = await driver.getCurrentUrl();
+        expect(url).toBe(issues_subpage);
+    });
+
 });
 
 describe('browser attributes', () => {
