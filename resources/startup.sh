@@ -155,15 +155,15 @@ function run_first_start_tasks() {
   set_property_via_rest_api "email.prefix" "[SONARQUBE]" admin admin
 
   get_out_of_date_plugins_via_rest_api admin admin
-  echo "The following plugins are not up-to-date. They will be updated:"
-  echo "${OUT_OF_DATE_PLUGINS}"
-  echo "Updating out-of-date plugins..."
-  while read -r PLUGIN; do
-    echo "Updating plugin ${PLUGIN}..."
-    curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
-    echo "Plugin ${PLUGIN} updated"
-  done <<< "${OUT_OF_DATE_PLUGINS}"
-
+  if ! [[ -z "${OUT_OF_DATE_PLUGINS}" ]]; then
+    echo "The following plugins are not up-to-date:"
+    echo "${OUT_OF_DATE_PLUGINS}"
+    while read -r PLUGIN; do
+      echo "Updating plugin ${PLUGIN}..."
+      curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
+      echo "Plugin ${PLUGIN} updated"
+    done <<< "${OUT_OF_DATE_PLUGINS}"
+  fi
 }
 
 # parameter: process-id of sonar
