@@ -15,7 +15,7 @@
   ],
   "Volumes": [{
     "Name": "data",
-    "Path": "/var/lib/sonar/",
+    "Path": "/opt/sonar/data/",
     "Owner": "1000",
     "Group": "1000",
     "NeedsBackup": true
@@ -33,7 +33,7 @@
   "Configuration": [
     {
     "Name": "sonar.updatecenter.url",
-    "Description": "Set UpdateCenter URL",
+    "Description": "Set custom SonarQube UpdateCenter URL",
     "Optional": true
     }
   ],
@@ -46,5 +46,11 @@
   "ExposedCommands": [{
     "Name": "post-upgrade",
     "Command": "/post-upgrade.sh"
+  },{
+    "Name": "upgrade-notification",
+    "Command": "/upgrade-notification.sh"
+  },{
+    "Name": "pre-upgrade",
+    "Command": "/pre-upgrade.sh"
   }]
 }

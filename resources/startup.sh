@@ -3,92 +3,67 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SONAR_PROPERTIESFILE=/opt/sonar/conf/sonar.properties
+# import util functions:
+# execute_sql_statement_on_database()
+# wait_for_sonar_status_endpoint()
+# wait_for_sonar_to_get_up()
+# wait_for_sonar_to_get_healthy()
+# create_dogu_admin_user_and_save_password()
+# create_user_via_rest_api()
+# add_user_to_group_via_rest_api()
+# create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag()
+# DOGU_ADMIN variable
+source util.sh
 
-# get variables for templates
-ADMINGROUP=$(doguctl config --global admin_group)
+# export so cas-plugin can use this env variable
+export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
+
+# get variables
+CES_ADMIN_GROUP=$(doguctl config --global admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
-MAIL_ADDRESS=$(doguctl config -d "sonar@${DOMAIN}" --global mail_address)
-# shellcheck disable=SC2034
-DATABASE_TYPE=postgresql
-DATABASE_IP=postgresql
-# shellcheck disable=SC2034
-DATABASE_PORT=5432
-DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-QUALITYPROFILE_DIR="/var/lib/qualityprofiles"
+MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
+QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
+CURL_LOG_LEVEL="--silent"
+HEALTH_TIMEOUT=600
 
-function import_quality_profiles {
-
-    echo "start importing quality profiles"
-    if [ "$(ls -A "${QUALITYPROFILE_DIR}")" ]; # only try to import profiles if directory is not empty
-    then
-      # temporarily create admin user and add to admin groups
-      TEMPORARY_ADMIN_USER=$(doguctl random)
-      sql "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local)
-      VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', 'a373a0e667abb2604c1fd571eb4ad47fe8cc0878', '48bc4b0d93179b5103fd3885ea9119498e9d161b', true, '${TEMPORARY_ADMIN_USER}', true);"
-      ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
-      ADMIN_ID=$(echo ${ADMIN_ID_PSQL_OUTPUT} | cut -d " " -f 3)
-      sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
-      sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
-      for file in "${QUALITYPROFILE_DIR}"/* # import all quality profiles that are in the suitable directory
-      do
-        # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-        RESPONSE_IMPORT=$(curl --silent -X POST -u $TEMPORARY_ADMIN_USER:admin -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
-        # check if import is successful
-        if ! ( echo $RESPONSE_IMPORT | grep -o errors);
-        then
-          echo "import of quality profile $file was successful"
-          # delete file if import was successful
-          rm -f "$file"
-          echo "removed $file file"
-        else
-          echo "import of quality profile $file has not been successful"
-          echo $RESPONSE_IMPORT
-        fi;
-      done;
-      sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
-    else
-      echo "no quality profiles to import"
-    fi;
-}
-
-function move_sonar_dir(){
-  DIR="$1"
-  if [ ! -d "/var/lib/sonar/$DIR" ]; then
-    mv "/opt/sonar/$DIR" /var/lib/sonar
-    ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
-  elif [ ! -L "/opt/sonar/$DIR" ] && [ -d "/opt/sonar/$DIR" ]; then
-    rm -rf "/opt/sonar/$DIR"
-    ln -s "/var/lib/sonar/$DIR" "/opt/sonar/$DIR"
-  fi
-}
-
-function render_template(){
-  FILE="$1"
-  if [ ! -f "$FILE.tpl" ]; then
-    echo "could not find template $FILE.tpl"
-    exit 1
-  fi
-
-  if [ -f "$FILE" ]; then
-    rm -f "$FILE"
-  fi
-  echo "render template $FILE.tpl to $FILE"
-  # render template
-  eval "echo \"$(cat "$FILE.tpl")\"" | egrep -v '^#' | egrep -v '^\s*$' > "$FILE"
+function import_quality_profiles_if_present {
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  echo "Check for quality profiles to import..."
+  # only import profiles if quality profiles are present
+  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
+  then
+    # import all quality profiles that are in the suitable directory
+    for file in "${QUALITY_PROFILE_DIR}"/*
+    do
+      # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
+      RESPONSE_IMPORT=$(curl ${CURL_LOG_LEVEL} --fail -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
+      # check if import is successful
+      if ! ( echo "${RESPONSE_IMPORT}" | grep -o errors);
+      then
+        echo "Import of quality profile $file was successful"
+        # delete file if import was successful
+        rm -f "$file"
+        echo "Removed $file file"
+      else
+        echo "Import of quality profile $file has not been successful"
+        echo "${RESPONSE_IMPORT}"
+      fi;
+    done;
+  else
+    echo "No quality profiles to import"
+  fi;
 }
 
 function setProxyConfiguration(){
-  removeProxyRelatedEntriesFrom ${SONAR_PROPERTIESFILE}
+  removeProxyRelatedEntriesFrom ${SONAR_PROPERTIES_FILE}
   # Write proxy settings if enabled in etcd
-  if [ "true" == "$(doguctl config --global proxy/enabled)" ]; then
+  if [[ "true" == "$(doguctl config --global proxy/enabled)" ]]; then
     if PROXYSERVER=$(doguctl config --global proxy/server) && PROXYPORT=$(doguctl config --global proxy/port); then
-      writeProxyCredentialsTo ${SONAR_PROPERTIESFILE}
+      writeProxyCredentialsTo ${SONAR_PROPERTIES_FILE}
       if PROXYUSER=$(doguctl config --global proxy/username) && PROXYPASSWORD=$(doguctl config --global proxy/password); then
-        writeProxyAuthenticationCredentialsTo ${SONAR_PROPERTIESFILE}
+        writeProxyAuthenticationCredentialsTo ${SONAR_PROPERTIES_FILE}
       else
         echo "Proxy authentication credentials are incomplete or not existent."
       fi
@@ -112,197 +87,196 @@ function writeProxyCredentialsTo(){
 
 function writeProxyAuthenticationCredentialsTo(){
   # Check for java option and add it if not existent
-  if [ -z "$(grep sonar.web.javaAdditionalOpts= "$1" | grep Djdk.http.auth.tunneling.disabledSchemes=)" ]; then
+  if ! grep sonar.web.javaAdditionalOpts= "$1" | grep -q Djdk.http.auth.tunneling.disabledSchemes= ; then
     sed -i '/^sonar.web.javaAdditionalOpts=/ s/$/ -Djdk.http.auth.tunneling.disabledSchemes=/' "$1"
   fi
   # Add proxy authentication credentials
-  echo http.proxyUser="${PROXYUSER}" >> ${SONAR_PROPERTIESFILE}
-  echo http.proxyPassword="${PROXYPASSWORD}" >> ${SONAR_PROPERTIESFILE}
+  echo http.proxyUser="${PROXYUSER}" >> ${SONAR_PROPERTIES_FILE}
+  echo http.proxyPassword="${PROXYPASSWORD}" >> ${SONAR_PROPERTIES_FILE}
 }
 
-function sql(){
-  PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
-  return $?
+function render_properties_template() {
+  doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 }
 
-function configureUpdatecenterUrl() {
-# remove updatecenter url configuration, if existent
-sed -i '/sonar.updatecenter.url=/d' ${SONAR_PROPERTIESFILE}
-# set updatecenter url if configured in registry
-if doguctl config sonar.updatecenter.url > /dev/null; then
-  updatecenterUrl=$(doguctl config sonar.updatecenter.url)
-  echo "Setting sonar.updatecenter.url to ${updatecenterUrl}"
-  echo sonar.updatecenter.url="${updatecenterUrl}" >> ${SONAR_PROPERTIESFILE}
-fi
+function set_property_via_rest_api() {
+  PROPERTY=$1
+  VALUE=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
-function firstSonarStart() {
-  echo "first start of SonarQube dogu"
-	# prepare config
-  # shellcheck disable=SC2034
-	REALM="cas"
-	render_template "${SONAR_PROPERTIESFILE}"
-	# move cas plugin to right folder
-	if [ -f "/opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar" ]; then
-		mv /opt/sonar/sonar-cas-plugin-0.3-TRIO-SNAPSHOT.jar /var/lib/sonar/extensions/plugins/
-	fi
-  # move german language pack to correct folder
-  if [ -f "/opt/sonar/sonar-l10n-de-plugin-1.2.jar" ]; then
-    mv /opt/sonar/sonar-l10n-de-plugin-1.2.jar /var/lib/sonar/extensions/plugins/
+function create_user_group_via_rest_api() {
+  NAME=$1
+  DESCRIPTION=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+}
+
+function grant_permission_to_group_via_rest_api() {
+  GROUPNAME=$1
+  PERMISSION=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+}
+
+function get_out_of_date_plugins_via_rest_api() {
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  OUT_OF_DATE_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X GET "http://localhost:9000/sonar/api/plugins/updates" | jq '.plugins' | jq '.[]' | jq -r '.key')
+}
+
+function set_updatecenter_url_if_configured_in_registry() {
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  if doguctl config sonar.updatecenter.url > /dev/null; then
+    UPDATECENTER_URL=$(doguctl config sonar.updatecenter.url)
+    echo "Setting sonar.updatecenter.url to ${UPDATECENTER_URL}"
+    set_property_via_rest_api "sonar.updatecenter.url" "${UPDATECENTER_URL}" "${AUTH_USER}" "${AUTH_PASSWORD}"
   fi
+}
 
-  setProxyConfiguration
+function run_first_start_tasks() {
+  # default admin credentials (admin, admin) are used
+  echo  "Adding CES admin group..."
+  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" admin admin
 
-  # start sonar in background
-  su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
-  SONAR_PROCESS_ID=$!
+  printf "\\nAdding admin privileges to CES admin group...\\n"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" admin admin
 
-  echo "wait until sonarqube has finished database migration"
-  N=0
-  until [ $N -ge 24 ]; do
-    # we are waiting for the last known migration version
-    if sql "SELECT 1 FROM schema_migrations WHERE version='1153';" &> /dev/null; then
-      break
-    else
-      N=$[$N+1]
-      sleep 10
-    fi
-  done
+  set_updatecenter_url_if_configured_in_registry admin admin
 
-  # waiting for sonar to get healthy
-  if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
-    echo "timeout reached while waiting for sonar to get healthy"
-    exit 1
+  echo "Setting email configuration..."
+  set_property_via_rest_api "email.smtp_host.secured" "postfix" admin admin
+  set_property_via_rest_api "email.smtp_port.secured" "25" admin admin
+  set_property_via_rest_api "email.prefix" "[SONARQUBE]" admin admin
+
+  get_out_of_date_plugins_via_rest_api admin admin
+  if ! [[ -z "${OUT_OF_DATE_PLUGINS}" ]]; then
+    echo "The following plugins are not up-to-date:"
+    echo "${OUT_OF_DATE_PLUGINS}"
+    while read -r PLUGIN; do
+      echo "Updating plugin ${PLUGIN}..."
+      curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
+      echo "Plugin ${PLUGIN} updated"
+    done <<< "${OUT_OF_DATE_PLUGINS}"
   fi
-
-  # Waiting for SonarQube to be started based on the log file
-  # Could not work if old log file is already present, e.g. after upgrade of dogu
-  for i in $(seq 1 10);
-  do
-    # starting compute engine is the last thing sonar does on startup
-    if grep -s "Compute Engine is up" /opt/sonar/logs/sonar.log > /dev/null; then
-      break
-    fi
-    if [ "$i" -eq 10 ] ; then
-      echo "compute engine did not start in the allowed time. Dogu exits now"
-      exit 1
-    fi
-    echo "wait for compute engine to be up"
-    sleep 5
-  done
-
-  # import quality profiles
-  import_quality_profiles
-
-  echo "write ces configurations into database"
-	# set base url
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('sonar.core.serverBaseURL', 'https://${FQDN}/sonar');"
-  # remove default admin
-  sql "DELETE FROM users WHERE login='admin';"
-  # add admin group
-  sql "INSERT INTO groups (name, description, created_at) VALUES ('${ADMINGROUP}', 'CES Administrator Group', now());"
-  # add admin privileges to admin group
-  sql "INSERT INTO group_roles (group_id, role) VALUES((SELECT id FROM groups WHERE name='${ADMINGROUP}'), 'admin');"
-
-  # set email settings
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_host.secured', 'postfix');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.smtp_port.secured', '25');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.from', '${MAIL_ADDRESS}');"
-  sql "INSERT INTO properties (prop_key, text_value) VALUES ('email.prefix', '[SONARQUBE]');"
-
-  echo "restarting sonar to account for configuration changes"
-  stopSonar ${SONAR_PROCESS_ID}
 }
 
 # parameter: process-id of sonar
-function stopSonar() {
-    # kill process (sonar) in background
-    kill ${1}
-    # kill CeServer process which is started by sonar
-    kill "$(ps -ax | grep CeServer | awk 'NR==1{print $1}')"
+function stopSonarQube() {
+    # kill SonarQube and all child processes
+    kill "${1}"
+    # wait for processes to finish
+    wait "${1}" || true
+}
 
-    # wait for killed processes to disappear
-    for i in $(seq 1 10);
-    do
-      JAVA_PROCESSES=$(ps -ax | grep java | wc -l)
-      # 1 instead of 0 because the 'grep java' command itself
-      if [ "$JAVA_PROCESSES" -eq 1 ] ; then
-        echo "all java processes ended. Starting sonar again"
-        break
-      fi
-      if [ "$i" -eq 10 ] ; then
-        echo "java processes did not end in the allowed time. Dogu exits now"
-        exit 1
-      fi
-      echo "wait for all java processes to end"
-      sleep 5
-    done
+function firstSonarStart() {
+  echo "First start of SonarQube dogu"
+  # default admin credentials (admin, admin) are used
+
+  echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
+
+  run_first_start_tasks
+
+  create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag ${CURL_LOG_LEVEL}
 }
 
 function subsequentSonarStart() {
-  echo "subsequent start of SonarQube dogu"
-  # refresh base url
-  sql "UPDATE properties SET text_value='https://${FQDN}/sonar' WHERE prop_key='sonar.core.serverBaseURL';"
+  echo "Subsequent start of SonarQube dogu"
+  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
-  # refresh FQDN
-  sed -i "/sonar.cas.casServerLoginUrl=.*/c\sonar.cas.casServerLoginUrl=https://${FQDN}/cas/login" ${SONAR_PROPERTIESFILE}
-  sed -i "/sonar.cas.casServerUrlPrefix=.*/c\sonar.cas.casServerUrlPrefix=https://${FQDN}/cas" ${SONAR_PROPERTIESFILE}
-  sed -i "/sonar.cas.sonarServerUrl=.*/c\sonar.cas.sonarServerUrl=https://${FQDN}/sonar" ${SONAR_PROPERTIESFILE}
-  sed -i "/sonar.cas.casServerLogoutUrl=.*/c\sonar.cas.casServerLogoutUrl=https://${FQDN}/cas/logout" ${SONAR_PROPERTIESFILE}
+  echo "Removing and re-creating ${DOGU_ADMIN} user..."
+  # Remove dogu admin user, because it may have been changed by logging in with the same name
+  execute_sql_statement_on_database "DELETE FROM users WHERE login='${DOGU_ADMIN}';"
+  # Re-create dogu admin user
+  TEMPORARY_ADMIN_USER=$(doguctl random)
+  add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+  create_dogu_admin_user_and_save_password "${TEMPORARY_ADMIN_USER}" admin ${CURL_LOG_LEVEL}
+  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
-  setProxyConfiguration
+  echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
-  if [ "$(ls -A "${QUALITYPROFILE_DIR}")" ]; # only try to import profiles if directory is not empty
-  then
-    # start sonar in background to have the possibility to import quality profiles
-    su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar" &
-    SONAR_PROCESS_ID=$!
+  set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-    # waiting for sonar to get healthy
-    if ! doguctl wait-for-http --timeout 120 --method GET http://localhost:9000/sonar/api/system/status; then
-      echo "timeout reached while waiting for sonar to get healthy"
-      exit 1
-    fi
+  # Creating CES admin group if not existent or if it has changed
+  ADMIN_GROUP_COUNT=$(curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search?q=${CES_ADMIN_GROUP}" | jq '.paging' | jq -r '.total')
+  if [[ ${ADMIN_GROUP_COUNT} == 0 ]]; then
+    echo  "Adding CES admin group..."
+    create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-    import_quality_profiles
-
-    echo "stop sonar after importing quality profiles"
-    stopSonar ${SONAR_PROCESS_ID}
+    printf "\\nAdding admin privileges to CES admin group...\\n"
+    grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
   fi
 }
 
-### End of declarations, work is done now
 
-doguctl state "internalPreparations"
 
-move_sonar_dir conf
-move_sonar_dir extensions
-move_sonar_dir data
-move_sonar_dir logs
-move_sonar_dir temp
+### End of function declarations, work is done now
 
 doguctl state "waitingForPostgreSQL"
 
-echo "wait until postgresql passes all health checks"
-if ! doguctl healthy --wait --timeout 120 postgresql; then
-  echo "timeout reached by waiting of postgresql to get healthy"
+echo "Waiting until postgresql passes all health checks..."
+if ! doguctl healthy --wait --timeout ${HEALTH_TIMEOUT} postgresql; then
+  echo "Timeout reached by waiting of postgresql to get healthy"
   exit 1
+else
+  echo "Postgresql is healthy"
 fi
 
-# create truststore, which is used in the sonar.properties file
-create_truststore.sh > /dev/null
+echo "Creating truststore..."
+# Using non-default truststore, because sonar user has no write permissions to /etc/ssl
+create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks > /dev/null
 
-doguctl state "installing..."
+doguctl state "configuring..."
 
-# check whether initialization has already been performed
-if ! [ "$(cat ${SONAR_PROPERTIESFILE} | grep sonar.security.realm)" == "sonar.security.realm=cas" ]; then
+echo "Rendering sonar properties template..."
+render_properties_template
+
+echo "Setting proxy configuration, if existent..."
+setProxyConfiguration
+
+echo "Starting SonarQube... "
+java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
+SONAR_PROCESS_ID=$!
+
+echo "Waiting for SonarQube status endpoint to be available (max. ${HEALTH_TIMEOUT} seconds)..."
+wait_for_sonar_status_endpoint ${HEALTH_TIMEOUT}
+
+echo "Waiting for SonarQube to get up (max. ${HEALTH_TIMEOUT} seconds)..."
+wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
+
+# check whether post-upgrade script is still running
+while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
+  echo "Post-upgrade script is running. Waiting..."
+  sleep 3
+done
+
+# check whether firstSonarStart has already been performed
+if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
   firstSonarStart
 else
   subsequentSonarStart
 fi
 
-configureUpdatecenterUrl
+echo "Setting sonar.core.serverBaseURL..."
+set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+echo "Setting email.from configuration..."
+set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+echo "Configuration done, stopping SonarQube..."
+stopSonarQube ${SONAR_PROCESS_ID}
 
 doguctl state "ready"
-# fire it up
-exec su - sonar -c "java -jar /opt/sonar/lib/sonar-application-$SONAR_VERSION.jar"
+
+echo "Starting SonarQube..."
+exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar

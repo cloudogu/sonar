@@ -54,21 +54,34 @@ module.exports = class AdminFunctions{
 
 
     async testUserLogin(driver) {
-
+        // getting sonar login page
         await driver.get(config.baseUrl + config.sonarContextPath);
+        // waiting for cas login page to show up
         await driver.wait(until.elementLocated(By.id('password')), 5000);
+        // inserting username and password
         await driver.findElement(By.id('username')).sendKeys(this.testuserName);
         await driver.findElement(By.id('password')).sendKeys(this.testuserPasswort);
+        // clicking login button
         await driver.findElement(By.css('input[name="submit"]')).click();
     };
 
     async testUserLogout(driver) {
+        // opening user dropdown menu
+        await this.showUserMenu(driver);
+        // wait for dropdown menu
+        await driver.wait(until.elementLocated(By.className("dropdown-menu dropdown-menu-right")),5000);
+        // wait for sonar-cas-plugin to inject logout code
+        // timeout is set in https://github.com/cloudogu/sonar-cas-plugin/blob/develop/src/main/resources/casLogoutUrl.js
+        await driver.sleep(500)
+        // click logout link
+        await driver.findElement(By.className("dropdown-menu dropdown-menu-right")).findElement(By.css("a[href*='#']")).click();
+    };
 
-		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
-		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")),5000);
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
-		await driver.wait(until.elementLocated(By.className('success')), 5000);
+    async showUserMenu(driver) {
+        // wait for user button
+        await driver.wait(until.elementLocated(By.className("dropdown-toggle navbar-avatar")),5000);
+        // click user button
+        await driver.findElement(By.className("dropdown-toggle navbar-avatar")).click();
     };
 
 	async giveAdminRightsUsermgt(){
@@ -110,7 +123,7 @@ module.exports = class AdminFunctions{
         await request(config.baseUrl)
             .get(config.sonarContextPath + "/api/users/groups?login="+this.testuserName)
             .auth(this.testuserName, this.testuserPasswort)
-            .expect('Content-Type', 'application/json;charset=utf-8')
+            .expect('Content-Type', 'application/json')
             .type('json')
             .expect(expectStatus);//403 = "Forbidden", 200 = "OK"
     };

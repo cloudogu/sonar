@@ -16,7 +16,15 @@
 
 **Dependencies:** postgresql, cas, nginx, postfix
 
-## Installation Ecosystem
+**Persistent Dogu Admin User:**
+
+This SonarQube Dogu holds a persistent user called "sonarqubedoguadmin" for configuration purposes which should not be removed.
+
+## Importing Quality Profiles
+
+To import quality profiles into the SonarQube dogu please follow the steps described here: https://github.com/cloudogu/ecosystem/blob/develop/docs/docs/user-guide/sonar.md
+
+## Installation in Cloudogu EcoSystem
 ```
 cesapp install official/sonar
 

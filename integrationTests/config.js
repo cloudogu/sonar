@@ -17,7 +17,7 @@ module.exports = {
     password: 'ecosystem2016',
     firstname:'admin',
     lastname: 'admin',
-    displayName: 'ces-admin',
+    displayName: 'admin',
     email: 'ces-admin@cloudogu.com',
     webdriverType: webdriverType,
     debug: true,
