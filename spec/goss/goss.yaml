@@ -16,11 +16,6 @@ file:
     exists: true
     filetype: file
     contains: []
-  /opt/sonar/extensions/plugins/sonar-l10n-de-plugin-1.2.jar:
-    exists: true
-    size: 34576
-    filetype: file
-    contains: []
 package:
   postgresql-client:
     installed: true
