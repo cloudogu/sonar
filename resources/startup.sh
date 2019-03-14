@@ -11,7 +11,8 @@ set -o pipefail
 # create_dogu_admin_user_and_save_password()
 # create_user_via_rest_api()
 # add_user_to_group_via_rest_api()
-# create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag()
+# create_dogu_admin_and_deactivate_default_admin()
+# set_successful_first_start_flag()
 # DOGU_ADMIN variable
 source util.sh
 
@@ -140,27 +141,26 @@ function set_updatecenter_url_if_configured_in_registry() {
 }
 
 function run_first_start_tasks() {
-  # default admin credentials (admin, admin) are used
   echo  "Adding CES admin group..."
-  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" admin admin
+  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   printf "\\nAdding admin privileges to CES admin group...\\n"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" admin admin
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  set_updatecenter_url_if_configured_in_registry admin admin
+  set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   echo "Setting email configuration..."
-  set_property_via_rest_api "email.smtp_host.secured" "postfix" admin admin
-  set_property_via_rest_api "email.smtp_port.secured" "25" admin admin
-  set_property_via_rest_api "email.prefix" "[SONARQUBE]" admin admin
+  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_port.secured" "25" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  get_out_of_date_plugins_via_rest_api admin admin
+  get_out_of_date_plugins_via_rest_api "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
   if ! [[ -z "${OUT_OF_DATE_PLUGINS}" ]]; then
     echo "The following plugins are not up-to-date:"
     echo "${OUT_OF_DATE_PLUGINS}"
     while read -r PLUGIN; do
       echo "Updating plugin ${PLUGIN}..."
-      curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
+      curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
       echo "Plugin ${PLUGIN} updated"
     done <<< "${OUT_OF_DATE_PLUGINS}"
   fi
@@ -176,14 +176,15 @@ function stopSonarQube() {
 
 function firstSonarStart() {
   echo "First start of SonarQube dogu"
-  # default admin credentials (admin, admin) are used
+
+  create_dogu_admin_and_deactivate_default_admin ${CURL_LOG_LEVEL}
 
   echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
-  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
+  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
   run_first_start_tasks
 
-  create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag ${CURL_LOG_LEVEL}
+  set_successful_first_start_flag
 }
 
 function subsequentSonarStart() {
