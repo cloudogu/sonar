@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "5.6.7-2",
+  "Version": "6.7.6-1",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -15,7 +15,7 @@
   ],
   "Volumes": [{
     "Name": "data",
-    "Path": "/var/lib/sonar/",
+    "Path": "/opt/sonar/data/",
     "Owner": "1000",
     "Group": "1000",
     "NeedsBackup": true
@@ -30,6 +30,13 @@
   "ServiceAccounts": [{
     "Type": "postgresql"
   }],
+  "Configuration": [
+    {
+    "Name": "sonar.updatecenter.url",
+    "Description": "Set custom SonarQube UpdateCenter URL",
+    "Optional": true
+    }
+  ],
   "HealthChecks": [{
     "Type": "tcp",
     "Port": 9000
@@ -39,5 +46,11 @@
   "ExposedCommands": [{
     "Name": "post-upgrade",
     "Command": "/post-upgrade.sh"
+  },{
+    "Name": "upgrade-notification",
+    "Command": "/upgrade-notification.sh"
+  },{
+    "Name": "pre-upgrade",
+    "Command": "/pre-upgrade.sh"
   }]
 }

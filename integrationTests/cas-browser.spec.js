@@ -1,7 +1,8 @@
 const config = require('./config');
 const utils = require('./utils');
 const expectations = require('./expectations');
-
+const AdminFunctions = require('./adminFunctions');
+const userName = 'testUser';
 
 require('chromedriver');
 const webdriver = require('selenium-webdriver');
@@ -11,10 +12,11 @@ const until = webdriver.until;
 jest.setTimeout(30000);
 
 let driver;
-
+let adminFunctions;
 
 beforeEach(async () => {
     driver = utils.createDriver(webdriver);
+    adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
     await driver.manage().window().maximize();
 });
 
@@ -33,17 +35,17 @@ describe('cas browser login', () => {
 
     test('cas authentication', async() => {
         await driver.get(utils.getCasUrl(driver));
-		await utils.login(driver);
-		const username = await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a"))).getText();
+        await utils.login(driver);
+        await adminFunctions.showUserMenu(driver)
+        const username = await driver.findElement(By.className("text-ellipsis text-muted")).getText();
         expect(username).toContain(config.displayName);
     });
 	
 	test('logout front channel', async() => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-		await driver.wait(until.elementLocated(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > a")),5000);
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1)")).click();
-		await driver.findElement(By.css("#global-navigation > div > ul.nav.navbar-nav.navbar-right > li:nth-child(1) > ul > li:nth-child(2) > a")).click();
+        await adminFunctions.testUserLogout(driver)
+        await driver.sleep(1000)
 		const url = await driver.getCurrentUrl();
         expectations.expectCasLogout(url);
     });
@@ -55,6 +57,22 @@ describe('cas browser login', () => {
         await driver.get(config.baseUrl + config.sonarContextPath);
 		const url = await driver.getCurrentUrl();
         expectations.expectCasLogin(url);
+    });
+
+    test('login and redirect', async() => {
+        // call a subpage of sonar without being logged in
+        const issues_subpage = config.baseUrl + config.sonarContextPath + '/issues?resolved=false'
+        await driver.get(issues_subpage);
+        // make sure you landed on cas login page
+        var url = await driver.getCurrentUrl();
+        expectations.expectCasLogin(url);
+        // login via cas
+        await utils.login(driver);
+        // wait for issues page to show up
+        await driver.wait(until.elementLocated(By.className("issues-my-issues-filter")), 5000);
+        // check that you have been redirected to the correct subpage
+        url = await driver.getCurrentUrl();
+        expect(url).toBe(issues_subpage);
     });
 
 });
@@ -69,7 +87,7 @@ describe('browser attributes', () => {
 		const emailAddress = await driver.findElement(By.id("email")).getText();
 		const username = await driver.findElement(By.id("login")).getText();
         expect(emailAddress).toBe(config.email);
-		expect(username).toBe(config.displayName);
+		expect(username).toBe(config.username);
     });
 
     test('front channel user administrator', async () => {
