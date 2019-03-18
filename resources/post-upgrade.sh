@@ -10,7 +10,8 @@ set -o pipefail
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
-# create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag()
+# create_dogu_admin_and_deactivate_default_admin()
+# set_successful_first_start_flag()
 source util.sh
 
 FROM_VERSION="${1}"
@@ -86,7 +87,8 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   fi
 
   # Do everything that needs to be done to get into a state that is equal to a successful first start
-  create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag ${CURL_LOG_LEVEL}
+  create_dogu_admin_and_deactivate_default_admin ${CURL_LOG_LEVEL}
+  set_successful_first_start_flag
 fi
 
 doguctl config post_upgrade_running false

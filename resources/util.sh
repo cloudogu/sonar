@@ -124,19 +124,22 @@ function deactivate_default_admin_user() {
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
 }
 
-function create_dogu_admin_and_deactivate_default_admin_and_set_successful_first_start_flag() {
+function create_dogu_admin_and_deactivate_default_admin() {
   LOG_LEVEL=$1
+
   # default admin credentials (admin, admin) are used
   create_dogu_admin_user_and_save_password admin admin "${LOG_LEVEL}"
 
   echo "Deactivating default admin account..."
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
-  deactivate_default_admin_user ${DOGU_ADMIN} "${DOGU_ADMIN_PASSWORD}" "${LOG_LEVEL}"
+  deactivate_default_admin_user "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" "${LOG_LEVEL}"
   printf "\\n"
 
   echo "Waiting for configuration changes to be internally executed..."
   sleep 3
+}
 
+function set_successful_first_start_flag() {
   echo "Setting successfulFirstStart registry key..."
   doguctl config successfulFirstStart true
 }
