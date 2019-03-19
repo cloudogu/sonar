@@ -33,6 +33,6 @@ EXPOSE 9000
 
 USER sonar
 
-HEALTHCHECK --interval=10s --timeout=5s --retries=3 CMD [ $(curl --silent --fail -u sonarqubedoguadmin:$(doguctl config -e dogu_admin_password) http://localhost:9000/sonar/api/system/health | jq -r '.health') = "GREEN" ]
+HEALTHCHECK --interval=10s --timeout=5s --retries=3 CMD [ $(curl --silent --fail -u sonarqubedoguadmin:$(doguctl config -e dogu_admin_password) http://localhost:9000/sonar/api/system/health | jq -r '.health') = "GREEN" ] && [ $(doguctl state) == "ready" ]
 
 CMD ["/startup.sh"]
