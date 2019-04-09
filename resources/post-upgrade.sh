@@ -91,4 +91,17 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   set_successful_first_start_flag
 fi
 
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]] && [[ ${TO_VERSION} == *"6.7.6-"* ]]; then
+  # grant further permissions to CES admin group via API
+  # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
+  CES_ADMIN_GROUP=$(doguctl config --global admin_group)
+  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
+  # grant profileadmin permission
+  curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=profileadmin&groupName=${CES_ADMIN_GROUP}"
+  # grant gateadmin permission
+  curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=gateadmin&groupName=${CES_ADMIN_GROUP}"
+  # grant provisioning permission
+  curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=provisioning&groupName=${CES_ADMIN_GROUP}"
+fi
+
 doguctl config post_upgrade_running false
