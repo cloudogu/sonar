@@ -146,6 +146,9 @@ function run_first_start_tasks() {
 
   printf "\\nAdding admin privileges to CES admin group...\\n"
   grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "profileadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "gateadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "provisioning" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
