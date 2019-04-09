@@ -23,6 +23,12 @@ echo "Running post-upgrade script..."
 
 doguctl config post_upgrade_running true
 
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+  mkdir -p /opt/sonar/extensions
+  cp -R /opt/sonar/data/extensions/* /opt/sonar/extensions/
+  rm -rf /opt/sonar/data/extensions
+fi
+
 if [[ ${FROM_VERSION} == *"5.6.6"* ]]; then
   echo "You have upgraded from SonarQube 5.6.6. This may lead to unexpected behavior!"
   echo "See https://docs.sonarqube.org/latest/setup/upgrading/"
