@@ -17,12 +17,12 @@ beforeEach(async () => {
     driver = utils.createDriver(webdriver);
     await driver.manage().window().maximize();
     adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
-	await adminFunctions.createUser();
+	await adminFunctions.createTestUser();
 });
 
 afterEach(async() => {
-    await adminFunctions.testUserLogout(driver);
-    await adminFunctions.removeUser(driver);
+    await adminFunctions.logoutUserViaUI(driver);
+    await adminFunctions.removeTestUser(driver);
     await driver.quit();
 });
 
@@ -31,7 +31,7 @@ describe('user permissions', () => {
 	
 	test('user (testUser) has admin privileges', async() => {
 
-		await adminFunctions.giveAdminRightsUsermgt(driver);
+		await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
 		await driver.get(utils.getCasUrl(driver));
 		await adminFunctions.testUserLogin(driver);
 
@@ -49,11 +49,11 @@ describe('user permissions', () => {
 
 	test('user (testUser) remove admin privileges', async() => {
 
-        await adminFunctions.giveAdminRightsUsermgt(driver);
+        await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
         await driver.get(utils.getCasUrl(driver));
 
 		await adminFunctions.testUserLogin(driver);
-		await adminFunctions.testUserLogout(driver);
+		await adminFunctions.logoutUserViaUI(driver);
 
 		await adminFunctions.takeAdminRightsUsermgt(driver);
 

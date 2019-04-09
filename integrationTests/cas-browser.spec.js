@@ -41,13 +41,24 @@ describe('cas browser login', () => {
         expect(username).toContain(config.displayName);
     });
 	
-	test('logout front channel', async() => {
+	test('logout front channel with admin user', async() => {
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
-        await adminFunctions.testUserLogout(driver)
+        await adminFunctions.logoutUserViaUI(driver)
         await driver.sleep(1000)
 		const url = await driver.getCurrentUrl();
         expectations.expectCasLogout(url);
+    });
+
+    test('logout front channel with test user', async() => {
+        await adminFunctions.createTestUser();
+        await driver.get(utils.getCasUrl(driver));
+        await adminFunctions.testUserLogin(driver)
+        await adminFunctions.logoutUserViaUI(driver)
+        await driver.sleep(1000)
+		const url = await driver.getCurrentUrl();
+        expectations.expectCasLogout(url);
+        await adminFunctions.removeTestUser(driver);
     });
 	
     test('logout back channel', async() => {

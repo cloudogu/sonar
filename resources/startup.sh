@@ -146,6 +146,9 @@ function run_first_start_tasks() {
 
   printf "\\nAdding admin privileges to CES admin group...\\n"
   grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "profileadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "gateadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "provisioning" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
@@ -220,6 +223,15 @@ function subsequentSonarStart() {
 
 
 ### End of function declarations, work is done now
+
+if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
+  echo "Moving cas plugin to plugins folder..."
+  mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
+  if ls ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-*.jar 1> /dev/null 2>&1; then
+    rm ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-*.jar
+  fi
+  mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
+fi
 
 doguctl state "waitingForPostgreSQL"
 

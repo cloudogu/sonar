@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "6.7.6-1",
+  "Version": "6.7.6-2",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -26,6 +26,13 @@
     "Owner": "1000",
     "Group": "1000",
     "NeedsBackup": false
+  },
+  {
+    "Name": "extensions",
+    "Path": "/opt/sonar/extensions",
+    "Owner": "1000",
+    "Group": "1000",
+    "NeedsBackup": true
   }],
   "ServiceAccounts": [{
     "Type": "postgresql"
