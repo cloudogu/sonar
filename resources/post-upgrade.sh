@@ -46,6 +46,9 @@ fi
 echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
 wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
 
+echo "Waiting for SonarQube to get up (max. ${WAIT_TIMEOUT} seconds)..."
+wait_for_sonar_to_get_up "${WAIT_TIMEOUT}"
+
 echo "Checking if db migration is needed..."
 DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
 if [[ "${DB_MIGRATION_STATUS}" = "MIGRATION_REQUIRED" ]]; then
@@ -102,6 +105,8 @@ if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
+  echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
   # grant profileadmin permission
   curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=profileadmin&groupName=${CES_ADMIN_GROUP}"
   # grant gateadmin permission
