@@ -23,7 +23,7 @@ echo "Running post-upgrade script..."
 
 doguctl config post_upgrade_running true
 
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]] && [[ ${TO_VERSION} == *"6.7.6"* ]]; then
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   mkdir -p /opt/sonar/extensions
   cp -R /opt/sonar/data/extensions/* /opt/sonar/extensions/
   rm -rf /opt/sonar/data/extensions

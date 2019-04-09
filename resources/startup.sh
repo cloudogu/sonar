@@ -224,6 +224,9 @@ function subsequentSonarStart() {
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
   echo "Moving cas plugin to plugins folder..."
   mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
+  if ls ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-*.jar 1> /dev/null 2>&1; then
+    rm ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-*.jar
+  fi
   mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
 fi
 
