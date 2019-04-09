@@ -221,6 +221,12 @@ function subsequentSonarStart() {
 
 ### End of function declarations, work is done now
 
+if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
+  echo "Moving cas plugin to plugins folder..."
+  mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
+  mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
+fi
+
 doguctl state "waitingForPostgreSQL"
 
 echo "Waiting until postgresql passes all health checks..."

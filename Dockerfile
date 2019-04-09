@@ -20,7 +20,8 @@ RUN set -x \
     && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     # get sonar-cas-plugin
-    && curl --fail --location https://github.com/cloudogu/sonar-cas-plugin/releases/download/v${CAS_PLUGIN_VERSION}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar --output ${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar \
+    # will be moved to correct ${SONARQUBE_HOME}/extensions/plugins/ folder in startup.sh
+    && curl --fail --location https://github.com/cloudogu/sonar-cas-plugin/releases/download/v${CAS_PLUGIN_VERSION}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar --output ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar \
     # create sonar user
     && addgroup -S -g 1000 sonar \
     && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar
