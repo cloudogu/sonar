@@ -66,6 +66,11 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   # The temporary admin user is not removed; this will be done at the end of firstSonarStart() in the sonar 6.7.x dogu
 fi
 
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+  mkdir /opt/sonar/data/extensions
+  cp -R /opt/sonar/extensions/* /opt/sonar/data/extensions/
+fi
+
 
 
 
