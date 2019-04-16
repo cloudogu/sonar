@@ -44,15 +44,14 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "Creating temporary ${TEMPORARY_ADMIN_USER} user..."
   add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
 
-  echo "Getting plugins which are not up-to-date..."
-  AVAILABLE_PLUGIN_UPDATES=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X GET localhost:9000/sonar/api/plugins/updates | jq '.plugins' | jq '.[]' | jq -r '.key')
-  echo "The following plugins are not up-to-date. They will be removed and re-installed after dogu upgrade:"
+  echo "Getting all installed..."
+  AVAILABLE_PLUGIN_UPDATES=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+  echo "The following plugins are installed. They will be removed and re-installed after dogu upgrade:"
   echo "${AVAILABLE_PLUGIN_UPDATES}"
   SAVED_PLUGIN_NAMES=""
-  # remove them
+  # TODO: Do not remove them as they will be removed automatically when the plugins folder gets moved to its own volume??
   while read -r PLUGIN; do
-    echo "Removing plugin ${PLUGIN}..."
-    curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X POST "localhost:9000/sonar/api/plugins/uninstall?key=${PLUGIN}"
+    #curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X POST "localhost:9000/sonar/api/plugins/uninstall?key=${PLUGIN}"
     SAVED_PLUGIN_NAMES+=${PLUGIN},
   done <<< "${AVAILABLE_PLUGIN_UPDATES}"
 

@@ -83,16 +83,34 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
     # default admin credentials (admin, admin) are used
     wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
 
+    FAILED_PLUGIN_NAMES=""
     while IFS=',' read -ra ADDR; do
       for PLUGIN in "${ADDR[@]}"; do
-        echo "Installing plugin ${PLUGIN}..."
-        curl "${CURL_LOG_LEVEL}" --fail -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}"
-        echo "Plugin ${PLUGIN} installed."
+        echo "Checking if plugin ${PLUGIN} is installed already..."
+        AVAILABLE_PLUGIN_UPDATES=$(curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+        if [[ ${AVAILABLE_PLUGIN_UPDATES} == *"${PLUGIN}"* ]]; then
+          echo "Plugin ${PLUGIN} is installed already"
+        else
+          echo "Plugin ${PLUGIN} is not installed, installing it..."
+          INSTALL_RESULT=$(curl ${CURL_LOG_LEVEL} -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key=${PLUGIN})
+          if ! [[ -z ${INSTALL_RESULT} ]]; then
+            ERROR_MESSAGE=$(echo "${INSTALL_RESULT}"|jq '.errors[0]'|jq '.msg')
+            if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
+              echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
+              FAILED_PLUGIN_NAMES=${FAILED_PLUGIN_NAMES}${PLUGIN},
+            fi
+          else
+            echo "Plugin ${PLUGIN} installed."
+          fi
+        fi
       done
     done <<< "$(doguctl config install_plugins)"
+    if ! [[ -z ${FAILED_PLUGIN_NAMES} ]]; then
+      echo "The following plugins could not be re-installed: ${FAILED_PLUGIN_NAMES}"
+    fi
 
     # clear install_plugins key
-    doguctl config install_plugins ""
+    doguctl config install_plugins "" >> /dev/null
   fi
 
   # Do everything that needs to be done to get into a state that is equal to a successful first start
