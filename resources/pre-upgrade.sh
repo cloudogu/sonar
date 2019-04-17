@@ -60,9 +60,10 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "Setting correct owner for data folder..."
   chown -R sonar:sonar "/var/lib/sonar"
 
-  # The temporary admin user is not removed; this will be done at the end of firstSonarStart() in the sonar 6.7.x dogu
+  # The temporary admin user is not removed; this will be done at the end of the post-upgrade script in the sonar 6.7.x dogu
 fi
 
+# Save extensions folder as it henceforth gets its own volume
 if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   mkdir /opt/sonar/data/extensions
   cp -R /opt/sonar/extensions/* /opt/sonar/data/extensions/

@@ -63,6 +63,7 @@ echo "Running post-upgrade script..."
 
 doguctl config post_upgrade_running true
 
+# Migrate saved extensions folder to its own volume
 if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   mkdir -p /opt/sonar/extensions
   cp -R /opt/sonar/data/extensions/* /opt/sonar/extensions/
