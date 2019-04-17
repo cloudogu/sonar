@@ -132,7 +132,7 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   set_successful_first_start_flag
 fi
 
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]] || [[ ${FROM_VERSION} == *"5.6"* ]]; then
   # grant further permissions to CES admin group via API
   # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
