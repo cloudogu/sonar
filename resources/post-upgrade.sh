@@ -18,6 +18,46 @@ FROM_VERSION="${1}"
 TO_VERSION="${2}"
 WAIT_TIMEOUT=600
 CURL_LOG_LEVEL="--silent"
+FAILED_PLUGIN_NAMES=""
+
+##### functions declaration
+
+function install_plugin_via_api() {
+  PLUGIN=${1}
+  INSTALL_RESPONSE=$(curl ${CURL_LOG_LEVEL} -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
+  # check response for error messages
+  if ! [[ -z ${INSTALL_RESPONSE} ]]; then
+    ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
+    if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
+      echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
+      FAILED_PLUGIN_NAMES+=${PLUGIN},
+    fi
+  else
+    echo "Plugin ${PLUGIN} installed."
+  fi
+}
+
+function reinstall_plugins() {
+  while IFS=',' read -ra ADDR; do
+    for PLUGIN in "${ADDR[@]}"; do
+      echo "Checking if plugin ${PLUGIN} is installed already..."
+      INSTALLED_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+      if [[ ${INSTALLED_PLUGINS} == *"${PLUGIN}"* ]]; then
+        echo "Plugin ${PLUGIN} is installed already"
+      else
+        echo "Plugin ${PLUGIN} is not installed, installing it..."
+        install_plugin_via_api "${PLUGIN}"
+      fi
+    done
+  done <<< "$(doguctl config install_plugins)"
+
+  if ! [[ -z ${FAILED_PLUGIN_NAMES} ]]; then
+    echo "The following plugins could not have been re-installed: ${FAILED_PLUGIN_NAMES}"
+  fi
+}
+
+
+######
 
 echo "Running post-upgrade script..."
 
@@ -37,17 +77,14 @@ fi
 # At LTS upgrade from 5.6.7 to 6.7.6, the data volume has been switched from /var/lib/sonar/ to ${SONARQUBE_HOME}/data/
 # Move data from old 5.6.7 data volume to new 6.7.x data volume
 if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
-  echo "Moving old SonarQube 5.6.7 data to current data folder"
+  echo "Moving old SonarQube 5.6.7 data to current data folder..."
   mv "${SONARQUBE_HOME}"/data/data/* "${SONARQUBE_HOME}"/data
-  echo "Removing old SonarQube 5.6.7 files and folders"
+  echo "Removing old SonarQube 5.6.7 files and folders..."
   rm -rf "${SONARQUBE_HOME}"/data/conf "${SONARQUBE_HOME}"/data/extensions "${SONARQUBE_HOME}"/data/logs "${SONARQUBE_HOME}"/data/temp "${SONARQUBE_HOME}"/data/data
 fi
 
 echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
 wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
-
-echo "Waiting for SonarQube to get up (max. ${WAIT_TIMEOUT} seconds)..."
-wait_for_sonar_to_get_up "${WAIT_TIMEOUT}"
 
 echo "Checking if db migration is needed..."
 DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
@@ -73,7 +110,7 @@ else
 fi
 
 if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
-  # install missing plugins if there are any
+  # reinstall missing plugins if there are any
   if doguctl config install_plugins > /dev/null; then
 
     echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
@@ -83,31 +120,7 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
     # default admin credentials (admin, admin) are used
     wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
 
-    FAILED_PLUGIN_NAMES=""
-    while IFS=',' read -ra ADDR; do
-      for PLUGIN in "${ADDR[@]}"; do
-        echo "Checking if plugin ${PLUGIN} is installed already..."
-        AVAILABLE_PLUGIN_UPDATES=$(curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
-        if [[ ${AVAILABLE_PLUGIN_UPDATES} == *"${PLUGIN}"* ]]; then
-          echo "Plugin ${PLUGIN} is installed already"
-        else
-          echo "Plugin ${PLUGIN} is not installed, installing it..."
-          INSTALL_RESULT=$(curl ${CURL_LOG_LEVEL} -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key=${PLUGIN})
-          if ! [[ -z ${INSTALL_RESULT} ]]; then
-            ERROR_MESSAGE=$(echo "${INSTALL_RESULT}"|jq '.errors[0]'|jq '.msg')
-            if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
-              echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
-              FAILED_PLUGIN_NAMES=${FAILED_PLUGIN_NAMES}${PLUGIN},
-            fi
-          else
-            echo "Plugin ${PLUGIN} installed."
-          fi
-        fi
-      done
-    done <<< "$(doguctl config install_plugins)"
-    if ! [[ -z ${FAILED_PLUGIN_NAMES} ]]; then
-      echo "The following plugins could not be re-installed: ${FAILED_PLUGIN_NAMES}"
-    fi
+    reinstall_plugins
 
     # clear install_plugins key
     doguctl config install_plugins "" >> /dev/null
@@ -123,6 +136,8 @@ if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
+  echo "Waiting for SonarQube to get up (max. ${WAIT_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_up "${WAIT_TIMEOUT}"
   echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
   wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
   # grant profileadmin permission
