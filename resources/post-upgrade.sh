@@ -26,7 +26,7 @@ function install_plugin_via_api() {
   PLUGIN=${1}
   INSTALL_RESPONSE=$(curl ${CURL_LOG_LEVEL} -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
   # check response for error messages
-  if ! [[ -z ${INSTALL_RESPONSE} ]]; then
+  if [[ -n ${INSTALL_RESPONSE} ]]; then
     ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
     if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
       echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
@@ -51,7 +51,7 @@ function reinstall_plugins() {
     done
   done <<< "$(doguctl config install_plugins)"
 
-  if ! [[ -z ${FAILED_PLUGIN_NAMES} ]]; then
+  if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
     echo "The following plugins could not have been re-installed: ${FAILED_PLUGIN_NAMES}"
   fi
 }
