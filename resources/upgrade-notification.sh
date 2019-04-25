@@ -13,5 +13,5 @@ if [[ ${FROM_VERSION} == *"5.6.6"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   exit 1
 elif [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "You are upgrading your SonarQube instance from 5.6.7 to 6.7.x LTS. Please consider backing up your SonarQube database. Upgrade problems are rare, but you'll want the backup if anything does happen."
-  echo "If you are using plugins which are not up-to-date, they will be updated during the upgrade process."
+  echo "The currently installed plugins will be re-installed in SonarQube 6.7, potentially in a newer version than they are installed now. As not all plugins which have been available in SonarQube 5.6 are also available in SonarQube 6.7, you should check the log output for plugins which could not be re-installed."
 fi
