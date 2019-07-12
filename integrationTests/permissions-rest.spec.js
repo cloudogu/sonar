@@ -19,11 +19,11 @@ function sleep(ms) {
 
 beforeEach(async() => {
     adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
-	await adminFunctions.createUser();
+	await adminFunctions.createTestUser();
 });
 
 afterEach(async() => {
-    await adminFunctions.removeUser(driver);
+    await adminFunctions.removeTestUser(driver);
 });
 
 
@@ -31,7 +31,7 @@ describe('administration rest tests', () => {
 	
 	test('rest - user (testUser) has admin privileges', async() => {
 
-        await adminFunctions.giveAdminRightsUsermgt(driver);
+        await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
         await sleep(waitInterval);
         await adminFunctions.accessUsersJson(200);
 
@@ -48,11 +48,11 @@ describe('administration rest tests', () => {
         await driver.manage().window().maximize();
 
         // give user admin permissions in usermgt
-        await adminFunctions.giveAdminRightsUsermgt(driver);
+        await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
         await driver.sleep(waitInterval)
         // log user in and out
         await adminFunctions.testUserLogin(driver);
-        await adminFunctions.testUserLogout(driver);
+        await adminFunctions.logoutUserViaUI(driver);
         await driver.sleep(waitInterval)
         // make sure user is logged out (=> .../cas/logout is shown)
         let url = await driver.getCurrentUrl();
@@ -62,7 +62,7 @@ describe('administration rest tests', () => {
         await driver.sleep(waitInterval)
         // log user in and out
         await adminFunctions.testUserLogin(driver);
-        await adminFunctions.testUserLogout(driver);
+        await adminFunctions.logoutUserViaUI(driver);
         await driver.sleep(waitInterval)
         // make sure user is logged out (=> .../cas/logout is shown)
         url = await driver.getCurrentUrl();

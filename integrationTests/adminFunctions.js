@@ -18,7 +18,7 @@ module.exports = class AdminFunctions{
         this.testuserPasswort=testuserPasswort;
     };
 	
-    async createUser(){
+    async createTestUser(){
 		await request(config.baseUrl)
             .post('/usermgt/api/users/')
             .auth(config.username, config.password)
@@ -35,7 +35,7 @@ module.exports = class AdminFunctions{
             });
     };
 
-    async removeUser(driver){
+    async removeTestUser(driver){
         //remove in usermanagement
 		await request(config.baseUrl)
             .del('/usermgt/api/users/' + this.testuserName)
@@ -65,7 +65,7 @@ module.exports = class AdminFunctions{
         await driver.findElement(By.css('input[name="submit"]')).click();
     };
 
-    async testUserLogout(driver) {
+    async logoutUserViaUI(driver) {
         // opening user dropdown menu
         await this.showUserMenu(driver);
         // wait for dropdown menu
@@ -84,7 +84,7 @@ module.exports = class AdminFunctions{
         await driver.findElement(By.className("dropdown-toggle navbar-avatar")).click();
     };
 
-	async giveAdminRightsUsermgt(){
+	async giveAdminRightsToTestUserViaUsermgt(){
 		
 		await request(config.baseUrl)
             .put('/usermgt/api/users/' + this.testuserName)

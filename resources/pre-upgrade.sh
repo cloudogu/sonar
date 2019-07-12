@@ -44,26 +44,29 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
   echo "Creating temporary ${TEMPORARY_ADMIN_USER} user..."
   add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
 
-  echo "Getting plugins which are not up-to-date..."
-  AVAILABLE_PLUGIN_UPDATES=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X GET localhost:9000/sonar/api/plugins/updates | jq '.plugins' | jq '.[]' | jq -r '.key')
-  echo "The following plugins are not up-to-date. They will be removed and re-installed after dogu upgrade:"
-  echo "${AVAILABLE_PLUGIN_UPDATES}"
+  echo "Getting all installed plugins..."
+  INSTALLED_PLUGINS=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+  echo "The following plugins are installed. They will be re-installed after dogu upgrade:"
+  echo "${INSTALLED_PLUGINS}"
   SAVED_PLUGIN_NAMES=""
-  # remove them
   while read -r PLUGIN; do
-    echo "Removing plugin ${PLUGIN}..."
-    curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":admin -X POST "localhost:9000/sonar/api/plugins/uninstall?key=${PLUGIN}"
     SAVED_PLUGIN_NAMES+=${PLUGIN},
-  done <<< "${AVAILABLE_PLUGIN_UPDATES}"
+  done <<< "${INSTALLED_PLUGINS}"
 
   echo "Saving plugin names to registry..."
   doguctl config install_plugins "${SAVED_PLUGIN_NAMES}"
 
   # Changing owner of data folder, because SonarQube 6.7 dogu user is 'sonar' and not root any more
-  echo "Setting correct owner for data folder"
+  echo "Setting correct owner for data folder..."
   chown -R sonar:sonar "/var/lib/sonar"
 
-  # The temporary admin user is not removed; this will be done at the end of firstSonarStart() in the sonar 6.7.x dogu
+  # The temporary admin user is not removed; this will be done at the end of the post-upgrade script in the sonar 6.7.x dogu
+fi
+
+# Save extensions folder as it henceforth gets its own volume
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+  mkdir /opt/sonar/data/extensions
+  cp -R /opt/sonar/extensions/* /opt/sonar/data/extensions/
 fi
 
 
