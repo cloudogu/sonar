@@ -22,6 +22,10 @@ node('vagrant') {
             lintDockerfile()
         }
 
+        stage('Shellcheck'){
+            shellCheck()
+        }
+
         try {
 
             stage('Provision') {
