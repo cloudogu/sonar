@@ -1,10 +1,10 @@
-FROM registry.cloudogu.com/official/java:8u191-1
+FROM registry.cloudogu.com/official/java:8u212-1
 
 LABEL NAME="official/sonar" \
-    VERSION="6.7.6-3" \
+    VERSION="6.7.7-1" \
     maintainer="robert.auer@cloudogu.com"
 
-ENV SONAR_VERSION=6.7.6 \
+ENV SONAR_VERSION=6.7.7 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
@@ -12,7 +12,7 @@ ENV SONAR_VERSION=6.7.6 \
 
 RUN set -x \
     && apk add --no-cache procps postgresql-client \
-    && mkdir /opt \
+    && mkdir -p /opt \
     && cd /tmp \
     && rm -rf /var/cache/apk/* \
     # get SonarQube
