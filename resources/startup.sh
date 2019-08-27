@@ -158,7 +158,7 @@ function run_first_start_tasks() {
   set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   get_out_of_date_plugins_via_rest_api "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  if ! [[ -z "${OUT_OF_DATE_PLUGINS}" ]]; then
+  if [[ -n "${OUT_OF_DATE_PLUGINS}" ]]; then
     echo "The following plugins are not up-to-date:"
     echo "${OUT_OF_DATE_PLUGINS}"
     while read -r PLUGIN; do
