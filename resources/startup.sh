@@ -14,6 +14,7 @@ set -o pipefail
 # create_dogu_admin_and_deactivate_default_admin()
 # set_successful_first_start_flag()
 # DOGU_ADMIN variable
+# shellcheck disable=SC1091
 source util.sh
 
 # export so cas-plugin can use this env variable
