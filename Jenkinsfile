@@ -70,7 +70,7 @@ node('vagrant') {
 
                             dir('integrationTests') {
 
-                                docker.image('node:8.14.0-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${externalIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${zaleniumIp}:4444/wd/hub") {
+                                docker.image('node:10.16.3-jessie').inside("-e WEBDRIVER=remote -e CES_FQDN=${externalIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${zaleniumIp}:4444/wd/hub") {
                                     sh 'yarn install'
                                     sh 'yarn run ci-test'
                                 }
