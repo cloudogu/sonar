@@ -23,7 +23,7 @@ node('vagrant') {
         }
 
         stage('Shellcheck'){
-            shellCheck()
+            shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
 
         try {
