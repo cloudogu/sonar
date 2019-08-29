@@ -1,10 +1,10 @@
-FROM registry.cloudogu.com/official/java:8u191-1
+FROM registry.cloudogu.com/official/java:8u212-1
 
 LABEL NAME="official/sonar" \
-    VERSION="6.7.6-3" \
+    VERSION="6.7.7-1" \
     maintainer="robert.auer@cloudogu.com"
 
-ENV SONAR_VERSION=6.7.6 \
+ENV SONAR_VERSION=6.7.7 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
@@ -12,7 +12,7 @@ ENV SONAR_VERSION=6.7.6 \
 
 RUN set -x \
     && apk add --no-cache procps postgresql-client \
-    && mkdir /opt \
+    && mkdir -p /opt \
     && cd /tmp \
     && rm -rf /var/cache/apk/* \
     # get SonarQube
@@ -33,5 +33,7 @@ RUN chown -R sonar:sonar ${SONARQUBE_HOME}
 EXPOSE 9000
 
 USER sonar
+
+HEALTHCHECK CMD [ $(curl --silent --fail -u sonarqubedoguadmin:$(doguctl config -e dogu_admin_password) http://localhost:9000/sonar/api/system/health | jq -r '.health') = "GREEN" ] && [ $(doguctl state) == "ready" ] && [ $(doguctl healthy sonar; EXIT_CODE=$?; echo ${EXIT_CODE}) == 0 ]
 
 CMD ["/startup.sh"]

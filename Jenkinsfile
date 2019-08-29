@@ -1,5 +1,5 @@
 #!groovy
-@Library(['github.com/cloudogu/dogu-build-lib@1e5e2a63', 'github.com/cloudogu/zalenium-build-lib@30923630']) _
+@Library(['github.com/cloudogu/dogu-build-lib@414bdfd5', 'github.com/cloudogu/zalenium-build-lib@30923630']) _
 import com.cloudogu.ces.dogubuildlib.*
 
 node('vagrant') {
@@ -20,6 +20,11 @@ node('vagrant') {
 
         stage('Lint') {
             lintDockerfile()
+        }
+
+        stage('Shellcheck'){
+            // TODO: Change this to shellCheck("./resources") as soon as https://github.com/cloudogu/dogu-build-lib/issues/8 is solved
+            shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
 
         try {
@@ -66,7 +71,7 @@ node('vagrant') {
 
                             dir('integrationTests') {
 
-                                docker.image('node:8.14.0-stretch').inside("-e WEBDRIVER=remote -e CES_FQDN=${externalIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${zaleniumIp}:4444/wd/hub") {
+                                docker.image('node:10.16.3-jessie').inside("-e WEBDRIVER=remote -e CES_FQDN=${externalIP} -e SELENIUM_BROWSER=chrome -e SELENIUM_REMOTE_URL=http://${zaleniumIp}:4444/wd/hub") {
                                     sh 'yarn install'
                                     sh 'yarn run ci-test'
                                 }

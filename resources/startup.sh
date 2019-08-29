@@ -14,6 +14,7 @@ set -o pipefail
 # create_dogu_admin_and_deactivate_default_admin()
 # set_successful_first_start_flag()
 # DOGU_ADMIN variable
+# shellcheck disable=SC1091
 source util.sh
 
 # export so cas-plugin can use this env variable
@@ -158,7 +159,7 @@ function run_first_start_tasks() {
   set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   get_out_of_date_plugins_via_rest_api "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  if ! [[ -z "${OUT_OF_DATE_PLUGINS}" ]]; then
+  if [[ -n "${OUT_OF_DATE_PLUGINS}" ]]; then
     echo "The following plugins are not up-to-date:"
     echo "${OUT_OF_DATE_PLUGINS}"
     while read -r PLUGIN; do
