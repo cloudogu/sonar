@@ -283,7 +283,7 @@ while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
 done
 
 # check whether firstSonarStart has already been performed
-if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
+if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   firstSonarStart
 else
   subsequentSonarStart
