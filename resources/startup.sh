@@ -160,7 +160,7 @@ function grant_admin_group_permissions() {
 }
 
 function run_first_start_tasks() {
-  echo  "Adding CES admin group..."
+  echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
   grant_admin_group_permissions ${CES_ADMIN_GROUP}
@@ -227,7 +227,7 @@ function subsequentSonarStart() {
   # Creating CES admin group if not existent or if it has changed
   ADMIN_GROUP_COUNT=$(curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search?q=${CES_ADMIN_GROUP}" | jq '.paging' | jq -r '.total')
   if [[ ${ADMIN_GROUP_COUNT} == 0 ]]; then
-    echo  "Adding CES admin group..."
+    echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
     grant_admin_group_permissions ${CES_ADMIN_GROUP}
@@ -235,7 +235,7 @@ function subsequentSonarStart() {
 }
 
 function remove_permissions_from_last_admin_group() {
-    printf "Remove admin privileges from previous CES admin group %s...\\n" ${CES_ADMIN_GROUP_LAST}
+    printf "Remove admin privileges from previous CES admin group '%s'...\\n" ${CES_ADMIN_GROUP_LAST}
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
 
     remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "admin" "${DOGU_ADMIN}" "${dogu_admin_password}"
