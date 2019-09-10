@@ -221,6 +221,16 @@ function subsequentSonarStart() {
   fi
 }
 
+function getLastAdminGroupOrGlobalAdminGroup() {
+    if CES_ADMIN_GROUP_LAST=$(doguctl config admin_group_last) ;
+    then
+        return ${CES_ADMIN_GROUP_LAST}
+    else
+        # this group name is used either way to check if it is equal with the global admin group
+        # instead of unnecessarily check for empty strings we return a valid value for the equal-check
+        return $(doguctl config --global admin_group)
+    fi
+}
 
 
 ### End of function declarations, work is done now
@@ -277,6 +287,13 @@ if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
   firstSonarStart
 else
   subsequentSonarStart
+fi
+
+if [[ ${CES_ADMIN_GROUP} == $(getLastAdminGroupOrGlobalAdminGroup) ]];
+then
+    echo "Did not detect a change of the admin group. Continue as usual"
+else
+    remove_permissions_from_last_admin_group
 fi
 
 echo "Setting sonar.core.serverBaseURL..."
