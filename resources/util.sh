@@ -166,3 +166,10 @@ function getLastAdminGroupOrGlobalAdminGroup() {
         printf $(doguctl config --global admin_group)
     fi
 }
+
+function update_last_admin_group_in_registry() {
+    echo "Update SonarQube admin group in registry..."
+
+    local newAdminGroup=$1
+    doguctl config admin_group_last ${newAdminGroup}
+}

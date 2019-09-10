@@ -302,6 +302,7 @@ then
 else
     remove_permissions_from_last_admin_group
 fi
+update_last_admin_group_in_registry ${CES_ADMIN_GROUP}
 
 echo "Setting sonar.core.serverBaseURL..."
 set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
