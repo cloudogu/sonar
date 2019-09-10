@@ -150,15 +150,20 @@ function set_updatecenter_url_if_configured_in_registry() {
   fi
 }
 
+function grant_admin_group_permissions() {
+    local admin_group=$1
+    printf "\\nAdding admin privileges to CES admin group...\\n"
+    grant_permission_to_group_via_rest_api "${admin_group}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+    grant_permission_to_group_via_rest_api "${admin_group}" "profileadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+    grant_permission_to_group_via_rest_api "${admin_group}" "gateadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+    grant_permission_to_group_via_rest_api "${admin_group}" "provisioning" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+}
+
 function run_first_start_tasks() {
   echo  "Adding CES admin group..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  printf "\\nAdding admin privileges to CES admin group...\\n"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "profileadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "gateadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "provisioning" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_admin_group_permissions ${CES_ADMIN_GROUP}
 
   set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
@@ -225,8 +230,7 @@ function subsequentSonarStart() {
     echo  "Adding CES admin group..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-    printf "\\nAdding admin privileges to CES admin group...\\n"
-    grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+    grant_admin_group_permissions ${CES_ADMIN_GROUP}
   fi
 }
 
