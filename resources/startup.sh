@@ -230,23 +230,10 @@ function subsequentSonarStart() {
   fi
 }
 
-function getLastAdminGroupOrGlobalAdminGroup() {
-    local admin_group_last=""
-
-    if admin_group_last=$(doguctl config admin_group_last) ;
-    then
-        return ${admin_group_last}
-    else
-        # this group name is used either way to check if it is equal with the global admin group
-        # instead of unnecessarily check for empty strings we return a valid value for the equal-check
-        return $(doguctl config --global admin_group)
-    fi
-}
-
 function remove_permissions_from_last_admin_group() {
     printf "\\nRemove admin privileges from previous CES admin group %s...\\n" ${CES_ADMIN_GROUP_LAST}
-
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
+
     remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "admin" "${DOGU_ADMIN}" "${dogu_admin_password}"
     remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "profileadmin" "${DOGU_ADMIN}" "${dogu_admin_password}"
     remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "gateadmin" "${DOGU_ADMIN}" "${dogu_admin_password}"
@@ -311,7 +298,7 @@ fi
 
 if [[ ${CES_ADMIN_GROUP} == ${CES_ADMIN_GROUP_LAST} ]];
 then
-    echo "Did not detect a change of the admin group. Continue as usual"
+    echo "Did not detect a change of the admin group. Continue as usual..."
 else
     remove_permissions_from_last_admin_group
 fi
