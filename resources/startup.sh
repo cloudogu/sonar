@@ -22,6 +22,7 @@ export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
 # get variables
 CES_ADMIN_GROUP=$(doguctl config --global admin_group)
+CES_ADMIN_GROUP_LAST=$(getLastAdminGroupOrGlobalAdminGroup)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
@@ -125,6 +126,14 @@ function grant_permission_to_group_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
+function remove_permission_of_group_via_rest_api() {
+  GROUPNAME=$1
+  PERMISSION=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+}
+
 function get_out_of_date_plugins_via_rest_api() {
   AUTH_USER=$1
   AUTH_PASSWORD=$2
@@ -222,9 +231,11 @@ function subsequentSonarStart() {
 }
 
 function getLastAdminGroupOrGlobalAdminGroup() {
-    if CES_ADMIN_GROUP_LAST=$(doguctl config admin_group_last) ;
+    local admin_group_last=""
+
+    if admin_group_last=$(doguctl config admin_group_last) ;
     then
-        return ${CES_ADMIN_GROUP_LAST}
+        return ${admin_group_last}
     else
         # this group name is used either way to check if it is equal with the global admin group
         # instead of unnecessarily check for empty strings we return a valid value for the equal-check
@@ -232,6 +243,15 @@ function getLastAdminGroupOrGlobalAdminGroup() {
     fi
 }
 
+function remove_permissions_from_last_admin_group() {
+    printf "\\nRemove admin privileges from previous CES admin group %s...\\n" ${CES_ADMIN_GROUP_LAST}
+
+    local dogu_admin_password=$(doguctl config -e dogu_admin_password)
+    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "admin" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "profileadmin" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "gateadmin" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "provisioning" "${DOGU_ADMIN}" "${dogu_admin_password}"
+}
 
 ### End of function declarations, work is done now
 
@@ -289,7 +309,7 @@ else
   subsequentSonarStart
 fi
 
-if [[ ${CES_ADMIN_GROUP} == $(getLastAdminGroupOrGlobalAdminGroup) ]];
+if [[ ${CES_ADMIN_GROUP} == ${CES_ADMIN_GROUP_LAST} ]];
 then
     echo "Did not detect a change of the admin group. Continue as usual"
 else
