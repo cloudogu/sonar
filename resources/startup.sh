@@ -29,6 +29,7 @@ MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
 HEALTH_TIMEOUT=600
+PERMISSIONS="admin profileadmin gateadmin provisioning"
 
 function import_quality_profiles_if_present {
   AUTH_USER=$1
@@ -153,10 +154,12 @@ function set_updatecenter_url_if_configured_in_registry() {
 function grant_admin_group_permissions() {
     local admin_group=$1
     printf "\\nAdding admin privileges to CES admin group...\\n"
-    grant_permission_to_group_via_rest_api "${admin_group}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-    grant_permission_to_group_via_rest_api "${admin_group}" "profileadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-    grant_permission_to_group_via_rest_api "${admin_group}" "gateadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-    grant_permission_to_group_via_rest_api "${admin_group}" "provisioning" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+    for permission in $PERMISSIONS
+    do
+      printf "grant permission '%s' to group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP_LAST}
+      grant_permission_to_group_via_rest_api "${admin_group}" "$permission" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    done
 }
 
 function run_first_start_tasks() {
@@ -238,10 +241,11 @@ function remove_permissions_from_last_admin_group() {
     printf "Remove admin privileges from previous CES admin group '%s'...\\n" ${CES_ADMIN_GROUP_LAST}
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
 
-    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "admin" "${DOGU_ADMIN}" "${dogu_admin_password}"
-    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "profileadmin" "${DOGU_ADMIN}" "${dogu_admin_password}"
-    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "gateadmin" "${DOGU_ADMIN}" "${dogu_admin_password}"
-    remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "provisioning" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    for permission in $PERMISSIONS
+    do
+      printf "remove permission '%s' from group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP_LAST}
+      remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "$permission" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    done
 }
 
 # returns value 1 if both admin group names have the same value. Otherwise, it returns 0
