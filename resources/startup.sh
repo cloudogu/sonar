@@ -244,6 +244,11 @@ function remove_permissions_from_last_admin_group() {
     remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "provisioning" "${DOGU_ADMIN}" "${dogu_admin_password}"
 }
 
+# returns value 1 if both admin group names have the same value. Otherwise, it returns 0
+function hasAdminGroupChanged() {
+    return $(expr "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST")
+}
+
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -300,11 +305,11 @@ else
   subsequentSonarStart
 fi
 
-if [[ ${CES_ADMIN_GROUP} == ${CES_ADMIN_GROUP_LAST} ]];
+if hasAdminGroupChanged
 then
-    echo "Did not detect a change of the admin group. Continue as usual..."
-else
     remove_permissions_from_last_admin_group
+else
+    echo "Did not detect a change of the admin group. Continue as usual..."
 fi
 update_last_admin_group_in_registry ${CES_ADMIN_GROUP}
 
