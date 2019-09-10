@@ -235,7 +235,7 @@ function subsequentSonarStart() {
 }
 
 function remove_permissions_from_last_admin_group() {
-    printf "\\nRemove admin privileges from previous CES admin group %s...\\n" ${CES_ADMIN_GROUP_LAST}
+    printf "Remove admin privileges from previous CES admin group %s...\\n" ${CES_ADMIN_GROUP_LAST}
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
 
     remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "admin" "${DOGU_ADMIN}" "${dogu_admin_password}"
