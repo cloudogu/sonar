@@ -117,6 +117,8 @@ function create_user_group_via_rest_api() {
   AUTH_USER=$3
   AUTH_PASSWORD=$4
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
+  printf "\\n"
 }
 
 function grant_permission_to_group_via_rest_api() {
