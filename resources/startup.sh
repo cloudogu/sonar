@@ -29,7 +29,7 @@ MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
 HEALTH_TIMEOUT=600
-PERMISSIONS="admin profileadmin gateadmin provisioning"
+ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 
 function import_quality_profiles_if_present {
   AUTH_USER=$1
@@ -154,11 +154,11 @@ function set_updatecenter_url_if_configured_in_registry() {
 function grant_admin_group_permissions() {
     local admin_group=$1
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
-    printf "\\nAdding admin privileges to CES admin group...\\n"
-    for permission in $PERMISSIONS
+    printf "Adding admin privileges to CES admin group...\\n"
+    for permission in ${ADMIN_PERMISSIONS}
     do
-      printf "grant permission '%s' to group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP}
-      grant_permission_to_group_via_rest_api "${admin_group}" "$permission" "${DOGU_ADMIN}" "${dogu_admin_password}"
+      printf "grant permission '%s' to group '%s'...\\n" ${permission} ${admin_group}
+      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
     done
 }
 
@@ -238,16 +238,17 @@ function subsequentSonarStart() {
 }
 
 function remove_permissions_from_last_admin_group() {
-    printf "Remove admin privileges from previous CES admin group '%s'...\\n" ${CES_ADMIN_GROUP_LAST}
+    local admin_group=${CES_ADMIN_GROUP_LAST}
+    printf "Remove admin privileges from previous CES admin group '%s'...\\n" ${admin_group}
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
-    for permission in $PERMISSIONS
+    for permission in ${ADMIN_PERMISSIONS}
     do
-      printf "remove permission '%s' from group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP_LAST}
-      remove_permission_of_group_via_rest_api "${CES_ADMIN_GROUP_LAST}" "$permission" "${DOGU_ADMIN}" "${dogu_admin_password}"
+      printf "remove permission '%s' from group '%s'...\\n" ${permission} ${admin_group}
+      remove_permission_of_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
     done
 }
 
-# It returns 0 if the admin group names differs from eachother. Otherwise, it returns the value 1 if both admin group names have the same value.
+# It returns 0 if the admin group names differs from each other. Otherwise, it returns the value 1.
 function has_admin_group_changed() {
     return $(expr "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST")
 }
