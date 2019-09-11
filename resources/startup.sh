@@ -157,7 +157,7 @@ function grant_admin_group_permissions() {
     printf "\\nAdding admin privileges to CES admin group...\\n"
     for permission in $PERMISSIONS
     do
-      printf "grant permission '%s' to group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP_LAST}
+      printf "grant permission '%s' to group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP}
       grant_permission_to_group_via_rest_api "${admin_group}" "$permission" "${DOGU_ADMIN}" "${dogu_admin_password}"
     done
 }
@@ -248,7 +248,7 @@ function remove_permissions_from_last_admin_group() {
 }
 
 # It returns 0 if the admin group names differs from eachother. Otherwise, it returns the value 1 if both admin group names have the same value.
-function hasAdminGroupChanged() {
+function has_admin_group_changed() {
     return $(expr "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST")
 }
 
@@ -308,7 +308,7 @@ else
   subsequentSonarStart
 fi
 
-if hasAdminGroupChanged
+if has_admin_group_changed
 then
     remove_permissions_from_last_admin_group
 else
