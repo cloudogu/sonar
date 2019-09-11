@@ -153,8 +153,8 @@ function set_updatecenter_url_if_configured_in_registry() {
 
 function grant_admin_group_permissions() {
     local admin_group=$1
+    local dogu_admin_password=$(doguctl config -e dogu_admin_password)
     printf "\\nAdding admin privileges to CES admin group...\\n"
-
     for permission in $PERMISSIONS
     do
       printf "grant permission '%s' to group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP_LAST}
@@ -240,7 +240,6 @@ function subsequentSonarStart() {
 function remove_permissions_from_last_admin_group() {
     printf "Remove admin privileges from previous CES admin group '%s'...\\n" ${CES_ADMIN_GROUP_LAST}
     local dogu_admin_password=$(doguctl config -e dogu_admin_password)
-
     for permission in $PERMISSIONS
     do
       printf "remove permission '%s' from group '%s'...\\n" ${permission} ${CES_ADMIN_GROUP_LAST}
@@ -248,7 +247,7 @@ function remove_permissions_from_last_admin_group() {
     done
 }
 
-# returns value 1 if both admin group names have the same value. Otherwise, it returns 0
+# It returns 0 if the admin group names differs from eachother. Otherwise, it returns the value 1 if both admin group names have the same value.
 function hasAdminGroupChanged() {
     return $(expr "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST")
 }
@@ -315,6 +314,7 @@ then
 else
     echo "Did not detect a change of the admin group. Continue as usual..."
 fi
+
 update_last_admin_group_in_registry ${CES_ADMIN_GROUP}
 
 echo "Setting sonar.core.serverBaseURL..."
