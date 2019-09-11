@@ -255,7 +255,12 @@ function remove_permissions_from_last_admin_group() {
 
 # It returns 0 if the admin group names differs from each other. Otherwise, it returns the value 1.
 function has_admin_group_changed() {
-    return $(expr "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST")
+    if [[ "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST" ]];
+    then
+        return 1
+    else
+        return 0
+    fi
 }
 
 ### End of function declarations, work is done now
