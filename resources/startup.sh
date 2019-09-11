@@ -155,11 +155,12 @@ function set_updatecenter_url_if_configured_in_registry() {
 
 function grant_admin_group_permissions() {
     local admin_group=$1
-    local dogu_admin_password=$(doguctl config -e dogu_admin_password)
+    local dogu_admin_password
+    dogu_admin_password=$(doguctl config -e dogu_admin_password)
     printf "Adding admin privileges to CES admin group...\\n"
     for permission in ${ADMIN_PERMISSIONS}
     do
-      printf "grant permission '%s' to group '%s'...\\n" ${permission} ${admin_group}
+      printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${admin_group}"
       grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
     done
 }
@@ -168,7 +169,7 @@ function run_first_start_tasks() {
   echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  grant_admin_group_permissions ${CES_ADMIN_GROUP}
+  grant_admin_group_permissions "${CES_ADMIN_GROUP}"
 
   set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
@@ -235,17 +236,19 @@ function subsequentSonarStart() {
     echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-    grant_admin_group_permissions ${CES_ADMIN_GROUP}
+    grant_admin_group_permissions "${CES_ADMIN_GROUP}"
   fi
 }
 
 function remove_permissions_from_last_admin_group() {
     local admin_group=${CES_ADMIN_GROUP_LAST}
-    printf "Remove admin privileges from previous CES admin group '%s'...\\n" ${admin_group}
-    local dogu_admin_password=$(doguctl config -e dogu_admin_password)
+    printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
+    local dogu_admin_password
+    dogu_admin_password=$(doguctl config -e dogu_admin_password)
+
     for permission in ${ADMIN_PERMISSIONS}
     do
-      printf "remove permission '%s' from group '%s'...\\n" ${permission} ${admin_group}
+      printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
       remove_permission_of_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
     done
 }
@@ -318,7 +321,7 @@ else
     echo "Did not detect a change of the admin group. Continue as usual..."
 fi
 
-update_last_admin_group_in_registry ${CES_ADMIN_GROUP}
+update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 
 echo "Setting sonar.core.serverBaseURL..."
 set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"

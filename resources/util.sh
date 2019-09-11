@@ -159,11 +159,11 @@ function getLastAdminGroupOrGlobalAdminGroup() {
 
     if admin_group_last=$(doguctl config admin_group_last) ;
     then
-        printf ${admin_group_last}
+        printf "%s" "${admin_group_last}"
     else
         # this group name is used either way to check if it is equal with the global admin group
         # instead of unnecessarily check for empty strings we return a valid value for the equal-check
-        printf $(doguctl config --global admin_group)
+        printf "%s" "$(doguctl config --global admin_group)"
     fi
 }
 
@@ -171,5 +171,5 @@ function update_last_admin_group_in_registry() {
     echo "Update SonarQube admin group in registry..."
 
     local newAdminGroup=$1
-    doguctl config admin_group_last ${newAdminGroup}
+    doguctl config admin_group_last "${newAdminGroup}"
 }
