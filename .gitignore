@@ -1,0 +1,8 @@
+# ignore IDEA stuff
+.idea/
+out/
+.idea_modules/
+*.iml
+
+# ignore VS code stuff
+.vscode/*

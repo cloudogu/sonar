@@ -143,3 +143,33 @@ function set_successful_first_start_flag() {
   echo "Setting successfulFirstStart registry key..."
   doguctl config successfulFirstStart true
 }
+
+
+# getLastAdminGroupOrGlobalAdminGroup echoes admin_group__last value from the registry if it was set, otherwise
+# it echoes the current (global) admin_group.
+#
+# Store the result in a variable like this:
+#  myAdminGroup=$(getLastAdminGroupOrGlobalAdminGroup)
+#
+# note that 'echo' returns the string to the caller and _does not_ print the value to stdout. It is also not possible
+# to add debug echo's/printf's/etc.
+# see https://stackoverflow.com/questions/14482943/
+function getLastAdminGroupOrGlobalAdminGroup() {
+    local admin_group_last=""
+
+    if admin_group_last=$(doguctl config admin_group_last) ;
+    then
+        printf "%s" "${admin_group_last}"
+    else
+        # this group name is used either way to check if it is equal with the global admin group
+        # instead of unnecessarily check for empty strings we return a valid value for the equal-check
+        printf "%s" "$(doguctl config --global admin_group)"
+    fi
+}
+
+function update_last_admin_group_in_registry() {
+    echo "Update SonarQube admin group in registry..."
+
+    local newAdminGroup=$1
+    doguctl config admin_group_last "${newAdminGroup}"
+}

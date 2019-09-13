@@ -22,12 +22,14 @@ export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
 # get variables
 CES_ADMIN_GROUP=$(doguctl config --global admin_group)
+CES_ADMIN_GROUP_LAST=$(getLastAdminGroupOrGlobalAdminGroup)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
 HEALTH_TIMEOUT=600
+ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 
 function import_quality_profiles_if_present {
   AUTH_USER=$1
@@ -115,6 +117,8 @@ function create_user_group_via_rest_api() {
   AUTH_USER=$3
   AUTH_PASSWORD=$4
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
+  printf "\\n"
 }
 
 function grant_permission_to_group_via_rest_api() {
@@ -123,6 +127,14 @@ function grant_permission_to_group_via_rest_api() {
   AUTH_USER=$3
   AUTH_PASSWORD=$4
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+}
+
+function remove_permission_of_group_via_rest_api() {
+  GROUPNAME=$1
+  PERMISSION=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
 function get_out_of_date_plugins_via_rest_api() {
@@ -141,15 +153,23 @@ function set_updatecenter_url_if_configured_in_registry() {
   fi
 }
 
+function grant_admin_group_permissions() {
+    local admin_group=$1
+    local dogu_admin_password
+    dogu_admin_password=$(doguctl config -e dogu_admin_password)
+    printf "Adding admin privileges to CES admin group...\\n"
+    for permission in ${ADMIN_PERMISSIONS}
+    do
+      printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${admin_group}"
+      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    done
+}
+
 function run_first_start_tasks() {
-  echo  "Adding CES admin group..."
+  echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-  printf "\\nAdding admin privileges to CES admin group...\\n"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "profileadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "gateadmin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "provisioning" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  grant_admin_group_permissions "${CES_ADMIN_GROUP}"
 
   set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
@@ -213,15 +233,35 @@ function subsequentSonarStart() {
   # Creating CES admin group if not existent or if it has changed
   ADMIN_GROUP_COUNT=$(curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search?q=${CES_ADMIN_GROUP}" | jq '.paging' | jq -r '.total')
   if [[ ${ADMIN_GROUP_COUNT} == 0 ]]; then
-    echo  "Adding CES admin group..."
+    echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-    printf "\\nAdding admin privileges to CES admin group...\\n"
-    grant_permission_to_group_via_rest_api "${CES_ADMIN_GROUP}" "admin" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+    grant_admin_group_permissions "${CES_ADMIN_GROUP}"
   fi
 }
 
+function remove_permissions_from_last_admin_group() {
+    local admin_group=${CES_ADMIN_GROUP_LAST}
+    printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
+    local dogu_admin_password
+    dogu_admin_password=$(doguctl config -e dogu_admin_password)
 
+    for permission in ${ADMIN_PERMISSIONS}
+    do
+      printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
+      remove_permission_of_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
+    done
+}
+
+# It returns 0 if the admin group names differs from each other. Otherwise, it returns the value 1.
+function has_admin_group_changed() {
+    if [[ "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST" ]];
+    then
+        return 1
+    else
+        return 0
+    fi
+}
 
 ### End of function declarations, work is done now
 
@@ -273,11 +313,20 @@ while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
 done
 
 # check whether firstSonarStart has already been performed
-if [ "$(doguctl config successfulFirstStart)" != "true" ]; then
+if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   firstSonarStart
 else
   subsequentSonarStart
 fi
+
+if has_admin_group_changed
+then
+    remove_permissions_from_last_admin_group
+else
+    echo "Did not detect a change of the admin group. Continue as usual..."
+fi
+
+update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 
 echo "Setting sonar.core.serverBaseURL..."
 set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
