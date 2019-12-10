@@ -71,20 +71,6 @@ if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   rm -rf /opt/sonar/data/extensions
 fi
 
-if [[ ${FROM_VERSION} == *"5.6.6"* ]]; then
-  echo "You have upgraded from SonarQube 5.6.6. This may lead to unexpected behavior!"
-  echo "See https://docs.sonarqube.org/latest/setup/upgrading/"
-fi
-
-# At LTS upgrade from 5.6.7 to 6.7.6, the data volume has been switched from /var/lib/sonar/ to ${SONARQUBE_HOME}/data/
-# Move data from old 5.6.7 data volume to new 6.7.x data volume
-if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
-  echo "Moving old SonarQube 5.6.7 data to current data folder..."
-  mv "${SONARQUBE_HOME}"/data/data/* "${SONARQUBE_HOME}"/data
-  echo "Removing old SonarQube 5.6.7 files and folders..."
-  rm -rf "${SONARQUBE_HOME}"/data/conf "${SONARQUBE_HOME}"/data/extensions "${SONARQUBE_HOME}"/data/logs "${SONARQUBE_HOME}"/data/temp "${SONARQUBE_HOME}"/data/data
-fi
-
 echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
 wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
 
@@ -111,29 +97,7 @@ else
   echo "No db migration is needed"
 fi
 
-if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
-  # reinstall missing plugins if there are any
-  if doguctl config install_plugins > /dev/null; then
-
-    echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
-    wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
-
-    echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
-    # default admin credentials (admin, admin) are used
-    wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
-
-    reinstall_plugins
-
-    # clear install_plugins key
-    doguctl config install_plugins "" >> /dev/null
-  fi
-
-  # Do everything that needs to be done to get into a state that is equal to a successful first start
-  create_dogu_admin_and_deactivate_default_admin ${CURL_LOG_LEVEL}
-  set_successful_first_start_flag
-fi
-
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]] || [[ ${FROM_VERSION} == *"5.6"* ]]; then
+if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
   # grant further permissions to CES admin group via API
   # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
