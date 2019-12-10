@@ -22,19 +22,19 @@ describe('cas rest basic authentication', () => {
             .expect(200);
     });
 
-    test('authentication with API key', async () => {
+    let test1 = test('authentication with API key', async () => {
         driver = utils.createDriver(webdriver);
 		// Login and go to user tokens page
         await driver.get(utils.getCasUrl(driver));
         await utils.login(driver);
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
-        await driver.wait(until.elementLocated(By.className("js-generate-token-form spacer-top panel bg-muted")), 5000);
+        await driver.wait(until.elementLocated(By.className("display-flex-center")), 5000);
         // Create user Token
         await driver.findElement(By.css("input[type='text']")).sendKeys(config.sonarqubeToken);
         await driver.findElement(By.xpath("//button[contains(text(),'Generate')]")).click(); //Click to create Token
         // Get token id
-        await driver.wait(until.elementLocated(By.className("monospaced text-success")), 5000);
-        const apikey = await driver.findElement(By.className("monospaced text-success")).getText(); //Saving Token
+        await driver.wait(until.elementLocated(By.className("big-spacer-left text-success")), 5000);
+        const apikey = await driver.findElement(By.className("big-spacer-left text-success")).getText(); //Saving Token
 		//Checking login with Token
         await request(config.baseUrl)
 			.get(config.sonarContextPath + "/api/system/health")
@@ -42,9 +42,11 @@ describe('cas rest basic authentication', () => {
             .expect(200);
 		//Deleting user Token
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
-        await driver.wait(until.elementLocated(By.className("js-generate-token-form spacer-top panel bg-muted")), 5000);
-        await driver.findElement(By.className("button-red input-small")).click(); // Click to delete
-        await driver.findElement(By.className("button-red active input-small")).click(); // Click to confirm deletion
+        await driver.wait(until.elementLocated(By.className("display-flex-center")), 5000);
+        await driver.findElement(By.className("button spacer-left button-red input-small")).click(); // Click to delete
+        // Wait until modal is open
+        await driver.sleep(500);
+        await driver.findElement(By.xpath("/html/body/div[4]/div/div/form/footer/button[1]")).click(); // Click to confirm deletion
 
         await driver.quit();
     });
