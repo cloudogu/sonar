@@ -8,7 +8,7 @@ ENV SONAR_VERSION=7.9.1 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    CAS_PLUGIN_VERSION=1.0.5
+    CAS_PLUGIN_VERSION=2.0.0
 
 RUN set -x \
     && apk add --no-cache procps postgresql-client \
