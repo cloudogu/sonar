@@ -341,5 +341,6 @@ stopSonarQube ${SONAR_PROCESS_ID}
 
 doguctl state "ready"
 
+exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
 echo "Starting SonarQube..."
 exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
