@@ -45,8 +45,10 @@ function add_temporary_admin_user() {
   # temporarily create admin user and add to admin groups
   # the password is 'admin'
   TEMPORARY_ADMIN_USER=${1}
+  HASHED_PW=${2}
+  SALT=${3}
   execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
-  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '\$2a\$12\$uCkkXmhW5ThVK8mpBvnXOOJRLd64LJeHTeCkSuB3lfaR2N0AYBaSi', null, 'BCRYPT', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
+  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
  
   ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
   ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
@@ -56,6 +58,12 @@ function add_temporary_admin_user() {
   fi
   execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
   execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
+}
+
+function getSHA1PW() {
+    PW="${1}"
+    SALT="${2}"
+    echo -n "--${SALT}--${PW}--" | sha1sum | awk '{print $1}'
 }
 
 function remove_temporary_admin_user() {

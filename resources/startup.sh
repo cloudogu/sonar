@@ -9,6 +9,8 @@ set -o pipefail
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
 # create_dogu_admin_user_and_save_password()
+# add_temporary_admin_user()
+# getSHA1PW()
 # create_user_via_rest_api()
 # add_user_to_group_via_rest_api()
 # create_dogu_admin_and_deactivate_default_admin()
@@ -194,7 +196,8 @@ function run_first_start_tasks() {
 function stopSonarQube() {
     # kill SonarQube and all child processes
     kill "${1}"
-    # wait for processes to finish
+    # In some cases the underlying webserver and elasticsearch are not exiting immediately. The wrapper will kill them after 5 minutes.
+    echo "Wait for SonarQube exit. This can take up to 5 minutes."
     wait "${1}" || true
 }
 
@@ -220,8 +223,11 @@ function subsequentSonarStart() {
   execute_sql_statement_on_database "DELETE FROM users WHERE login='${DOGU_ADMIN}';"
   # Re-create dogu admin user
   TEMPORARY_ADMIN_USER=$(doguctl random)
-  add_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-  create_dogu_admin_user_and_save_password "${TEMPORARY_ADMIN_USER}" admin ${CURL_LOG_LEVEL}
+  PW=$(doguctl random)
+  SALT=$(doguctl random)
+  HASH=$(getSHA1PW "${PW}" "${SALT}")
+  add_temporary_admin_user "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
+  create_dogu_admin_user_and_save_password "${TEMPORARY_ADMIN_USER}" "${PW}" ${CURL_LOG_LEVEL}
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
