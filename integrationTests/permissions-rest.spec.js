@@ -52,6 +52,7 @@ describe('administration rest tests', () => {
         await driver.sleep(waitInterval)
         // log user in and out
         await adminFunctions.testUserLogin(driver);
+        await driver.sleep(waitInterval)
         await adminFunctions.logoutUserViaUI(driver);
         await driver.sleep(waitInterval)
         // make sure user is logged out (=> .../cas/logout is shown)
