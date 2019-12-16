@@ -116,7 +116,7 @@ if [[ ${FROM_VERSION} == *"6"* ]] && [[ ${TO_VERSION} == *"7.9"* ]]; then
 
     reinstall_plugins "${TEMPORARY_ADMIN_USER}" "${PW}"
 
-    # TODO: doguctl config -rm install_plugins
+    doguctl config --remove install_plugins
   fi
 
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
