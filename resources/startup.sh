@@ -241,9 +241,9 @@ function subsequentSonarStart() {
   if [[ ${ADMIN_GROUP_COUNT} == 0 ]]; then
     echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-    grant_admin_group_permissions "${CES_ADMIN_GROUP}"
   fi
+  # Grant the right permissions to the new or existing group
+  grant_admin_group_permissions "${CES_ADMIN_GROUP}"
 }
 
 function remove_permissions_from_last_admin_group() {
