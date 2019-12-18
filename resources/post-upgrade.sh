@@ -54,7 +54,9 @@ function reinstall_plugins() {
   done <<< "$(doguctl config install_plugins)"
 
   if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
+    echo "### SUMMARY ###"
     echo "The following plugins could not have been re-installed: ${FAILED_PLUGIN_NAMES}"
+    echo ""
   fi
 }
 
