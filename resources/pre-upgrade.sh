@@ -59,7 +59,7 @@ if [[ ${FROM_VERSION} == *"6"* ]] && [[ ${TO_VERSION} == *"7.9"* ]]; then
   TEMPORARY_ADMIN_USER=$(doguctl random)
   # remove user in case it already exists
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-  echo "Creating temporary ${TEMPORARY_ADMIN_USER} user..."
+  echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
   PW=$(doguctl random)
   SALT=$(doguctl random)
   HASH=$(getSHA1PW "${PW}" "${SALT}")
