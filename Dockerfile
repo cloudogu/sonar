@@ -19,8 +19,8 @@ RUN set -x \
     && rm -rf /var/cache/apk/* \
     # get SonarQube
     && curl --fail --remote-name --location https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-${SONAR_VERSION}.zip \
-    && unzip sonarqube-${SONAR_VERSION}.zip \
     && echo "${SONARQUBE_ZIP_SHA256} *sonarqube-${SONAR_VERSION}.zip" | sha256sum -c - \
+    && unzip sonarqube-${SONAR_VERSION}.zip \
     && mv sonarqube-${SONAR_VERSION} ${SONARQUBE_HOME} \
     # get sonar-cas-plugin
     # will be moved to correct ${SONARQUBE_HOME}/extensions/plugins/ folder in startup.sh
