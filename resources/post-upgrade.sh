@@ -6,6 +6,7 @@ set -o pipefail
 # import util functions:
 # execute_sql_statement_on_database()
 # add_temporary_admin_user()
+# getSHA1PW()
 # remove_temporary_admin_user functions()
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
@@ -25,7 +26,7 @@ FAILED_PLUGIN_NAMES=""
 
 function install_plugin_via_api() {
   PLUGIN=${1}
-  INSTALL_RESPONSE=$(curl ${CURL_LOG_LEVEL} -u admin:admin -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
+  INSTALL_RESPONSE=$(curl ${CURL_LOG_LEVEL} -u "${2}":"${3}" -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
   # check response for error messages
   if [[ -n ${INSTALL_RESPONSE} ]]; then
     ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
@@ -42,18 +43,20 @@ function reinstall_plugins() {
   while IFS=',' read -ra ADDR; do
     for PLUGIN in "${ADDR[@]}"; do
       echo "Checking if plugin ${PLUGIN} is installed already..."
-      INSTALLED_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u admin:admin -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+      INSTALLED_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${1}":"${2}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
       if [[ ${INSTALLED_PLUGINS} == *"${PLUGIN}"* ]]; then
         echo "Plugin ${PLUGIN} is installed already"
       else
         echo "Plugin ${PLUGIN} is not installed, installing it..."
-        install_plugin_via_api "${PLUGIN}"
+        install_plugin_via_api "${PLUGIN}" "${1}" "${2}"
       fi
     done
   done <<< "$(doguctl config install_plugins)"
 
   if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
+    echo "### SUMMARY ###"
     echo "The following plugins could not have been re-installed: ${FAILED_PLUGIN_NAMES}"
+    echo ""
   fi
 }
 
@@ -62,27 +65,11 @@ function reinstall_plugins() {
 
 echo "Running post-upgrade script..."
 
-doguctl config post_upgrade_running true
-
 # Migrate saved extensions folder to its own volume
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   mkdir -p /opt/sonar/extensions
   cp -R /opt/sonar/data/extensions/* /opt/sonar/extensions/
   rm -rf /opt/sonar/data/extensions
-fi
-
-if [[ ${FROM_VERSION} == *"5.6.6"* ]]; then
-  echo "You have upgraded from SonarQube 5.6.6. This may lead to unexpected behavior!"
-  echo "See https://docs.sonarqube.org/latest/setup/upgrading/"
-fi
-
-# At LTS upgrade from 5.6.7 to 6.7.6, the data volume has been switched from /var/lib/sonar/ to ${SONARQUBE_HOME}/data/
-# Move data from old 5.6.7 data volume to new 6.7.x data volume
-if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
-  echo "Moving old SonarQube 5.6.7 data to current data folder..."
-  mv "${SONARQUBE_HOME}"/data/data/* "${SONARQUBE_HOME}"/data
-  echo "Removing old SonarQube 5.6.7 files and folders..."
-  rm -rf "${SONARQUBE_HOME}"/data/conf "${SONARQUBE_HOME}"/data/extensions "${SONARQUBE_HOME}"/data/logs "${SONARQUBE_HOME}"/data/temp "${SONARQUBE_HOME}"/data/data
 fi
 
 echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
@@ -111,7 +98,12 @@ else
   echo "No db migration is needed"
 fi
 
-if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
+if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
+  TEMPORARY_ADMIN_USER=$(doguctl random)
+  PW=$(doguctl random)
+  SALT=$(doguctl random)
+  HASH=$(getSHA1PW "${PW}" "${SALT}")
+  add_temporary_admin_user "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
   # reinstall missing plugins if there are any
   if doguctl config install_plugins > /dev/null; then
 
@@ -120,20 +112,17 @@ if [[ ${FROM_VERSION} == *"5.6.7"* ]] && [[ ${TO_VERSION} == *"6.7."* ]]; then
 
     echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
     # default admin credentials (admin, admin) are used
-    wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} admin admin ${CURL_LOG_LEVEL}
+    wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${PW}" ${CURL_LOG_LEVEL}
 
-    reinstall_plugins
+    reinstall_plugins "${TEMPORARY_ADMIN_USER}" "${PW}"
 
-    # clear install_plugins key
-    doguctl config install_plugins "" >> /dev/null
+    doguctl config --remove install_plugins
   fi
 
-  # Do everything that needs to be done to get into a state that is equal to a successful first start
-  create_dogu_admin_and_deactivate_default_admin ${CURL_LOG_LEVEL}
-  set_successful_first_start_flag
+  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
 fi
 
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]] || [[ ${FROM_VERSION} == *"5.6"* ]]; then
+if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   # grant further permissions to CES admin group via API
   # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)

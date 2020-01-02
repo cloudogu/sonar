@@ -69,12 +69,12 @@ module.exports = class AdminFunctions{
         // opening user dropdown menu
         await this.showUserMenu(driver);
         // wait for dropdown menu
-        await driver.wait(until.elementLocated(By.className("dropdown-menu dropdown-menu-right")),5000);
+        await driver.wait(until.elementLocated(By.className("popup is-bottom")),5000);
         // wait for sonar-cas-plugin to inject logout code
         // timeout is set in https://github.com/cloudogu/sonar-cas-plugin/blob/develop/src/main/resources/casLogoutUrl.js
-        await driver.sleep(500)
+        await driver.sleep(500);
         // click logout link
-        await driver.findElement(By.className("dropdown-menu dropdown-menu-right")).findElement(By.css("a[href*='#']")).click();
+        await driver.findElement(By.className("popup is-bottom")).findElement(By.css("a[href*='#']")).click();
     };
 
     async showUserMenu(driver) {
