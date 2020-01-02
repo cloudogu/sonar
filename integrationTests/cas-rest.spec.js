@@ -22,7 +22,7 @@ describe('cas rest basic authentication', () => {
             .expect(200);
     });
 
-    let test1 = test('authentication with API key', async () => {
+    test('authentication with API key', async () => {
         driver = utils.createDriver(webdriver);
 		// Login and go to user tokens page
         await driver.get(utils.getCasUrl(driver));
