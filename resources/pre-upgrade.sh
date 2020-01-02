@@ -11,13 +11,13 @@ DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 
 echo "Running pre-upgrade script..."
-if [[ ${FROM_VERSION} == *"5"* ]]; then
+if [[ ${FROM_VERSION} == "5"* ]]; then
   echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 6.7.7-2 before."
   exit 1
 fi
 
 # Save extensions folder as it henceforth gets its own volume
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   mkdir /opt/sonar/data/extensions
   cp -R /opt/sonar/extensions/* /opt/sonar/data/extensions/
 fi
@@ -55,7 +55,7 @@ function remove_temporary_admin_user() {
   sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
 }
 
-if [[ ${FROM_VERSION} == *"6"* ]] && [[ ${TO_VERSION} == *"7.9"* ]]; then
+if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
   TEMPORARY_ADMIN_USER=$(doguctl random)
   # remove user in case it already exists
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
@@ -81,3 +81,6 @@ if [[ ${FROM_VERSION} == *"6"* ]] && [[ ${TO_VERSION} == *"7.9"* ]]; then
 
   mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
 fi
+
+# set this so the startup.sh waits for the post_upgrade to finish
+doguctl config post_upgrade_running true

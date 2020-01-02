@@ -6,12 +6,12 @@ set -o pipefail
 FROM_VERSION="${1}"
 TO_VERSION="${2}"
 
-if [[ ${FROM_VERSION} == *"5"* ]]; then
+if [[ ${FROM_VERSION} == "5"* ]]; then
   echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Please upgrade to version 6.7.7-2 before."
   exit 1
 fi
 
-if [[ ${FROM_VERSION} == *"6.7."* ]] && [[ ${TO_VERSION} == *"7.9."* ]]; then
+if [[ ${FROM_VERSION} == "6.7."* ]] && [[ ${TO_VERSION} == "7.9."* ]]; then
   echo "You are upgrading your SonarQube instance from 6.7.x LTS to 7.9.x LTS. Please consider backing up your SonarQube database. Upgrade problems are rare, but you'll want the backup if anything does happen."
   echo "The currently installed plugins will be re-installed in SonarQube 7.9, potentially in a newer version than they are installed now. As not all plugins which have been available in SonarQube 6.7 are also available in SonarQube 7.9, you should check the log output for plugins which could not be re-installed. The plugin binaries from your current 6.7.x SonarQube instance will not be removed, but be moved to their own folder in the extensions volume."
 fi

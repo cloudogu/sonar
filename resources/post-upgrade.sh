@@ -65,10 +65,8 @@ function reinstall_plugins() {
 
 echo "Running post-upgrade script..."
 
-doguctl config post_upgrade_running true
-
 # Migrate saved extensions folder to its own volume
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   mkdir -p /opt/sonar/extensions
   cp -R /opt/sonar/data/extensions/* /opt/sonar/extensions/
   rm -rf /opt/sonar/data/extensions
@@ -100,7 +98,7 @@ else
   echo "No db migration is needed"
 fi
 
-if [[ ${FROM_VERSION} == *"6"* ]] && [[ ${TO_VERSION} == *"7.9"* ]]; then
+if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
   TEMPORARY_ADMIN_USER=$(doguctl random)
   PW=$(doguctl random)
   SALT=$(doguctl random)
@@ -124,7 +122,7 @@ if [[ ${FROM_VERSION} == *"6"* ]] && [[ ${TO_VERSION} == *"7.9"* ]]; then
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
 fi
 
-if [[ ${FROM_VERSION} == *"6.7.6-1"* ]]; then
+if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   # grant further permissions to CES admin group via API
   # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)

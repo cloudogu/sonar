@@ -43,7 +43,6 @@ function wait_for_sonar_to_get_up() {
 
 function add_temporary_admin_user() {
   # temporarily create admin user and add to admin groups
-  # the password is 'admin'
   TEMPORARY_ADMIN_USER=${1}
   HASHED_PW=${2}
   SALT=${3}
