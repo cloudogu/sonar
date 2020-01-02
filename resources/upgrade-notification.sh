@@ -6,7 +6,7 @@ set -o pipefail
 FROM_VERSION="${1}"
 TO_VERSION="${2}"
 
-if [[ ${FROM_VERSION} == "5"* ]]; then
+if [[ ${FROM_VERSION} == "5"* ]] || [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Please upgrade to version 6.7.7-2 before."
   exit 1
 fi
