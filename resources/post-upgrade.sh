@@ -24,21 +24,6 @@ FAILED_PLUGIN_NAMES=""
 
 ##### functions declaration
 
-function install_plugin_via_api() {
-  PLUGIN=${1}
-  INSTALL_RESPONSE=$(curl ${CURL_LOG_LEVEL} -u "${2}":"${3}" -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
-  # check response for error messages
-  if [[ -n ${INSTALL_RESPONSE} ]]; then
-    ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
-    if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
-      echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
-      FAILED_PLUGIN_NAMES+=${PLUGIN},
-    fi
-  else
-    echo "Plugin ${PLUGIN} installed."
-  fi
-}
-
 function reinstall_plugins() {
   while IFS=',' read -ra ADDR; do
     for PLUGIN in "${ADDR[@]}"; do
@@ -59,7 +44,6 @@ function reinstall_plugins() {
     echo ""
   fi
 }
-
 
 ######
 

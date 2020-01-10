@@ -269,6 +269,22 @@ function has_admin_group_changed() {
     fi
 }
 
+function install_default_plugins() {
+  if PLUGINS=$(doguctl config sonar.plugins.default); then
+    USER=${1}
+    PASSWORD=${2}
+
+    echo "found plugins '${PLUGINS}' to be installed on startup"
+
+    IFS=','
+    for plugin in $PLUGINS; do
+      install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
+    done
+  else
+    echo "no key sonar.plugins.default found"
+  fi
+}
+
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -342,6 +358,8 @@ import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
 echo "Setting email.from configuration..."
 set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+
+install_default_plugins "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
 echo "Configuration done, stopping SonarQube..."
 stopSonarQube ${SONAR_PROCESS_ID}
