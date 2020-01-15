@@ -182,6 +182,8 @@ function update_last_admin_group_in_registry() {
     doguctl config admin_group_last "${newAdminGroup}"
 }
 
+FAILED_PLUGIN_NAMES=""
+
 function install_plugin_via_api() {
   PLUGIN=${1}
   USER=${2}
@@ -196,5 +198,31 @@ function install_plugin_via_api() {
     fi
   else
     echo "Plugin ${PLUGIN} installed."
+  fi
+}
+
+function reinstall_plugins() {
+  PLUGINS="${1}"
+  USER=${2}
+  PASSWORD=${3}
+
+  echo "Fetch already installed plugins"
+  INSTALLED_PLUGINS=$(curl "${CURL_LOG_LEVEL}" --fail -u "${USER}":"${PASSWORD}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+
+  IFS=','
+  for PLUGIN in ${PLUGINS}; do
+    echo "Checking if plugin ${PLUGIN} is installed already..."
+    if [[ ${INSTALLED_PLUGINS} == *"${PLUGIN}"* ]]; then
+      echo "Plugin ${PLUGIN} is installed already"
+    else
+      echo "Plugin ${PLUGIN} is not installed, installing it..."
+      install_plugin_via_api "${PLUGIN}" "${USER}" "${PASSWORD}"
+    fi
+  done
+
+  if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
+    echo "### SUMMARY ###"
+    echo "The following plugins could not have been re-installed: ${FAILED_PLUGIN_NAMES}"
+    echo ""
   fi
 }

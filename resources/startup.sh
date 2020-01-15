@@ -275,11 +275,7 @@ function install_default_plugins() {
     PASSWORD=${2}
 
     echo "found plugins '${PLUGINS}' to be installed on startup"
-
-    IFS=','
-    for plugin in $PLUGINS; do
-      install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
-    done
+    reinstall_plugins "$PLUGINS" "$USER" "$PASSWORD"
   else
     echo "no key sonar.plugins.default found"
   fi
