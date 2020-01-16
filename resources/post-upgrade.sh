@@ -20,6 +20,32 @@ FROM_VERSION="${1}"
 TO_VERSION="${2}"
 WAIT_TIMEOUT=600
 CURL_LOG_LEVEL="--silent"
+FAILED_PLUGIN_NAMES=""
+
+##### functions declaration
+
+function reinstall_plugins() {
+  while IFS=',' read -ra ADDR; do
+    for PLUGIN in "${ADDR[@]}"; do
+      echo "Checking if plugin ${PLUGIN} is installed already..."
+      INSTALLED_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${1}":"${2}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+      if [[ ${INSTALLED_PLUGINS} == *"${PLUGIN}"* ]]; then
+        echo "Plugin ${PLUGIN} is installed already"
+      else
+        echo "Plugin ${PLUGIN} is not installed, installing it..."
+        install_plugin_via_api "${PLUGIN}" "${1}" "${2}"
+      fi
+    done
+  done <<< "$(doguctl config install_plugins)"
+
+  if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
+    echo "### SUMMARY ###"
+    echo "The following plugins could not have been re-installed: ${FAILED_PLUGIN_NAMES}"
+    echo ""
+  fi
+}
+
+######
 
 echo "Running post-upgrade script..."
 
@@ -72,7 +98,7 @@ if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
     # default admin credentials (admin, admin) are used
     wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${PW}" ${CURL_LOG_LEVEL}
 
-    reinstall_plugins "$(doguctl config install_plugins)" "${TEMPORARY_ADMIN_USER}" "${PW}"
+    reinstall_plugins "${TEMPORARY_ADMIN_USER}" "${PW}"
 
     doguctl config --remove install_plugins
   fi
