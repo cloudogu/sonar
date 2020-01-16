@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.9.1-2] - 2020-01-16
+
 ### Added
 
-* etcd key `sonar.plugins.default` which may contain a comma separated list with plugin names that are installed on startup
+* config key `sonar.plugins.default` which may contain a comma separated list with plugin names that are installed on startup
 
 ## [7.9.1-1] - 2020-01-02
 
