@@ -181,3 +181,20 @@ function update_last_admin_group_in_registry() {
     local newAdminGroup=$1
     doguctl config admin_group_last "${newAdminGroup}"
 }
+
+function install_plugin_via_api() {
+  PLUGIN=${1}
+  USER=${2}
+  PASSWORD=${3}
+  INSTALL_RESPONSE=$(curl "${CURL_LOG_LEVEL}" -u "${USER}":"${PASSWORD}" -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
+  # check response for error messages
+  if [[ -n ${INSTALL_RESPONSE} ]]; then
+    ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
+    if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
+      echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
+      FAILED_PLUGIN_NAMES+=${PLUGIN},
+    fi
+  else
+    echo "Plugin ${PLUGIN} installed."
+  fi
+}
