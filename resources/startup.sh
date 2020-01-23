@@ -366,8 +366,7 @@ stopSonarQube ${SONAR_PROCESS_ID}
 
 doguctl state "ready"
 
-exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
-echo "Starting SonarQube..."
+echo "Starting SonarQube for plugin installation..."
 exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
 SONAR_PROCESS_ID=$!
 
@@ -380,7 +379,9 @@ wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
 echo "Installing preconfigured plugins..."
 install_default_plugins "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
-echo "SonarQube is ready to use"
+echo "Rebooting SonarQube to apply plugins..."
+stopSonarQube ${SONAR_PROCESS_ID}
 
-# rejoin with the sonarqube process
-wait $SONAR_PROCESS_ID
+exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
+echo "Starting SonarQube..."
+exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
