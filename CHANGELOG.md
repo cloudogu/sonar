@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [7.9.1-3] - 2020-01-24
+
+### Changed
+* Configure update center url before starting sonar
+* Restart sonar after installing default plugins
+
 ## [7.9.1-2] - 2020-01-16
 
 ### Added

@@ -280,6 +280,8 @@ function install_default_plugins() {
     for plugin in $PLUGINS; do
       install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
     done
+
+    echo "finished installation of default plugins"
   else
     echo "no key sonar.plugins.default found"
   fi
@@ -319,7 +321,7 @@ render_properties_template
 echo "Setting proxy configuration, if existent..."
 setProxyConfiguration
 
-echo "Starting SonarQube... "
+echo "Starting SonarQube for configuration api... "
 java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
 SONAR_PROCESS_ID=$!
 
@@ -359,6 +361,7 @@ import_quality_profiles_if_present "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 echo "Setting email.from configuration..."
 set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
+echo "Installing preconfigured plugins..."
 install_default_plugins "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
 echo "Configuration done, stopping SonarQube..."
