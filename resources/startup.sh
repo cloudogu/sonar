@@ -296,11 +296,11 @@ function ensure_correct_branch_plugin_state() {
     rm "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
   fi
 
-  for f in $(find "$PLUGIN_FOLDER" -iname "sonarqube-community-branch-plugin*") ;do
+  while IFS= read -r -d '' file
+  do
     echo "Copy community branch plugin to lib/common"
-    cp "$f" "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
-    chown
-  done
+    cp "$file" "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
+  done <   <(find "${PLUGIN_FOLDER}" -mtime -7 -name 'sonarqube-community-branch-plugin*.jar' -print0)
 }
 
 ### End of function declarations, work is done now
