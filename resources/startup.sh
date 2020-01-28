@@ -290,17 +290,20 @@ function install_default_plugins() {
 function ensure_correct_branch_plugin_state() {
   PLUGIN_FOLDER="${SONARQUBE_HOME}/extensions/plugins"
   COMMON_FOLDER="${SONARQUBE_HOME}/lib/common"
+  PLUGIN_NAME="sonarqube-community-branch-plugin"
 
-  if [[ -e "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar" ]]; then
-    echo "Remove community branch plugin from lib/common"
-    rm "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
+  if [[ -e "${COMMON_FOLDER}/${PLUGIN_NAME}.jar" ]]; then
+    echo "Remove community branch plugin from ${COMMON_FOLDER}"
+    rm "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
   fi
 
-  while IFS= read -r -d '' file
+  for f in "${PLUGIN_FOLDER}"/sonarqube-community-branch-plugin*.jar
   do
-    echo "Copy community branch plugin to lib/common"
-    cp "$file" "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
-  done <   <(find "${PLUGIN_FOLDER}" -mtime -7 -name 'sonarqube-community-branch-plugin*.jar' -print0)
+    if [[  -e "$f" ]]; then
+      echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
+      cp "$f" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+    fi
+  done
 }
 
 ### End of function declarations, work is done now
