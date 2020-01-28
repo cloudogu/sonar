@@ -288,7 +288,8 @@ function install_default_plugins() {
 }
 
 function ensure_correct_branch_plugin_state() {
-  PLUGIN_FOLDER="${SONARQUBE_HOME}/extensions/plugins"
+  EXTENSIONS_FOLDER="${SONARQUBE_HOME}/extensions"
+  PLUGIN_FOLDER="${EXTENSIONS_FOLDER}/plugins"
   COMMON_FOLDER="${SONARQUBE_HOME}/lib/common"
   PLUGIN_NAME="sonarqube-community-branch-plugin"
 
@@ -297,7 +298,8 @@ function ensure_correct_branch_plugin_state() {
     rm "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
   fi
 
-  for f in "${PLUGIN_FOLDER}"/sonarqube-community-branch-plugin*.jar
+  # the branch plugin could be in the plugins dir or in the downloads dir if it is new
+  for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar
   do
     if [[  -e "$f" ]]; then
       echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
