@@ -289,7 +289,6 @@ function install_default_plugins() {
 
 function ensure_correct_branch_plugin_state() {
   EXTENSIONS_FOLDER="${SONARQUBE_HOME}/extensions"
-  PLUGIN_FOLDER="${EXTENSIONS_FOLDER}/plugins"
   COMMON_FOLDER="${SONARQUBE_HOME}/lib/common"
   PLUGIN_NAME="sonarqube-community-branch-plugin"
 
