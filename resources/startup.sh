@@ -288,14 +288,18 @@ function install_default_plugins() {
 }
 
 function ensure_correct_branch_plugin_state() {
-  if [[ -e /opt/sonar/lib/common/sonarqube-community-branch-plugin.jar ]]; then
+  PLUGIN_FOLDER="${SONARQUBE_HOME}/extensions/plugins"
+  COMMON_FOLDER="${SONARQUBE_HOME}/lib/common"
+
+  if [[ -e "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar" ]]; then
     echo "Remove community branch plugin from lib/common"
-    rm /opt/sonar/lib/common/sonarqube-community-branch-plugin.jar
+    rm "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
   fi
 
-  for f in /opt/sonar/extensions/plugins/sonarqube-community-branch-plugin* ;do
+  for f in $(find "$PLUGIN_FOLDER" -iname "sonarqube-community-branch-plugin*") ;do
     echo "Copy community branch plugin to lib/common"
-    cp "$f" /opt/sonar/lib/common/sonarqube-community-branch-plugin.jar
+    cp "$f" "${COMMON_FOLDER}/sonarqube-community-branch-plugin.jar"
+    chown
   done
 }
 
