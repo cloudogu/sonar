@@ -287,6 +287,26 @@ function install_default_plugins() {
   fi
 }
 
+function ensure_correct_branch_plugin_state() {
+  EXTENSIONS_FOLDER="${SONARQUBE_HOME}/extensions"
+  COMMON_FOLDER="${SONARQUBE_HOME}/lib/common"
+  PLUGIN_NAME="sonarqube-community-branch-plugin"
+
+  if [[ -e "${COMMON_FOLDER}/${PLUGIN_NAME}.jar" ]]; then
+    echo "Remove community branch plugin from ${COMMON_FOLDER}"
+    rm "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+  fi
+
+  # the branch plugin could be in the plugins dir or in the downloads dir if it is new
+  for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar
+  do
+    if [[  -e "$f" ]]; then
+      echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
+      cp "$f" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+    fi
+  done
+}
+
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -366,6 +386,9 @@ install_default_plugins "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
 
 echo "Configuration done, stopping SonarQube..."
 stopSonarQube ${SONAR_PROCESS_ID}
+
+echo "Ensure correct branch plugin state"
+ensure_correct_branch_plugin_state
 
 doguctl state "ready"
 
