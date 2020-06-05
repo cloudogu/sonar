@@ -20,9 +20,6 @@ node('vagrant') {
 
         stage('Lint') {
             lintDockerfile()
-        }
-
-        stage('Shellcheck'){
             // TODO: Change this to shellCheck("./resources") as soon as https://github.com/cloudogu/dogu-build-lib/issues/8 is solved
             shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
