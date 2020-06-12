@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed 
+* Update Sonar from 7.9.1 to 7.9.3
+
+### Added
+* Add automated release process
+
 ## [7.9.1-4] - 2020-01-29
 
 ### Added
