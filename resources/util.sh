@@ -103,6 +103,17 @@ function create_dogu_admin_user_and_save_password() {
   printf "\\n"
 }
 
+function deactivate_dogu_admin_user_and_remove_password() {
+  AUTH_USER=$1
+  AUTH_PASSWORD=$2
+  LOG_LEVEL=$3
+  echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
+  deactivate_user_via_rest_api "${DOGU_ADMIN}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
+  # Remove the password in registry
+  doguctl config --rm dogu_admin_password
+  printf "\\n"
+}
+
 function create_user_via_rest_api() {
   LOGIN=$1
   NAME=$2
@@ -113,6 +124,13 @@ function create_user_via_rest_api() {
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/create?login=${LOGIN}&name=${NAME}&password=${PASSWORD}&local=true"
 }
 
+function deactivate_user_via_rest_api() {
+  LOGIN=$1
+  AUTH_USER=$2
+  AUTH_PASSWORD=$3
+  LOG_LEVEL=$4
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=${LOGIN}"
+}
 
 function add_user_to_group_via_rest_api() {
   USERNAME=$1

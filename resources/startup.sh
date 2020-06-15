@@ -219,14 +219,15 @@ function subsequentSonarStart() {
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
 
   echo "Removing and re-creating ${DOGU_ADMIN} user..."
-  # Remove dogu admin user, because it may have been changed by logging in with the same name
-  execute_sql_statement_on_database "DELETE FROM users WHERE login='${DOGU_ADMIN}';"
-  # Re-create dogu admin user
+  # Create temporary admin only in database
   TEMPORARY_ADMIN_USER=$(doguctl random)
   PW=$(doguctl random)
   SALT=$(doguctl random)
   HASH=$(getSHA1PW "${PW}" "${SALT}")
   add_temporary_admin_user "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
+  # Remove dogu admin user, because it may have been changed by logging in with the same name
+  deactivate_dogu_admin_user_and_remove_password "${TEMPORARY_ADMIN_USER}" "${PW}" "${CURL_LOG_LEVEL}"
+  # Re-create dogu admin user
   create_dogu_admin_user_and_save_password "${TEMPORARY_ADMIN_USER}" "${PW}" ${CURL_LOG_LEVEL}
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
   DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
