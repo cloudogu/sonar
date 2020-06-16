@@ -82,5 +82,10 @@ if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
   mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
 fi
 
+if [[ "${FROM_VERSION}" < "7.9.1-5" ]]; then
+  echo "Removing es6 cache..."
+  rm -r /opt/sonar/data/es6
+fi
+
 # set this so the startup.sh waits for the post_upgrade to finish
 doguctl config post_upgrade_running true
