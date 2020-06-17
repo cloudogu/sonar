@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+* Fixed bug where a new dogu admin user was created on each restart
+
+### Added
+* The pre-Upgrade script now will delete es6 cache when upgrading from 7.9.1-4 or lower
+
 ## [7.9.1-4] - 2020-01-29
 
 ### Added
