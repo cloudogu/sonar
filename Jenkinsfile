@@ -1,5 +1,5 @@
 #!groovy
-@Library(['github.com/cloudogu/dogu-build-lib@414bdfd5', 'github.com/cloudogu/zalenium-build-lib@30923630']) _
+@Library(['github.com/cloudogu/dogu-build-lib@9882205', 'github.com/cloudogu/zalenium-build-lib@30923630']) _
 import com.cloudogu.ces.dogubuildlib.*
 
 node('vagrant') {
@@ -20,9 +20,6 @@ node('vagrant') {
 
         stage('Lint') {
             lintDockerfile()
-        }
-
-        stage('Shellcheck'){
             // TODO: Change this to shellCheck("./resources") as soon as https://github.com/cloudogu/dogu-build-lib/issues/8 is solved
             shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
