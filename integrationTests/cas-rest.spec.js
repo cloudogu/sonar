@@ -40,6 +40,8 @@ describe('cas rest basic authentication', () => {
 			.get(config.sonarContextPath + "/api/system/health")
             .auth(apikey)
             .expect(200);
+        //Close warp menu tooltip
+        await driver.findElement(By.className('warp-onboarding-msg')).click();
 		//Deleting user Token
 		await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
         await driver.wait(until.elementLocated(By.className("display-flex-center")), 5000);
