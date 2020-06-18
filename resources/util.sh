@@ -107,7 +107,7 @@ function deactivate_dogu_admin_user() {
   AUTH_USER=$1
   AUTH_PASSWORD=$2
   LOG_LEVEL=$3
-  echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
+  echo "Removing ${DOGU_ADMIN} user..."
   deactivate_user_via_rest_api "${DOGU_ADMIN}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
   printf "\\n"
 }
