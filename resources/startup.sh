@@ -226,7 +226,7 @@ function subsequentSonarStart() {
   HASH=$(getSHA1PW "${PW}" "${SALT}")
   add_temporary_admin_user "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
   # Remove dogu admin user, because it may have been changed by logging in with the same name
-  deactivate_dogu_admin_user_and_remove_password "${TEMPORARY_ADMIN_USER}" "${PW}" "${CURL_LOG_LEVEL}"
+  deactivate_dogu_admin_user "${TEMPORARY_ADMIN_USER}" "${PW}" "${CURL_LOG_LEVEL}"
   # Re-create dogu admin user
   create_dogu_admin_user_and_save_password "${TEMPORARY_ADMIN_USER}" "${PW}" ${CURL_LOG_LEVEL}
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
