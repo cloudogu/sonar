@@ -1,47 +1,57 @@
 {
   "Name": "official/sonar",
-  "Version": "7.9.1-4",
+  "Version": "7.9.3-1",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
   "Tags": [
-    "warp", "code", "quality", "analysis"
+    "warp",
+    "code",
+    "quality",
+    "analysis"
   ],
   "Logo": "https://cloudogu.com/images/dogus/sonarqube.png",
   "Url": "http://www.sonarqube.org/",
   "Image": "registry.cloudogu.com/official/sonar",
   "Dependencies": [
-    "postgresql", "cas", "nginx", "postfix"
+    "postgresql",
+    "cas",
+    "nginx",
+    "postfix"
   ],
-  "Volumes": [{
-    "Name": "data",
-    "Path": "/opt/sonar/data/",
-    "Owner": "1000",
-    "Group": "1000",
-    "NeedsBackup": true
-  }, 
-  {
-    "Name": "qualityprofiles",
-    "Path": "/var/lib/qualityprofiles",
-    "Owner": "1000",
-    "Group": "1000",
-    "NeedsBackup": false
-  },
-  {
-    "Name": "extensions",
-    "Path": "/opt/sonar/extensions",
-    "Owner": "1000",
-    "Group": "1000",
-    "NeedsBackup": true
-  }],
-  "ServiceAccounts": [{
-    "Type": "postgresql"
-  }],
+  "Volumes": [
+    {
+      "Name": "data",
+      "Path": "/opt/sonar/data/",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
+    },
+    {
+      "Name": "qualityprofiles",
+      "Path": "/var/lib/qualityprofiles",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": false
+    },
+    {
+      "Name": "extensions",
+      "Path": "/opt/sonar/extensions",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
+    }
+  ],
+  "ServiceAccounts": [
+    {
+      "Type": "postgresql"
+    }
+  ],
   "Configuration": [
     {
-    "Name": "sonar.updatecenter.url",
-    "Description": "Set custom SonarQube UpdateCenter URL",
-    "Optional": true
+      "Name": "sonar.updatecenter.url",
+      "Description": "Set custom SonarQube UpdateCenter URL",
+      "Optional": true
     },
     {
       "Name": "sonar.plugins.default",
@@ -49,20 +59,27 @@
       "Optional": true
     }
   ],
-  "HealthChecks": [{
-    "Type": "tcp",
-    "Port": 9000
-  },{
-    "Type": "state"
-  }],
-  "ExposedCommands": [{
-    "Name": "post-upgrade",
-    "Command": "/post-upgrade.sh"
-  },{
-    "Name": "upgrade-notification",
-    "Command": "/upgrade-notification.sh"
-  },{
-    "Name": "pre-upgrade",
-    "Command": "/pre-upgrade.sh"
-  }]
+  "HealthChecks": [
+    {
+      "Type": "tcp",
+      "Port": 9000
+    },
+    {
+      "Type": "state"
+    }
+  ],
+  "ExposedCommands": [
+    {
+      "Name": "post-upgrade",
+      "Command": "/post-upgrade.sh"
+    },
+    {
+      "Name": "upgrade-notification",
+      "Command": "/upgrade-notification.sh"
+    },
+    {
+      "Name": "pre-upgrade",
+      "Command": "/pre-upgrade.sh"
+    }
+  ]
 }
