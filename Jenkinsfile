@@ -1,9 +1,16 @@
 #!groovy
-@Library(['github.com/cloudogu/dogu-build-lib@414bdfd5', 'github.com/cloudogu/zalenium-build-lib@30923630']) _
+@Library(['github.com/cloudogu/ces-build-lib@1.43.0', 'github.com/cloudogu/dogu-build-lib@v1.0.0', 'github.com/cloudogu/zalenium-build-lib@30923630'])
+import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
+import com.cloudogu.ces.zaleniumbuildlib.*
 
 node('vagrant') {
-
+    Git git = new Git(this, "cesmarvin")
+    git.committerName = 'cesmarvin'
+    git.committerEmail = 'cesmarvin@cloudogu.com'
+    GitFlow gitflow = new GitFlow(this, git)
+    GitHub github = new GitHub(this, git)
+    Changelog changelog = new Changelog(this)
     timestamps{
         properties([
                 // Keep only the last x builds to preserve space
@@ -20,9 +27,6 @@ node('vagrant') {
 
         stage('Lint') {
             lintDockerfile()
-        }
-
-        stage('Shellcheck'){
             // TODO: Change this to shellCheck("./resources") as soon as https://github.com/cloudogu/dogu-build-lib/issues/8 is solved
             shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
@@ -86,6 +90,21 @@ node('vagrant') {
                 }
             }
 
+            if (gitflow.isReleaseBranch()) {
+                String releaseVersion = git.getSimpleBranchName();
+
+                stage('Finish Release') {
+                    gitflow.finishRelease(releaseVersion)
+                }
+
+                stage('Push Dogu to registry') {
+                    ecoSystem.push("/dogu")
+                }
+
+                stage ('Add Github-Release'){
+                    github.createReleaseWithChangelog(releaseVersion, changelog)
+                }
+            }
         } finally {
             stage('Clean') {
                 ecoSystem.destroy()
