@@ -214,3 +214,33 @@ function install_plugin_via_api() {
     echo "Plugin ${PLUGIN} installed."
   fi
 }
+
+function add_temporary_admin_group() {
+  GROUP_NAME=${1}
+  # Add group to "groups" table
+  echo "DEBUG: database: ${DATABASE_DB}"
+  execute_sql_statement_on_database "INSERT INTO groups (name, description, organization_uuid) VALUES ('${GROUP_NAME}', 'Temporary admin group', 'temporary');"
+  GROUP_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM groups WHERE name='${GROUP_NAME}';")
+  GROUP_ID=$(echo "${GROUP_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
+  if [[ -z ${GROUP_ID} ]]; then
+    # id has only one digit
+    GROUP_ID=$(echo "${GROUP_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
+  fi
+  echo "DEBUG: Created ${GROUP_NAME} group with id ${GROUP_ID}"
+  # Grant admin permissions in "group_roles" table
+  execute_sql_statement_on_database "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES (${GROUP_ID}, 'admin', 'temporary');"
+}
+
+function remove_temporary_admin_group() {
+  GROUP_NAME=${1}
+  GROUP_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM groups WHERE name='${GROUP_NAME}';")
+  GROUP_ID=$(echo "${GROUP_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
+  if [[ -z ${GROUP_ID} ]]; then
+    # id has only one digit
+    GROUP_ID=$(echo "${GROUP_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
+  fi
+  # Remove group entry from "group_roles" table
+  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id='${GROUP_ID}';"
+  # Remove group from "groups" table
+  execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
+}
