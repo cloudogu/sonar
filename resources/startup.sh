@@ -32,6 +32,8 @@ QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
 HEALTH_TIMEOUT=600
 ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
+TEMPORARY_ADMIN_GROUP=$(doguctl random)
+TEMPORARY_ADMIN_USER=$(doguctl random)
 
 function import_quality_profiles_if_present {
   AUTH_USER=$1
@@ -157,36 +159,37 @@ function set_updatecenter_url_if_configured_in_registry() {
 
 function grant_admin_group_permissions() {
     local admin_group=$1
-    local dogu_admin_password
-    dogu_admin_password=$(doguctl config -e dogu_admin_password)
+    local ADMIN_USER=${2}
+    local dogu_admin_password=${3}
     printf "Adding admin privileges to CES admin group...\\n"
     for permission in ${ADMIN_PERMISSIONS}
     do
       printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${admin_group}"
-      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
+      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${ADMIN_USER}" "${dogu_admin_password}"
     done
 }
 
 function run_first_start_tasks() {
+  local ADMIN_USER=${1}
+  local ADMIN_PASSWORD=${2}
   echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
-  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
-  grant_admin_group_permissions "${CES_ADMIN_GROUP}"
-
-  set_updatecenter_url_if_configured_in_registry "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-
+  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  echo "DEBUG: create_user_group_via_rest_api DONE"
+  grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  echo "DEBUG: grant_admin_group_permissions DONE"
+  set_updatecenter_url_if_configured_in_registry "${ADMIN_USER}" "${ADMIN_PASSWORD}"
   echo "Setting email configuration..."
-  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.smtp_port.secured" "25" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_port.secured" "25" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
 
-  get_out_of_date_plugins_via_rest_api "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}"
+  get_out_of_date_plugins_via_rest_api "${ADMIN_USER}" "${ADMIN_PASSWORD}"
   if [[ -n "${OUT_OF_DATE_PLUGINS}" ]]; then
     echo "The following plugins are not up-to-date:"
     echo "${OUT_OF_DATE_PLUGINS}"
     while read -r PLUGIN; do
       echo "Updating plugin ${PLUGIN}..."
-      curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
+      curl ${CURL_LOG_LEVEL} --fail -u "${ADMIN_USER}":"${ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
       echo "Plugin ${PLUGIN} updated"
     done <<< "${OUT_OF_DATE_PLUGINS}"
   fi
@@ -202,21 +205,39 @@ function stopSonarQube() {
 }
 
 function firstSonarStart() {
+  local TEMPORARY_ADMIN_PASSWORD
+  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+  DOGU_ADMIN_PASSWORD=$(doguctl random)
+
   echo "First start of SonarQube dogu"
 
-  create_dogu_admin_and_deactivate_default_admin ${CURL_LOG_LEVEL}
+  echo "Adding temporary admin group..."
+  add_temporary_admin_group_via_rest_api_with_default_credentials "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
+  echo "Adding temporary admin user..."
+  create_temporary_admin_user_via_rest_api_with_default_credentials "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
+  echo "Adding temporary admin user to temporary admin group..."
+  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" admin admin "${CURL_LOG_LEVEL}"
+
+  echo "Waiting for configuration changes to be internally executed..."
+  sleep 3
 
   echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
-  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
-  run_first_start_tasks
+  echo "Deactivating default admin user..."
+  deactivate_default_admin_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${CURL_LOG_LEVEL}"
+
+  run_first_start_tasks "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+
+  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}" 
+  remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
 
   set_successful_first_start_flag
 }
 
 function subsequentSonarStart() {
   echo "Subsequent start of SonarQube dogu"
-  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
+  DOGU_ADMIN_PASSWORD=${1}
 
   echo "Removing and re-creating ${DOGU_ADMIN} user..."
   # Create temporary admin only in database
@@ -308,6 +329,10 @@ function ensure_correct_branch_plugin_state() {
   done
 }
 
+
+
+
+
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -342,6 +367,13 @@ render_properties_template
 echo "Setting proxy configuration, if existent..."
 setProxyConfiguration
 
+if ! [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
+  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+  echo "Adding temporary admin group and user..."
+  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+  create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}"
+fi
+
 echo "Starting SonarQube for configuration api... "
 java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
 SONAR_PROCESS_ID=$!
@@ -362,7 +394,10 @@ done
 if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   firstSonarStart
 else
-  subsequentSonarStart
+  subsequentSonarStart "${TEMPORARY_ADMIN_PASSWORD}"
+
+  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+  remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
 fi
 
 if has_admin_group_changed

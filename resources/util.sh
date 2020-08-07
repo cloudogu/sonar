@@ -7,7 +7,6 @@ DATABASE_IP=postgresql
 DATABASE_USER=$(doguctl config -e sa-postgresql/username)
 DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-DOGU_ADMIN="sonarqubedoguadmin"
 
 function execute_sql_statement_on_database(){
   PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
@@ -133,6 +132,22 @@ function deactivate_user_via_rest_api() {
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=${LOGIN}"
 }
 
+function create_group_via_rest_api() {
+  GROUP_NAME=$1
+  AUTH_USER=$2
+  AUTH_PASSWORD=$3
+  LOG_LEVEL=$4
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?description=tempadmingroup&name=${GROUP_NAME}"
+}
+
+function grant_admin_permissions_to_group() {
+  GROUP_NAME=$1
+  AUTH_USER=$2
+  AUTH_PASSWORD=$3
+  LOG_LEVEL=$4
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?groupName=${GROUP_NAME}&permission=admin"
+}
+
 function add_user_to_group_via_rest_api() {
   USERNAME=$1
   GROUPNAME=$2
@@ -148,7 +163,9 @@ function deactivate_default_admin_user() {
   LOG_LEVEL=$3
   RANDOM_PASSWORD=$(doguctl random)
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
+  echo "DEBUG: PASSWORT ÄNDERN HAT GEKLAPPT"
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
+  echo "DEBUG: ADMIN DEAKTIVIEREN HAT GEKLAPPT"
 }
 
 function create_dogu_admin_and_deactivate_default_admin() {
@@ -257,6 +274,14 @@ function add_temporary_admin_group() {
   execute_sql_statement_on_database "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES (${GROUP_ID}, 'admin', 'temporary');"
 }
 
+function add_temporary_admin_group_via_rest_api_with_default_credentials() {
+  local GROUP_NAME=${1}
+  local LOGLEVEL=${2}
+  create_group_via_rest_api "${GROUP_NAME}" admin admin "${LOGLEVEL}"
+  grant_admin_permissions_to_group "${GROUP_NAME}" admin admin "${LOGLEVEL}"
+
+}
+
 function remove_temporary_admin_group() {
   local GROUP_NAME=${1}
   local GROUP_ID
@@ -283,4 +308,17 @@ function create_temporary_admin_user_with_temporary_admin_group() {
   ADMIN_ID=$(get_user_id "${TEMPORARY_ADMIN_USER}")
   GROUP_ID=$(get_group_id "${TEMPORARY_ADMIN_GROUP}")
   execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, ${GROUP_ID});"
+}
+
+function create_temporary_admin_user_via_rest_api_with_default_credentials() {
+  # create temporary admin user
+  local TEMPORARY_ADMIN_USER=${1}
+  local PASSWORD=${2}
+  local TEMPORARY_ADMIN_GROUP=${3}
+  local LOGLEVEL=${4}
+  echo "DEBUG: create_user_via_rest_api"
+  create_user_via_rest_api "${TEMPORARY_ADMIN_USER}" "TemporaryAdministrator" "${PASSWORD}" admin admin "${LOGLEVEL}"
+  echo "DEBUG: add_user_to_group_via_rest_api"
+  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" "admin" "admin" "${LOGLEVEL}"
+  echo "DEBUG: create_temporary_admin_user_via_rest_api_with_default_credentials HAT GEKLAPPT"
 }
