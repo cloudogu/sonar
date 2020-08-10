@@ -121,7 +121,7 @@ function create_user_group_via_rest_api() {
   DESCRIPTION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  curl -v ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
   # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
   printf "\\n"
 }
@@ -131,7 +131,7 @@ function grant_permission_to_group_via_rest_api() {
   PERMISSION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  curl -v ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
 function remove_permission_of_group_via_rest_api() {
@@ -245,9 +245,12 @@ function subsequent_sonar_start() {
 
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
+  echo "${TEMPORARY_ADMIN_USER}"
+  echo "${TEMPORARY_ADMIN_PASSWORD}"
+
   # Creating CES admin group if not existent or if it has changed
-  ADMIN_GROUP_COUNT=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search?q=${CES_ADMIN_GROUP}" | jq '.paging' | jq -r '.total')
-  if [[ ${ADMIN_GROUP_COUNT} == 0 ]]; then
+  GROUP_NAME=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search" | jq ".groups[] | select(.name==\"${CES_ADMIN_GROUP}\")" | jq '.name')
+  if [[ -z "${GROUP_NAME}" ]]; then
     echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   fi
