@@ -170,31 +170,13 @@ function deactivate_default_admin_user() {
   LOG_LEVEL=$3
   RANDOM_PASSWORD=$(doguctl random)
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
-  echo "DEBUG: PASSWORT ÄNDERN HAT GEKLAPPT"
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
-  echo "DEBUG: ADMIN DEAKTIVIEREN HAT GEKLAPPT"
-}
-
-function create_dogu_admin_and_deactivate_default_admin() {
-  LOG_LEVEL=$1
-
-  # default admin credentials (admin, admin) are used
-  create_dogu_admin_user_and_save_password admin admin "${LOG_LEVEL}"
-
-  echo "Deactivating default admin account..."
-  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
-  deactivate_default_admin_user "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" "${LOG_LEVEL}"
-  printf "\\n"
-
-  echo "Waiting for configuration changes to be internally executed..."
-  sleep 3
 }
 
 function set_successful_first_start_flag() {
   echo "Setting successfulFirstStart registry key..."
   doguctl config successfulFirstStart true
 }
-
 
 # getLastAdminGroupOrGlobalAdminGroup echoes admin_group__last value from the registry if it was set, otherwise
 # it echoes the current (global) admin_group.
@@ -322,9 +304,6 @@ function create_temporary_admin_user_via_rest_api_with_default_credentials() {
   local PASSWORD=${2}
   local TEMPORARY_ADMIN_GROUP=${3}
   local LOGLEVEL=${4}
-  echo "DEBUG: create_user_via_rest_api"
   create_user_via_rest_api "${TEMPORARY_ADMIN_USER}" "TemporaryAdministrator" "${PASSWORD}" admin admin "${LOGLEVEL}"
-  echo "DEBUG: add_user_to_group_via_rest_api"
   add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" "admin" "admin" "${LOGLEVEL}"
-  echo "DEBUG: create_temporary_admin_user_via_rest_api_with_default_credentials HAT GEKLAPPT"
 }

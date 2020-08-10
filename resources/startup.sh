@@ -13,7 +13,6 @@ set -o pipefail
 # getSHA1PW()
 # create_user_via_rest_api()
 # add_user_to_group_via_rest_api()
-# create_dogu_admin_and_deactivate_default_admin()
 # set_successful_first_start_flag()
 # DOGU_ADMIN variable
 # shellcheck disable=SC1091
