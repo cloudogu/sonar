@@ -2,8 +2,6 @@
 const config = require('./config');
 
 exports.expectStateUser = function(user) {
-    console.log(user);
-    console.log(config);
     expect(user.login).toBe(config.username);
     expect(user.email).toBe(config.email);
     expect(user.name).toBe(config.displayName);

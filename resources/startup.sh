@@ -156,36 +156,34 @@ function set_updatecenter_url_if_configured_in_registry() {
 }
 
 function grant_admin_group_permissions() {
-    local admin_group=${1}
+    local ADMIN_GROUP=${1}
     local ADMIN_USER=${2}
     local ADMIN_PASSWORD=${3}
     printf "Adding admin privileges to CES admin group...\\n"
     for permission in ${ADMIN_PERMISSIONS}
     do
-      printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${admin_group}"
-      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+      printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${ADMIN_GROUP}"
+      grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
     done
 }
 
 function run_first_start_tasks() {
-  local ADMIN_USER=${1}
-  local ADMIN_PASSWORD=${2}
   echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
-  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  set_updatecenter_url_if_configured_in_registry "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   echo "Setting email configuration..."
-  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.smtp_port.secured" "25" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.smtp_port.secured" "25" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  get_out_of_date_plugins_via_rest_api "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  get_out_of_date_plugins_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   if [[ -n "${OUT_OF_DATE_PLUGINS}" ]]; then
     echo "The following plugins are not up-to-date:"
     echo "${OUT_OF_DATE_PLUGINS}"
     while read -r PLUGIN; do
       echo "Updating plugin ${PLUGIN}..."
-      curl ${CURL_LOG_LEVEL} --fail -u "${ADMIN_USER}":"${ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
+      curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
       echo "Plugin ${PLUGIN} updated"
     done <<< "${OUT_OF_DATE_PLUGINS}"
   fi
@@ -220,7 +218,7 @@ function first_sonar_start() {
   echo "Deactivating default admin user..."
   deactivate_default_admin_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${CURL_LOG_LEVEL}"
 
-  run_first_start_tasks "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  run_first_start_tasks
 
   set_successful_first_start_flag
 }
@@ -253,7 +251,7 @@ function subsequent_sonar_start() {
   grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 }
 
-function removeTemporaryUser(){
+function remove_temporary_user(){
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
   remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
 }
@@ -316,7 +314,6 @@ function ensure_correct_branch_plugin_state() {
     fi
   done
 }
-
 
 ### End of function declarations, work is done now
 
@@ -407,7 +404,7 @@ stopSonarQube ${SONAR_PROCESS_ID}
 echo "Ensure correct branch plugin state"
 ensure_correct_branch_plugin_state
 
-removeTemporaryUser
+remove_temporary_user
 
 doguctl state "ready"
 
