@@ -174,9 +174,7 @@ function run_first_start_tasks() {
   local ADMIN_PASSWORD=${2}
   echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  echo "DEBUG: create_user_group_via_rest_api DONE"
   grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  echo "DEBUG: grant_admin_group_permissions DONE"
   set_updatecenter_url_if_configured_in_registry "${ADMIN_USER}" "${ADMIN_PASSWORD}"
   echo "Setting email configuration..."
   set_property_via_rest_api "email.smtp_host.secured" "postfix" "${ADMIN_USER}" "${ADMIN_PASSWORD}"

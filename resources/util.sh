@@ -254,11 +254,9 @@ function get_user_id() {
 function add_temporary_admin_group() {
   GROUP_NAME=${1}
   # Add group to "groups" table
-  echo "DEBUG: database: ${DATABASE_DB}"
   execute_sql_statement_on_database "INSERT INTO groups (name, description, organization_uuid) VALUES ('${GROUP_NAME}', 'Temporary admin group', 'temporary');"
   local GROUP_ID
   GROUP_ID=$(get_group_id "${GROUP_NAME}")
-  echo "DEBUG: Created ${GROUP_NAME} group with id ${GROUP_ID}"
   # Grant admin permissions in "group_roles" table
   execute_sql_statement_on_database "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES (${GROUP_ID}, 'admin', 'temporary');"
 }
