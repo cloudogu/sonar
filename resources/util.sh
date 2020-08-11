@@ -91,28 +91,6 @@ function wait_for_sonar_to_get_healthy() {
   done
 }
 
-function create_dogu_admin_user_and_save_password() {
-  AUTH_USER=$1
-  AUTH_PASSWORD=$2
-  LOG_LEVEL=$3
-  echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
-  DOGU_ADMIN_PASSWORD=$(doguctl random)
-  create_user_via_rest_api "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
-  add_user_to_group_via_rest_api "${DOGU_ADMIN}" "sonar-administrators" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
-  # saving dogu admin password in registry
-  doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
-  printf "\\n"
-}
-
-function deactivate_dogu_admin_user() {
-  AUTH_USER=$1
-  AUTH_PASSWORD=$2
-  LOG_LEVEL=$3
-  echo "Removing ${DOGU_ADMIN} user..."
-  deactivate_user_via_rest_api "${DOGU_ADMIN}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
-  printf "\\n"
-}
-
 function create_user_via_rest_api() {
   LOGIN=$1
   NAME=$2

@@ -8,13 +8,11 @@ set -o pipefail
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
-# create_dogu_admin_user_and_save_password()
 # add_temporary_admin_user()
 # getSHA1PW()
 # create_user_via_rest_api()
 # add_user_to_group_via_rest_api()
 # set_successful_first_start_flag()
-# DOGU_ADMIN variable
 # shellcheck disable=SC1091
 source util.sh
 
@@ -160,12 +158,12 @@ function set_updatecenter_url_if_configured_in_registry() {
 function grant_admin_group_permissions() {
     local admin_group=${1}
     local ADMIN_USER=${2}
-    local dogu_admin_password=${3}
+    local ADMIN_PASSWORD=${3}
     printf "Adding admin privileges to CES admin group...\\n"
     for permission in ${ADMIN_PERMISSIONS}
     do
       printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${admin_group}"
-      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${ADMIN_USER}" "${dogu_admin_password}"
+      grant_permission_to_group_via_rest_api "${admin_group}" "${permission}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
     done
 }
 
@@ -263,13 +261,11 @@ function removeTemporaryUser(){
 function remove_permissions_from_last_admin_group() {
     local admin_group=${CES_ADMIN_GROUP_LAST}
     printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
-    local dogu_admin_password
-    dogu_admin_password=$(doguctl config -e dogu_admin_password)
 
     for permission in ${ADMIN_PERMISSIONS}
     do
       printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
-      remove_permission_of_group_via_rest_api "${admin_group}" "${permission}" "${DOGU_ADMIN}" "${dogu_admin_password}"
+      remove_permission_of_group_via_rest_api "${admin_group}" "${permission}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
     done
 }
 
