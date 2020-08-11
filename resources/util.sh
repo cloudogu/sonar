@@ -74,8 +74,8 @@ function getSHA1PW() {
 function remove_temporary_admin_user() {
   local TEMPORARY_ADMIN_USER=${1}
   local ADMIN_ID
-  ADMIN_ID=$(get_user_id "${TEMPORARY_ADMIN_USER}")
-  execute_sql_statement_on_database "DELETE FROM groups_users WHERE user_id=${ADMIN_ID};"
+#  ADMIN_ID=$(get_user_id "${TEMPORARY_ADMIN_USER}")
+  execute_sql_statement_on_database "DELETE FROM groups_users WHERE user_id=(SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}');"
   execute_sql_statement_on_database "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
 }
 
@@ -178,16 +178,16 @@ function set_successful_first_start_flag() {
   doguctl config successfulFirstStart true
 }
 
-# getLastAdminGroupOrGlobalAdminGroup echoes admin_group__last value from the registry if it was set, otherwise
+# get_last_admin_group_or_global_admin_group echoes admin_group__last value from the registry if it was set, otherwise
 # it echoes the current (global) admin_group.
 #
 # Store the result in a variable like this:
-#  myAdminGroup=$(getLastAdminGroupOrGlobalAdminGroup)
+#  myAdminGroup=$(get_last_admin_group_or_global_admin_group)
 #
 # note that 'echo' returns the string to the caller and _does not_ print the value to stdout. It is also not possible
 # to add debug echo's/printf's/etc.
 # see https://stackoverflow.com/questions/14482943/
-function getLastAdminGroupOrGlobalAdminGroup() {
+function get_last_admin_group_or_global_admin_group() {
     local admin_group_last=""
 
     if admin_group_last=$(doguctl config admin_group_last) ;
@@ -205,6 +205,22 @@ function update_last_admin_group_in_registry() {
 
     local newAdminGroup=$1
     doguctl config admin_group_last "${newAdminGroup}"
+}
+
+function update_last_temp_admin_in_registry() {
+  ADMIN_USERNAME=${1}
+  ADMIN_GROUP=${2}
+  doguctl config "last_tmp_admin_name" "${ADMIN_USERNAME}"
+  doguctl config "last_tmp_admin_group" "${ADMIN_GROUP}"
+}
+
+function remove_last_temp_admin() {
+  echo "Removing last tmp admin..."
+  ADMIN_USERNAME=$(doguctl config "last_tmp_admin_name" --default " ")
+  ADMIN_GROUP=$(doguctl config "last_tmp_admin_group" --default " ")
+
+  remove_temporary_admin_user "${ADMIN_USERNAME}"
+  remove_temporary_admin_group "${ADMIN_GROUP}"
 }
 
 function install_plugin_via_api() {
@@ -270,10 +286,10 @@ function add_temporary_admin_group_via_rest_api_with_default_credentials() {
 
 function remove_temporary_admin_group() {
   local GROUP_NAME=${1}
-  local GROUP_ID
-  GROUP_ID=$(get_group_id "${GROUP_NAME}")
+#  local GROUP_ID
+#  GROUP_ID=$(get_group_id "${GROUP_NAME}")
   # Remove group entry from "group_roles" table
-  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id='${GROUP_ID}';"
+  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id=(SELECT id from groups WHERE name='${GROUP_NAME}');"
   # Remove group from "groups" table
   execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
 }

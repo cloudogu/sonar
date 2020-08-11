@@ -23,7 +23,7 @@ export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
 # get variables
 CES_ADMIN_GROUP=$(doguctl config --global admin_group)
-CES_ADMIN_GROUP_LAST=$(getLastAdminGroupOrGlobalAdminGroup)
+CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
@@ -375,9 +375,13 @@ done
 # check whether firstSonarStart has already been performed
 if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   create_temporary_admin_for_first_start
+  remove_last_temp_admin
+  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
   first_sonar_start
 else
   create_temporary_admin_for_subsequent_start
+  remove_last_temp_admin
+  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
   subsequent_sonar_start "${TEMPORARY_ADMIN_PASSWORD}"
 fi
 
