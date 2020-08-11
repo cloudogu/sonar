@@ -59,12 +59,6 @@ function add_temporary_admin_user() {
   execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
 }
 
-function get_user_id () {
-  USER_LOGIN=${1}
-  ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${USER_LOGIN}';")
-  return "${ADMIN_ID_PSQL_OUTPUT}"
-}
-
 function getSHA1PW() {
     PW="${1}"
     SALT="${2}"
@@ -73,8 +67,6 @@ function getSHA1PW() {
 
 function remove_temporary_admin_user() {
   local TEMPORARY_ADMIN_USER=${1}
-  local ADMIN_ID
-#  ADMIN_ID=$(get_user_id "${TEMPORARY_ADMIN_USER}")
   execute_sql_statement_on_database "DELETE FROM groups_users WHERE user_id=(SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}');"
   execute_sql_statement_on_database "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
 }
@@ -240,41 +232,13 @@ function install_plugin_via_api() {
   fi
 }
 
-function get_group_id() {
-  local GROUP_NAME
-  local GROUP_ID_PSQL_OUTPUT
-  local GROUP_ID
-  GROUP_NAME=${1}
-  GROUP_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM groups WHERE name='${GROUP_NAME}';")
-  GROUP_ID=$(echo "${GROUP_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
-  if [[ -z ${GROUP_ID} ]]; then
-    # id has only one digit
-    GROUP_ID=$(echo "${GROUP_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
-  fi
-  echo "${GROUP_ID}"
-}
-
-function get_user_id() {
-  local USER_NAME=${1}
-  local USER_ID_PSQL_OUTPUT
-  local USER_ID
-  USER_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${USER_NAME}';")
-  USER_ID=$(echo "${USER_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
-  if [[ -z ${USER_ID} ]]; then
-    # id has only one digit
-    USER_ID=$(echo "${USER_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
-  fi
-  echo "${USER_ID}"
-}
-
 function add_temporary_admin_group() {
   GROUP_NAME=${1}
   # Add group to "groups" table
   execute_sql_statement_on_database "INSERT INTO groups (name, description, organization_uuid) VALUES ('${GROUP_NAME}', 'Temporary admin group', 'temporary');"
-  local GROUP_ID
-  GROUP_ID=$(get_group_id "${GROUP_NAME}")
+  local GROUP_ID_QUERY="SELECT id from groups WHERE name='${GROUP_NAME}'"
   # Grant admin permissions in "group_roles" table
-  execute_sql_statement_on_database "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES (${GROUP_ID}, 'admin', 'temporary');"
+  execute_sql_statement_on_database "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES ((${GROUP_ID_QUERY}), 'admin', 'temporary');"
 }
 
 function add_temporary_admin_group_via_rest_api_with_default_credentials() {
@@ -286,8 +250,6 @@ function add_temporary_admin_group_via_rest_api_with_default_credentials() {
 
 function remove_temporary_admin_group() {
   local GROUP_NAME=${1}
-#  local GROUP_ID
-#  GROUP_ID=$(get_group_id "${GROUP_NAME}")
   # Remove group entry from "group_roles" table
   execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id=(SELECT id from groups WHERE name='${GROUP_NAME}');"
   # Remove group from "groups" table
@@ -301,15 +263,14 @@ function create_temporary_admin_user_with_temporary_admin_group() {
   local TEMPORARY_ADMIN_GROUP=${3}
   local SALT
   local HASHED_PW
-  local GROUP_ID
   SALT=$(doguctl random)
   HASHED_PW=$(getSHA1PW "${PASSWORD}" "${SALT}")
   execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
   VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
   # add temporary admin user to temporary admin group
-  ADMIN_ID=$(get_user_id "${TEMPORARY_ADMIN_USER}")
-  GROUP_ID=$(get_group_id "${TEMPORARY_ADMIN_GROUP}")
-  execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, ${GROUP_ID});"
+  local ADMIN_ID_QUERY="SELECT id from users WHERE login='${TEMPORARY_ADMIN_USER}'"
+  local GROUP_ID_QUERY="SELECT id from groups WHERE name='${TEMPORARY_ADMIN_GROUP}'"
+  execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES ((${ADMIN_ID_QUERY}), (${GROUP_ID_QUERY}));"
 }
 
 function create_temporary_admin_user_via_rest_api_with_default_credentials() {
