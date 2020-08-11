@@ -2,17 +2,11 @@
 const config = require('./config');
 
 exports.expectStateUser = function(user) {
-    console.log("user:");
     console.log(user);
-    console.log("config:");
     console.log(config);
-    console.log("expect login");
     expect(user.login).toBe(config.username);
-    console.log("expect email");
     expect(user.email).toBe(config.email);
-    console.log("expect displayName");
     expect(user.name).toBe(config.displayName);
-    console.log("expect username");
     expect(user.externalIdentity).toBe(config.username);
 }
 
