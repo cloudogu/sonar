@@ -62,7 +62,7 @@ function import_quality_profiles_if_present {
   fi;
 }
 
-function setProxyConfiguration(){
+function set_proxy_configuration(){
   removeProxyRelatedEntriesFrom ${SONAR_PROPERTIES_FILE}
   # Write proxy settings if enabled in etcd
   if [[ "true" == "$(doguctl config --global proxy/enabled)" ]]; then
@@ -118,7 +118,7 @@ function create_user_group_via_rest_api() {
   DESCRIPTION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl -v ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
   # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
   printf "\\n"
 }
@@ -128,7 +128,7 @@ function grant_permission_to_group_via_rest_api() {
   PERMISSION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl -v ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
 function remove_permission_of_group_via_rest_api() {
@@ -238,9 +238,6 @@ function subsequent_sonar_start() {
 
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  echo "${TEMPORARY_ADMIN_USER}"
-  echo "${TEMPORARY_ADMIN_PASSWORD}"
-
   # Creating CES admin group if not existent or if it has changed
   GROUP_NAME=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search" | jq ".groups[] | select(.name==\"${CES_ADMIN_GROUP}\")" | jq '.name')
   if [[ -z "${GROUP_NAME}" ]]; then
@@ -251,7 +248,7 @@ function subsequent_sonar_start() {
   grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 }
 
-function remove_temporary_user(){
+function remove_temporary_admin_user_and_group(){
   remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
   remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
 }
@@ -315,6 +312,17 @@ function ensure_correct_branch_plugin_state() {
   done
 }
 
+function create_temporary_admin_user(){
+  if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
+    create_temporary_admin_for_first_start
+  else
+    create_temporary_admin_for_subsequent_start
+  fi
+
+  remove_last_temp_admin
+  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+}
+
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -347,7 +355,7 @@ echo "Rendering sonar properties template..."
 render_properties_template
 
 echo "Setting proxy configuration, if existent..."
-setProxyConfiguration
+set_proxy_configuration
 
 echo "Starting SonarQube for configuration api... "
 java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
@@ -365,17 +373,14 @@ while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
   sleep 3
 done
 
+# add temporary admin to to configuration
+create_temporary_admin_user
+
 # check whether firstSonarStart has already been performed
 if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
-  create_temporary_admin_for_first_start
-  remove_last_temp_admin
-  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
   first_sonar_start
 else
-  create_temporary_admin_for_subsequent_start
-  remove_last_temp_admin
-  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
-  subsequent_sonar_start "${TEMPORARY_ADMIN_PASSWORD}"
+  subsequent_sonar_start
 fi
 
 if has_admin_group_changed
@@ -404,7 +409,7 @@ stopSonarQube ${SONAR_PROCESS_ID}
 echo "Ensure correct branch plugin state"
 ensure_correct_branch_plugin_state
 
-remove_temporary_user
+remove_temporary_admin_user_and_group
 
 doguctl state "ready"
 
