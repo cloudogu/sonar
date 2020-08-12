@@ -5,6 +5,8 @@ import com.cloudogu.ces.dogubuildlib.*
 import com.cloudogu.ces.zaleniumbuildlib.*
 
 node('vagrant') {
+
+    String doguName = "sonar"
     Git git = new Git(this, "cesmarvin")
     git.committerName = 'cesmarvin'
     git.committerEmail = 'cesmarvin@cloudogu.com'
@@ -16,7 +18,12 @@ node('vagrant') {
                 // Keep only the last x builds to preserve space
                 buildDiscarder(logRotator(numToKeepStr: '10')),
                 // Don't run concurrent builds for a branch, because they use the same workspace directory
-                disableConcurrentBuilds()
+                disableConcurrentBuilds(),
+                // Parameter to activate dogu upgrade test on demand
+                parameters([
+                        booleanParam(defaultValue: false, description: 'Test dogu upgrade from latest release or optionally from defined version below', name: 'TestDoguUpgrade'),
+                        string(defaultValue: '', description: 'Old Dogu version for the upgrade test (optional; e.g. 2.222.1-1)', name: 'OldDoguVersionForUpgradeTest')
+                ])
         ])
 
         EcoSystem ecoSystem = new EcoSystem(this, "gcloud-ces-operations-internal-packer", "jenkins-gcloud-ces-operations-internal")
@@ -62,6 +69,33 @@ node('vagrant') {
             stage('Integration Tests') {
                 ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie')
             }
+
+            if (params.TestDoguUpgrade != null && params.TestDoguUpgrade){
+                stage('Upgrade dogu') {
+                    // Remove new dogu that has been built and tested above
+                    ecoSystem.purgeDogu(doguName)
+
+                    if (params.OldDoguVersionForUpgradeTest != '' && !params.OldDoguVersionForUpgradeTest.contains('v')){
+                        println "Installing user defined version of dogu: " + params.OldDoguVersionForUpgradeTest
+                        ecoSystem.installDogu("official/" + doguName + " " + params.OldDoguVersionForUpgradeTest)
+                    } else {
+                        println "Installing latest released version of dogu..."
+                        ecoSystem.installDogu("official/" + doguName)
+                    }
+                    ecoSystem.startDogu(doguName)
+                    ecoSystem.waitForDogu(doguName)
+                    ecoSystem.upgradeDogu(ecoSystem)
+
+                    // Wait for upgraded dogu to get healthy
+                    ecoSystem.waitForDogu(doguName)
+                }
+
+                stage('Integration Tests - After Upgrade') {
+                    // Run integration tests again to verify that the upgrade was successful
+                    ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie')
+                }
+            }
+
 
             if (gitflow.isReleaseBranch()) {
                 String releaseVersion = git.getSimpleBranchName();
