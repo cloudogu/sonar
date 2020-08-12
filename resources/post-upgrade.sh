@@ -122,4 +122,10 @@ if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
   curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=provisioning&groupName=${CES_ADMIN_GROUP}"
 fi
 
+
+if [[ ${FROM_VERSION} == "6"* || "${FROM_VERSION}" =~ ^7.9.1-[1234]$ || ${FROM_VERSION} == "7.9.3-1" ]]; then
+  echo "Removing deprecated sonarqubedoguadmin..."
+  remove_temporary_admin_user "sonarqubedoguadmin"
+fi
+
 doguctl config post_upgrade_running false
