@@ -312,17 +312,6 @@ function ensure_correct_branch_plugin_state() {
   done
 }
 
-function create_temporary_admin_user(){
-  if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
-    create_temporary_admin_for_first_start
-  else
-    create_temporary_admin_for_subsequent_start
-  fi
-
-  remove_last_temp_admin
-  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
-}
-
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -374,12 +363,15 @@ while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
 done
 
 # add temporary admin to to configuration
-create_temporary_admin_user
+remove_last_temp_admin
+update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 
 # check whether firstSonarStart has already been performed
 if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
+  create_temporary_admin_for_first_start
   first_sonar_start
 else
+  create_temporary_admin_for_subsequent_start
   subsequent_sonar_start
 fi
 
