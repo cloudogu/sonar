@@ -357,7 +357,7 @@ sonar.web.context=/sonar
 # The following properties MUST NOT be used in production environments.
 
 # Elasticsearch HTTP connector
-#sonar.search.httpPort=-1
+sonar.search.httpPort=8181
 
 # ces properties
 sonar.jdbc.username={{ .Config.GetAndDecrypt "sa-postgresql/username" }}

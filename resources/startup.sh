@@ -260,7 +260,7 @@ function remove_permissions_from_last_admin_group() {
     for permission in ${ADMIN_PERMISSIONS}
     do
       printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
-      remove_permission_of_group_via_rest_api "${admin_group}" "${permission}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+      remove_permission_from_group "${admin_group}" "${permission}"
     done
 }
 
@@ -369,6 +369,8 @@ update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_
 # check whether firstSonarStart has already been performed
 if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   create_temporary_admin_for_first_start
+  #create_temporary_admin_for_subsequent_start
+  #curl localhost:8181/users/_refresh
   first_sonar_start
 else
   create_temporary_admin_for_subsequent_start
@@ -395,13 +397,15 @@ set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER
 echo "Installing preconfigured plugins..."
 install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
+echo "Removing temporary admin..."
+remove_temporary_admin_user_and_group
+curl -X DELETE localhost:8181/users
+
 echo "Configuration done, stopping SonarQube..."
 stopSonarQube ${SONAR_PROCESS_ID}
 
 echo "Ensure correct branch plugin state"
 ensure_correct_branch_plugin_state
-
-remove_temporary_admin_user_and_group
 
 doguctl state "ready"
 

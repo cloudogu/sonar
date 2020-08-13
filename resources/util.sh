@@ -234,6 +234,15 @@ function remove_temporary_admin_group() {
   execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
 }
 
+function remove_permission_from_group() {
+  local GROUP_NAME=${1}
+  local PERMISSION=${2}
+  # Remove group entry from "group_roles" table
+  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id=(SELECT id from groups WHERE name='${GROUP_NAME}' and role='${PERMISSION}');"
+  # Remove group from "groups" table
+  execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
+}
+
 function create_temporary_admin_user_with_temporary_admin_group() {
   # create temporary admin user
   local TEMPORARY_ADMIN_USER=${1}
