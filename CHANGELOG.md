@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v7.9.3-2] - 2020-08-14
+### Changed
+* Removed sonarqubedoguadmin
+* An admin with a random name is generated at every startup for configuration and removed after startup
+
 ## [v7.9.3-1] - 2020-06-18
 ### Fixed
 * Fixed bug where a new dogu admin user was created on each restart

@@ -55,26 +55,25 @@ describe('cas rest basic authentication', () => {
 
     test('rest - check user attributes', async () => {
         const response = await request(config.baseUrl)
-            .get(config.sonarContextPath + "/api/users/search")
+            .get(config.sonarContextPath + "/api/users/search?q="+config.username)
             .auth(config.username, config.password)
             .expect('Content-Type', 'application/json')
             .type('json')
-            .send({'q': config.username})
             .expect(200);
 
-        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[1];
+        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
         expectations.expectStateUser(userObject);
     });
 
     test('rest - user is administrator', async () => {
         const response = await request(config.baseUrl)
-            .get(config.sonarContextPath + "/api/users/search")
+            .get(config.sonarContextPath + "/api/users/search?q="+config.username)
             .auth(config.username, config.password)
             .expect('Content-Type', 'application/json')
             .type('json')
-            .send({'q': config.username})
             .expect(200);
-        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[1];
+
+        const userObject = JSON.parse(response["request"]["req"]["res"]["text"]).users[0];
         expectations.expectStateAdmin(userObject);
     });
 

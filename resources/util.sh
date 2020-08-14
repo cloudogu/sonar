@@ -7,7 +7,6 @@ DATABASE_IP=postgresql
 DATABASE_USER=$(doguctl config -e sa-postgresql/username)
 DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
 DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-DOGU_ADMIN="sonarqubedoguadmin"
 
 function execute_sql_statement_on_database(){
   PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
@@ -44,11 +43,12 @@ function wait_for_sonar_to_get_up() {
 function add_temporary_admin_user() {
   # temporarily create admin user and add to admin groups
   TEMPORARY_ADMIN_USER=${1}
-  HASHED_PW=${2}
-  SALT=${3}
+  TEMPORARY_ADMIN_PASSWORD=${2}
+  SALT=$(doguctl random)
+  HASHED_PW=$(getSHA1PW "${TEMPORARY_ADMIN_PASSWORD}" "${SALT}")
   execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
   VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
- 
+
   ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
   ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
   if [[ -z ${ADMIN_ID} ]]; then
@@ -66,7 +66,8 @@ function getSHA1PW() {
 }
 
 function remove_temporary_admin_user() {
-  TEMPORARY_ADMIN_USER=${1}
+  local TEMPORARY_ADMIN_USER=${1}
+  execute_sql_statement_on_database "DELETE FROM groups_users WHERE user_id=(SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}');"
   execute_sql_statement_on_database "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
 }
 
@@ -90,28 +91,6 @@ function wait_for_sonar_to_get_healthy() {
   done
 }
 
-function create_dogu_admin_user_and_save_password() {
-  AUTH_USER=$1
-  AUTH_PASSWORD=$2
-  LOG_LEVEL=$3
-  echo "Creating ${DOGU_ADMIN} and granting admin permissions..."
-  DOGU_ADMIN_PASSWORD=$(doguctl random)
-  create_user_via_rest_api "${DOGU_ADMIN}" "SonarQubeDoguAdmin" "${DOGU_ADMIN_PASSWORD}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
-  add_user_to_group_via_rest_api "${DOGU_ADMIN}" "sonar-administrators" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
-  # saving dogu admin password in registry
-  doguctl config -e dogu_admin_password "${DOGU_ADMIN_PASSWORD}"
-  printf "\\n"
-}
-
-function deactivate_dogu_admin_user() {
-  AUTH_USER=$1
-  AUTH_PASSWORD=$2
-  LOG_LEVEL=$3
-  echo "Removing ${DOGU_ADMIN} user..."
-  deactivate_user_via_rest_api "${DOGU_ADMIN}" "${AUTH_USER}" "${AUTH_PASSWORD}" "${LOG_LEVEL}"
-  printf "\\n"
-}
-
 function create_user_via_rest_api() {
   LOGIN=$1
   NAME=$2
@@ -128,6 +107,22 @@ function deactivate_user_via_rest_api() {
   AUTH_PASSWORD=$3
   LOG_LEVEL=$4
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=${LOGIN}"
+}
+
+function create_group_via_rest_api() {
+  GROUP_NAME=$1
+  AUTH_USER=$2
+  AUTH_PASSWORD=$3
+  LOG_LEVEL=$4
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?description=tempadmingroup&name=${GROUP_NAME}"
+}
+
+function grant_admin_permissions_to_group() {
+  GROUP_NAME=$1
+  AUTH_USER=$2
+  AUTH_PASSWORD=$3
+  LOG_LEVEL=$4
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?groupName=${GROUP_NAME}&permission=admin"
 }
 
 function add_user_to_group_via_rest_api() {
@@ -148,37 +143,21 @@ function deactivate_default_admin_user() {
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
 }
 
-function create_dogu_admin_and_deactivate_default_admin() {
-  LOG_LEVEL=$1
-
-  # default admin credentials (admin, admin) are used
-  create_dogu_admin_user_and_save_password admin admin "${LOG_LEVEL}"
-
-  echo "Deactivating default admin account..."
-  DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
-  deactivate_default_admin_user "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" "${LOG_LEVEL}"
-  printf "\\n"
-
-  echo "Waiting for configuration changes to be internally executed..."
-  sleep 3
-}
-
 function set_successful_first_start_flag() {
   echo "Setting successfulFirstStart registry key..."
   doguctl config successfulFirstStart true
 }
 
-
-# getLastAdminGroupOrGlobalAdminGroup echoes admin_group__last value from the registry if it was set, otherwise
+# get_last_admin_group_or_global_admin_group echoes admin_group__last value from the registry if it was set, otherwise
 # it echoes the current (global) admin_group.
 #
 # Store the result in a variable like this:
-#  myAdminGroup=$(getLastAdminGroupOrGlobalAdminGroup)
+#  myAdminGroup=$(get_last_admin_group_or_global_admin_group)
 #
 # note that 'echo' returns the string to the caller and _does not_ print the value to stdout. It is also not possible
 # to add debug echo's/printf's/etc.
 # see https://stackoverflow.com/questions/14482943/
-function getLastAdminGroupOrGlobalAdminGroup() {
+function get_last_admin_group_or_global_admin_group() {
     local admin_group_last=""
 
     if admin_group_last=$(doguctl config admin_group_last) ;
@@ -198,6 +177,22 @@ function update_last_admin_group_in_registry() {
     doguctl config admin_group_last "${newAdminGroup}"
 }
 
+function update_last_temp_admin_in_registry() {
+  ADMIN_USERNAME=${1}
+  ADMIN_GROUP=${2}
+  doguctl config "last_tmp_admin_name" "${ADMIN_USERNAME}"
+  doguctl config "last_tmp_admin_group" "${ADMIN_GROUP}"
+}
+
+function remove_last_temp_admin() {
+  echo "Removing last tmp admin..."
+  ADMIN_USERNAME=$(doguctl config "last_tmp_admin_name" --default " ")
+  ADMIN_GROUP=$(doguctl config "last_tmp_admin_group" --default " ")
+
+  remove_temporary_admin_user "${ADMIN_USERNAME}"
+  remove_temporary_admin_group "${ADMIN_GROUP}"
+}
+
 function install_plugin_via_api() {
   PLUGIN=${1}
   USER=${2}
@@ -213,4 +208,64 @@ function install_plugin_via_api() {
   else
     echo "Plugin ${PLUGIN} installed."
   fi
+}
+
+function add_temporary_admin_group() {
+  GROUP_NAME=${1}
+  # Add group to "groups" table
+  execute_sql_statement_on_database "INSERT INTO groups (name, description, organization_uuid) VALUES ('${GROUP_NAME}', 'Temporary admin group', 'temporary');"
+  local GROUP_ID_QUERY="SELECT id from groups WHERE name='${GROUP_NAME}'"
+  # Grant admin permissions in "group_roles" table
+  execute_sql_statement_on_database "INSERT INTO group_roles (group_id, role, organization_uuid) VALUES ((${GROUP_ID_QUERY}), 'admin', 'temporary');"
+}
+
+function add_temporary_admin_group_via_rest_api_with_default_credentials() {
+  local GROUP_NAME=${1}
+  local LOGLEVEL=${2}
+  create_group_via_rest_api "${GROUP_NAME}" admin admin "${LOGLEVEL}"
+  grant_admin_permissions_to_group "${GROUP_NAME}" admin admin "${LOGLEVEL}"
+}
+
+function remove_temporary_admin_group() {
+  local GROUP_NAME=${1}
+  # Remove group entry from "group_roles" table
+  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id=(SELECT id from groups WHERE name='${GROUP_NAME}');"
+  # Remove group from "groups" table
+  execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
+}
+
+function remove_permission_from_group() {
+  local GROUP_NAME=${1}
+  local PERMISSION=${2}
+  # Remove group entry from "group_roles" table
+  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_id=(SELECT id from groups WHERE name='${GROUP_NAME}' and role='${PERMISSION}');"
+  # Remove group from "groups" table
+  execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
+}
+
+function create_temporary_admin_user_with_temporary_admin_group() {
+  # create temporary admin user
+  local TEMPORARY_ADMIN_USER=${1}
+  local PASSWORD=${2}
+  local TEMPORARY_ADMIN_GROUP=${3}
+  local SALT
+  local HASHED_PW
+  SALT=$(doguctl random)
+  HASHED_PW=$(getSHA1PW "${PASSWORD}" "${SALT}")
+  execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
+  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
+  # add temporary admin user to temporary admin group
+  local ADMIN_ID_QUERY="SELECT id from users WHERE login='${TEMPORARY_ADMIN_USER}'"
+  local GROUP_ID_QUERY="SELECT id from groups WHERE name='${TEMPORARY_ADMIN_GROUP}'"
+  execute_sql_statement_on_database "INSERT INTO groups_users (user_id, group_id) VALUES ((${ADMIN_ID_QUERY}), (${GROUP_ID_QUERY}));"
+}
+
+function create_temporary_admin_user_via_rest_api_with_default_credentials() {
+  # create temporary admin user
+  local TEMPORARY_ADMIN_USER=${1}
+  local PASSWORD=${2}
+  local TEMPORARY_ADMIN_GROUP=${3}
+  local LOGLEVEL=${4}
+  create_user_via_rest_api "${TEMPORARY_ADMIN_USER}" "TemporaryAdministrator" "${PASSWORD}" admin admin "${LOGLEVEL}"
+  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" "admin" "admin" "${LOGLEVEL}"
 }

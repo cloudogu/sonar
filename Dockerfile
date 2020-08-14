@@ -1,7 +1,7 @@
 FROM registry.cloudogu.com/official/java:11.0.4-2
 
 LABEL NAME="official/sonar" \
-    VERSION="7.9.3-1" \
+    VERSION="7.9.3-2" \
     maintainer="robert.auer@cloudogu.com"
 
 ENV SONAR_VERSION=7.9.3 \
@@ -38,6 +38,6 @@ EXPOSE 9000
 
 USER sonar
 
-HEALTHCHECK CMD [ $(doguctl healthy sonar; echo $?) == 0 ]
+HEALTHCHECK CMD doguctl healthy sonar || exit 1
 
 CMD ["/startup.sh"]
