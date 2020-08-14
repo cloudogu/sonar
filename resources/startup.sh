@@ -373,6 +373,7 @@ if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   create_temporary_admin_for_first_start
   first_sonar_start
 else
+  IS_FIRST_START="false"
   create_temporary_admin_for_subsequent_start
   subsequent_sonar_start
 fi
@@ -400,7 +401,7 @@ install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 echo "Configuration done, stopping SonarQube..."
 stopSonarQube ${SONAR_PROCESS_ID}
 
-if [[ $IS_FIRST_START == "true" ]]; then
+if [[ "${IS_FIRST_START}" == "true" ]]; then
   # remove the es6 cache since it contains leftovers of the default admin
   echo "Removing es6 cache..."
   rm -r /opt/sonar/data/es6
