@@ -38,6 +38,6 @@ EXPOSE 9000
 
 USER sonar
 
-HEALTHCHECK CMD [ $(doguctl healthy sonar; echo $?) == 0 ]
+HEALTHCHECK CMD doguctl healthy sonar || exit 1
 
 CMD ["/startup.sh"]

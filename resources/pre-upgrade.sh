@@ -82,7 +82,10 @@ if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
   mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
 fi
 
-if [[ "${FROM_VERSION}" == "5."* || "${FROM_VERSION}" == "6."* || "${FROM_VERSION}" =~ ^7.9.1-[1234]$ ]]; then
+if [[ ${FROM_VERSION} == "6"* || "${FROM_VERSION}" =~ ^7.9.1-[1234]$ || ${FROM_VERSION} == "7.9.3-1" ]]; then
+  echo "Removing deprecated sonarqubedoguadmin..."
+  remove_temporary_admin_user "sonarqubedoguadmin"
+
   echo "Removing es6 cache..."
   rm -r /opt/sonar/data/es6
 fi

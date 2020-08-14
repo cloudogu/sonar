@@ -11,7 +11,6 @@ set -o pipefail
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
-# create_dogu_admin_and_deactivate_default_admin()
 # set_successful_first_start_flag()
 # shellcheck disable=SC1091
 source util.sh
