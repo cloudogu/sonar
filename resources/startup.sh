@@ -288,17 +288,22 @@ function has_admin_group_changed() {
 }
 
 function install_default_plugins() {
+  echo "Installing preconfigured plugins..."
+  local PLUGINS
+
   if PLUGINS=$(doguctl config sonar.plugins.default); then
-    USER=${1}
-    PASSWORD=${2}
-
     echo "found plugins '${PLUGINS}' to be installed on startup"
+    local USER=${1}
+    local PASSWORD=${2}
 
+    local storedIFS="${IFS}"
     IFS=','
+
     for plugin in $PLUGINS; do
       install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
     done
 
+    IFS="${storedIFS}"
     echo "finished installation of default plugins"
   else
     echo "no key sonar.plugins.default found"
