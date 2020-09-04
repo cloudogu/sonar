@@ -276,8 +276,18 @@ function subsequent_sonar_start() {
 
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  # Creating CES admin group if not existent or if it has changed
+  resetCesAdmin "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+}
+
+function resetCesAdmin() {
+  echo "Ensure that CES admin exists and has sufficient privileges..."
+
+  local TEMPORARY_ADMIN_USER="${1}"
+  local TEMPORARY_ADMIN_PASSWORD="${2}"
+
+  # Create CES admin group if not existent or if it has changed
   GROUP_NAME=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search" | jq ".groups[] | select(.name==\"${CES_ADMIN_GROUP}\")" | jq '.name')
+
   if [[ -z "${GROUP_NAME}" ]]; then
     echo "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
