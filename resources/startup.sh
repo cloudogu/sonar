@@ -68,22 +68,38 @@ function importQualityProfiles() {
   # import all quality profiles that are in the suitable directory
   for file in "${QUALITY_PROFILE_DIR}"/*; do
     echo "Found quality profile ${file}"
+    local importResponse=""
+    local importSuccesses=0
+    local importFailures=0
     # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-    local RESPONSE_IMPORT
-    RESPONSE_IMPORT=$(curl ${CURL_LOG_LEVEL} -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@$file" http://localhost:9000/sonar/api/qualityprofiles/restore)
-    echo "Import response for quality profile ${file}: ${RESPONSE_IMPORT}"
+    importResponse=$(curl ${CURL_LOG_LEVEL} -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@${file}" http://localhost:9000/sonar/api/qualityprofiles/restore)
 
     # check if import is successful
-    if ! (echo "${RESPONSE_IMPORT}" | grep -o errors); then
-      echo "Import of quality profile $file was successful"
+    if ! (echo "${importResponse}" | grep -o errors); then
+      importSuccesses=$(echo "${importResponse}" | jq '.ruleSuccesses')
+      importFailures=$(echo "${importResponse}" | jq '.ruleFailures')
+
+      echo "Import of quality profile for ${file} returned with: ${importSuccesses} rules okay, ${importFailures} rules failed."
+
+      if [[ "${importSuccesses}" == "0" ]]; then
+        echo "WARNING: No quality profiles could be imported from file ${file}. Import returned: '${importResponse}'"
+      fi
+
+      if [[ "${importFailures}" != "0" ]]; then
+        echo "ERROR: There were quality profiles import failures from file ${file}. Import returned: '${importResponse}'"
+        # do not remove file so the customer has the chance to  the file content
+        continue
+      fi
+
       # delete file if import was successful. This works also with files not owned by sonar user, f. i. root ownership.
-      rm -f "$file"
-      echo "Removed $file file"
+      rm -f "${file}"
+      echo "Removed quality profile file ${file}"
     else
-      echo "Import of quality profile $file has not been successful"
-      echo "${RESPONSE_IMPORT}"
+      echo "Import of quality profile ${file} has not been successful. Import returned: '${importResponse}'"
     fi
   done
+
+  echo "Quality profile import finished..."
 }
 
 function set_proxy_configuration(){
@@ -453,7 +469,7 @@ remove_temporary_admin_user_and_group
 
 # Please note!
 # in order to import quality profiles the plugin installation must be finished along with a sonar restart
-if areQualityProfilesPresent ; then
+if areQualityProfilesPresent; then
   # the temporary admin has different permissions during first start and subsequent start
   # only the subsequent temporary admin has sufficient privileges to import quality profiles
   create_temporary_admin_for_subsequent_start
