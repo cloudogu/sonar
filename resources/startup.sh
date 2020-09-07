@@ -87,7 +87,7 @@ function importQualityProfiles() {
 
       if [[ "${importFailures}" != "0" ]]; then
         echo "ERROR: There were quality profiles import failures from file ${file}. Import returned: '${importResponse}'"
-        # do not remove file so the customer has the chance to  the file content
+        # do not remove file so the user has the chance to examine the file content
         continue
       fi
 
