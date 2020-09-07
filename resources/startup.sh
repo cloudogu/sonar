@@ -46,15 +46,15 @@ TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
 TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
 
-function areQualityProfilesPresent() {
+function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
 
   local resultCode
   if [[ "$(ls -A ${QUALITY_PROFILE_DIR})" ]]; then
-    echo "Quality profiles are present..."
+    echo "Quality profiles are present for import..."
     resultCode=0
   else
-    echo "There are no quality profiles..."
+    echo "There are no quality profiles for import present..."
     resultCode=1
   fi
 
@@ -467,9 +467,8 @@ fi
 echo "Removing temporary admin..."
 remove_temporary_admin_user_and_group
 
-# Please note!
 # in order to import quality profiles the plugin installation must be finished along with a sonar restart
-if areQualityProfilesPresent; then
+if areQualityProfilesPresentToImport; then
   # the temporary admin has different permissions during first start and subsequent start
   # only the subsequent temporary admin has sufficient privileges to import quality profiles
   create_temporary_admin_for_subsequent_start
