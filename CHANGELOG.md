@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v7.9.3-3] - 2020-09-07
+### Changed
+- Changed order of plugin installation and quality profile import (#46)
+    - Quality profiles may depend on plugins. This change guarantees a restart of SonarQube if quality profiles are about to be imported
+    - There will be no additional restart if no quality profiles are supposed to be imported
+
 ## [v7.9.3-2] - 2020-08-14
 ### Changed
 * Removed sonarqubedoguadmin

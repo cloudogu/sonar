@@ -3,6 +3,18 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+echo "                                     ./////,                    "
+echo "                                 ./////==//////*                "
+echo "                                ////.  ___   ////.              "
+echo "                         ,**,. ////  ,////A,  */// ,**,.        "
+echo "                    ,/////////////*  */////*  *////////////A    "
+echo "                   ////'        \VA.   '|'   .///'       '///*  "
+echo "                  *///  .*///*,         |         .*//*,   ///* "
+echo "                  (///  (//////)**--_./////_----*//////)   ///) "
+echo "                   V///   '°°°°      (/////)      °°°°'   ////  "
+echo "                    V/////(////////\. '°°°' ./////////(///(/'   "
+echo "                       'V/(/////////////////////////////V'      "
+
 # import util functions:
 # execute_sql_statement_on_database()
 # wait_for_sonar_status_endpoint()
@@ -34,33 +46,60 @@ TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
 TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
 
-function import_quality_profiles_if_present {
-  AUTH_USER=$1
-  AUTH_PASSWORD=$2
+function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
-  # only import profiles if quality profiles are present
-  if [[ "$(ls -A "${QUALITY_PROFILE_DIR}")" ]];
-  then
-    # import all quality profiles that are in the suitable directory
-    for file in "${QUALITY_PROFILE_DIR}"/*
-    do
-      # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-      RESPONSE_IMPORT=$(curl ${CURL_LOG_LEVEL} --fail -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@$file" localhost:9000/sonar/api/qualityprofiles/restore)
-      # check if import is successful
-      if ! ( echo "${RESPONSE_IMPORT}" | grep -o errors);
-      then
-        echo "Import of quality profile $file was successful"
-        # delete file if import was successful
-        rm -f "$file"
-        echo "Removed $file file"
-      else
-        echo "Import of quality profile $file has not been successful"
-        echo "${RESPONSE_IMPORT}"
-      fi;
-    done;
+
+  local resultCode
+  if [[ "$(ls -A ${QUALITY_PROFILE_DIR})" ]]; then
+    echo "Quality profiles are present for import..."
+    resultCode=0
   else
-    echo "No quality profiles to import"
-  fi;
+    echo "There are no quality profiles for import present..."
+    resultCode=1
+  fi
+
+  return ${resultCode}
+}
+
+function importQualityProfiles() {
+  local AUTH_USER=$1
+  local AUTH_PASSWORD=$2
+
+  # import all quality profiles that are in the suitable directory
+  for file in "${QUALITY_PROFILE_DIR}"/*; do
+    echo "Found quality profile ${file}"
+    local importResponse=""
+    local importSuccesses=0
+    local importFailures=0
+    # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
+    importResponse=$(curl ${CURL_LOG_LEVEL} -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@${file}" http://localhost:9000/sonar/api/qualityprofiles/restore)
+
+    # check if import is successful
+    if ! (echo "${importResponse}" | grep -o errors); then
+      importSuccesses=$(echo "${importResponse}" | jq '.ruleSuccesses')
+      importFailures=$(echo "${importResponse}" | jq '.ruleFailures')
+
+      echo "Import of quality profile for ${file} returned with: ${importSuccesses} rules okay, ${importFailures} rules failed."
+
+      if [[ "${importSuccesses}" == "0" ]]; then
+        echo "WARNING: No quality profiles could be imported from file ${file}. Import returned: '${importResponse}'"
+      fi
+
+      if [[ "${importFailures}" != "0" ]]; then
+        echo "ERROR: There were quality profiles import failures from file ${file}. Import returned: '${importResponse}'"
+        # do not remove file so the user has the chance to examine the file content
+        continue
+      fi
+
+      # delete file if import was successful. This works also with files not owned by sonar user, f. i. root ownership.
+      rm -f "${file}"
+      echo "Removed quality profile file ${file}"
+    else
+      echo "Import of quality profile ${file} has not been successful. Import returned: '${importResponse}'"
+    fi
+  done
+
+  echo "Quality profile import finished..."
 }
 
 function set_proxy_configuration(){
@@ -157,19 +196,19 @@ function set_updatecenter_url_if_configured_in_registry() {
 }
 
 function grant_admin_group_permissions() {
-    local ADMIN_GROUP=${1}
-    local ADMIN_USER=${2}
-    local ADMIN_PASSWORD=${3}
-    printf "Adding admin privileges to CES admin group...\\n"
+  local ADMIN_GROUP=${1}
+  local ADMIN_USER=${2}
+  local ADMIN_PASSWORD=${3}
+  printf "Adding admin privileges to CES admin group...\\n"
     for permission in ${ADMIN_PERMISSIONS}
     do
-      printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${ADMIN_GROUP}"
-      grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-    done
+    printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${ADMIN_GROUP}"
+    grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  done
 }
 
 function run_first_start_tasks() {
-  echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
+  echo "Adding CES admin group '${CES_ADMIN_GROUP}'..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
@@ -190,13 +229,27 @@ function run_first_start_tasks() {
   fi
 }
 
+function startSonarQubeInBackground() {
+  local reason="${1}"
+
+  echo "Starting SonarQube for ${reason}... "
+  java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
+  SONAR_PROCESS_ID=$!
+
+  wait_for_sonar_status_endpoint "${HEALTH_TIMEOUT}"
+
+  wait_for_sonar_to_get_up "${HEALTH_TIMEOUT}"
+}
+
 # parameter: process-id of sonar
 function stopSonarQube() {
-    # kill SonarQube and all child processes
-    kill "${1}"
-    # In some cases the underlying webserver and elasticsearch are not exiting immediately. The wrapper will kill them after 5 minutes.
-    echo "Wait for SonarQube exit. This can take up to 5 minutes."
-    wait "${1}" || true
+  local PID="${1}"
+  # kill SonarQube and all child processes
+  kill "${PID}"
+  # In some cases the underlying webserver and elasticsearch are not exiting immediately. The wrapper will kill them after 5 minutes.
+  echo "Wait for SonarQube exit. This can take up to 5 minutes."
+  wait "${PID}" || true
+  echo "SonarQube was stopped."
 }
 
 function create_temporary_admin_for_first_start() {
@@ -239,10 +292,20 @@ function subsequent_sonar_start() {
 
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  # Creating CES admin group if not existent or if it has changed
+  resetCesAdmin "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+}
+
+function resetCesAdmin() {
+  echo "Ensure that CES admin exists and has sufficient privileges..."
+
+  local TEMPORARY_ADMIN_USER="${1}"
+  local TEMPORARY_ADMIN_PASSWORD="${2}"
+
+  # Create CES admin group if not existent or if it has changed
   GROUP_NAME=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search" | jq ".groups[] | select(.name==\"${CES_ADMIN_GROUP}\")" | jq '.name')
+
   if [[ -z "${GROUP_NAME}" ]]; then
-    echo  "Adding CES admin group '${CES_ADMIN_GROUP}'..."
+    echo "Adding CES admin group '${CES_ADMIN_GROUP}'..."
     create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   fi
   # Grant the right permissions to the new or existing group
@@ -255,38 +318,43 @@ function remove_temporary_admin_user_and_group(){
 }
 
 function remove_permissions_from_last_admin_group() {
-    local admin_group=${CES_ADMIN_GROUP_LAST}
-    printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
+  local admin_group=${CES_ADMIN_GROUP_LAST}
+  printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
 
-    for permission in ${ADMIN_PERMISSIONS}
-    do
-      printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
-      remove_permission_from_group "${admin_group}" "${permission}"
-    done
+  for permission in ${ADMIN_PERMISSIONS}
+  do
+    printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
+    remove_permission_from_group "${admin_group}" "${permission}"
+  done
 }
 
 # It returns 0 if the admin group names differs from each other. Otherwise, it returns the value 1.
 function has_admin_group_changed() {
-    if [[ "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST" ]];
-    then
-        return 1
-    else
-        return 0
-    fi
+  if [[ "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST" ]];
+  then
+    return 1
+  else
+    return 0
+  fi
 }
 
 function install_default_plugins() {
+  echo "Installing preconfigured plugins..."
+  local PLUGINS
+
   if PLUGINS=$(doguctl config sonar.plugins.default); then
-    USER=${1}
-    PASSWORD=${2}
-
     echo "found plugins '${PLUGINS}' to be installed on startup"
+    local USER=${1}
+    local PASSWORD=${2}
 
+    local storedIFS="${IFS}"
     IFS=','
+
     for plugin in $PLUGINS; do
       install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
     done
 
+    IFS="${storedIFS}"
     echo "finished installation of default plugins"
   else
     echo "no key sonar.plugins.default found"
@@ -347,15 +415,7 @@ render_properties_template
 echo "Setting proxy configuration, if existent..."
 set_proxy_configuration
 
-echo "Starting SonarQube for configuration api... "
-java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
-SONAR_PROCESS_ID=$!
-
-echo "Waiting for SonarQube status endpoint to be available (max. ${HEALTH_TIMEOUT} seconds)..."
-wait_for_sonar_status_endpoint ${HEALTH_TIMEOUT}
-
-echo "Waiting for SonarQube to get up (max. ${HEALTH_TIMEOUT} seconds)..."
-wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
+startSonarQubeInBackground "configuration api"
 
 # check whether post-upgrade script is still running
 while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
@@ -379,10 +439,10 @@ else
 fi
 
 if has_admin_group_changed
-  then
-      remove_permissions_from_last_admin_group
-  else
-      echo "Did not detect a change of the admin group. Continue as usual..."
+then
+  remove_permissions_from_last_admin_group
+else
+  echo "Did not detect a change of the admin group. Continue as usual..."
 fi
 
 update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
@@ -390,12 +450,9 @@ update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 echo "Setting sonar.core.serverBaseURL..."
 set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-import_quality_profiles_if_present "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-
 echo "Setting email.from configuration..."
 set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-echo "Installing preconfigured plugins..."
 install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
 echo "Configuration done, stopping SonarQube..."
@@ -409,6 +466,19 @@ fi
 
 echo "Removing temporary admin..."
 remove_temporary_admin_user_and_group
+
+# in order to import quality profiles the plugin installation must be finished along with a sonar restart
+if areQualityProfilesPresentToImport; then
+  # the temporary admin has different permissions during first start and subsequent start
+  # only the subsequent temporary admin has sufficient privileges to import quality profiles
+  create_temporary_admin_for_subsequent_start
+  startSonarQubeInBackground "importing quality profiles"
+
+  importQualityProfiles "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+
+  stopSonarQube "${SONAR_PROCESS_ID}"
+  remove_temporary_admin_user_and_group
+fi
 
 echo "Ensure correct branch plugin state"
 ensure_correct_branch_plugin_state
