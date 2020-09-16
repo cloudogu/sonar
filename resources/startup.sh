@@ -179,6 +179,68 @@ function remove_permission_of_group_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
+function existsPermissionTemplate() {
+  echo "Check if permission template exists..."
+  local permissionTemplate="default_template"
+  local authUser=${1}
+  local authPassword=${2}
+
+  local searchResult
+  local exitCode=0
+  local templateSearchRequest="http://localhost:9000/sonar/api/permissions/search_templates?q=${permissionTemplate}"
+  searchResult=$(curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" "${templateSearchRequest}") || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Permission template search request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
+    return 1
+  fi
+
+  local jqGetTemplateOrFalse=".permissionTemplates[] | select(.id==\"${permissionTemplate}\") // false"
+  local templateJsonOrFalse
+  templateJsonOrFalse=$(echo "${searchResult}" | jq "${jqGetTemplateOrFalse}")
+
+  if [[ "${templateJsonOrFalse}" == "" || "${templateJsonOrFalse}" == "false" ]]; then
+    echo "Did not find permission template ${permissionTemplate}."
+    return 1
+  else
+    echo "Permission template ${permissionTemplate} exists."
+    return 0
+  fi
+}
+
+function addCesAdminGroupToPermissionTemplate() {
+  local groupToAdd="${CES_ADMIN_GROUP}"
+  echo "Adding group ${groupToAdd} to permission template..."
+
+  local permissionTemplate="default_template"
+  local permissionsToGrant="admin codeviewer issueadmin securityhotspotadmin scan user"
+  local authUser=${1}
+  local authPassword=${2}
+
+
+  for permissionToGrant in ${permissionsToGrant}; do
+    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplate}" "${permissionToGrant}" "${authUser}" "${authPassword}"
+  done
+}
+
+function addGroupToPermissionTemplateViaRestAPI() {
+  local groupToAdd="${1}"
+  local permissionTemplate="${2}"
+  local permissionToGrant="${3}"
+  local authUser=${4}
+  local authPassword=${5}
+
+  echo "Adding group '${groupToAdd}' and permission '${permissionToGrant}' to ${permissionTemplate}..."
+
+  local addGroupRequest="http://localhost:9000/sonar/api/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${permissionToGrant}"
+  local exitCode=0
+  curl -f -s -S -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Permission template add group request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
+  fi
+}
+
 function get_out_of_date_plugins_via_rest_api() {
   AUTH_USER=$1
   AUTH_PASSWORD=$2
@@ -446,6 +508,10 @@ else
 fi
 
 update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
+
+if existsPermissionTemplate "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
+  addCesAdminGroupToPermissionTemplate "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+fi
 
 echo "Setting sonar.core.serverBaseURL..."
 set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
