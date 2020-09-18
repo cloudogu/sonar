@@ -57,6 +57,11 @@
       "Name": "sonar.plugins.default",
       "Description": "Comma separated list of plugin names to install on start",
       "Optional": true
+    },
+    {
+      "Name": "amend_projects_with_ces_admin_permissions",
+      "Description": "If set to 'all', the ces-admin group will be enabled to administer all project. This key will automatically reset to 'none' afterwards.",
+      "Optional": true
     }
   ],
   "HealthChecks": [
