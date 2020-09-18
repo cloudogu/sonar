@@ -42,6 +42,8 @@ QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
 HEALTH_TIMEOUT=600
 ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
+PROJECT_PERMISSIONS="admin codeviewer issueadmin securityhotspotadmin scan user"
+KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
 TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
 TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
@@ -164,11 +166,20 @@ function create_user_group_via_rest_api() {
 }
 
 function grant_permission_to_group_via_rest_api() {
-  GROUPNAME=$1
-  PERMISSION=$2
-  AUTH_USER=$3
-  AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  local groupName=${1}
+  local permission=${2}
+  local additionalParams=${3}
+  local authUser=${4}
+  local authPassword=${5}
+  local addGroupRequest="http://localhost:9000/sonar/api/permissions/add_group?permission=${permission}&groupName=${groupName}&${additionalParams}"
+
+  local exitCode=0
+  curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Granting permission to group ${groupName} failed with code ${exitCode}."
+    exit 1
+  fi
 }
 
 function remove_permission_of_group_via_rest_api() {
@@ -180,7 +191,6 @@ function remove_permission_of_group_via_rest_api() {
 }
 
 function existsPermissionTemplate() {
-  echo "Check if permission template exists..."
   local permissionTemplate="default_template"
   local authUser=${1}
   local authPassword=${2}
@@ -200,44 +210,107 @@ function existsPermissionTemplate() {
   templateJsonOrFalse=$(echo "${searchResult}" | jq "${jqGetTemplateOrFalse}")
 
   if [[ "${templateJsonOrFalse}" == "" || "${templateJsonOrFalse}" == "false" ]]; then
-    echo "Did not find permission template ${permissionTemplate}."
+    echo "Skip updating permission template..."
     return 1
   else
-    echo "Permission template ${permissionTemplate} exists."
     return 0
   fi
 }
 
 function addCesAdminGroupToPermissionTemplate() {
   local groupToAdd="${CES_ADMIN_GROUP}"
-  echo "Adding group ${groupToAdd} to permission template..."
-
   local permissionTemplate="default_template"
-  local permissionsToGrant="admin codeviewer issueadmin securityhotspotadmin scan user"
   local authUser=${1}
   local authPassword=${2}
 
+  echo "Adding group '${groupToAdd}' to permission template '${permissionTemplate}'..."
 
-  for permissionToGrant in ${permissionsToGrant}; do
-    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplate}" "${permissionToGrant}" "${authUser}" "${authPassword}"
+  for projectPermissionToGrant in ${PROJECT_PERMISSIONS}; do
+    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplate}" "${projectPermissionToGrant}" "${authUser}" "${authPassword}"
   done
 }
 
 function addGroupToPermissionTemplateViaRestAPI() {
   local groupToAdd="${1}"
   local permissionTemplate="${2}"
-  local permissionToGrant="${3}"
+  local projectPermissionToGrant="${3}"
   local authUser=${4}
   local authPassword=${5}
 
-  echo "Adding group '${groupToAdd}' and permission '${permissionToGrant}' to ${permissionTemplate}..."
-
-  local addGroupRequest="http://localhost:9000/sonar/api/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${permissionToGrant}"
+  local addGroupRequest="http://localhost:9000/sonar/api/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
   local exitCode=0
-  curl -f -s -S -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+  curl ${CURL_LOG_LEVEL} -f -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
 
   if [[ "${exitCode}" != "0" ]]; then
     echo "ERROR: Permission template add group request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
+  fi
+}
+
+function shouldCesAdminGroupToAllProjects() {
+  local result
+  local exitCode=0
+  result=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}" --default "none") || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Reading the registry '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}' failed with exitCode ${exitCode}."
+    return 1
+  fi
+
+  if [[ "${result}" == "all" ]] ;  then
+    echo "All projects should amended with CES-Admin group permissions..."
+    return 0
+  fi
+
+  echo "Skip amending projects with CES-Admin group permissions..."
+  return 1
+}
+
+function addCesAdminGroupToProject() {
+  local groupToAdd="${CES_ADMIN_GROUP}"
+  local authUser=${1}
+  local authPassword=${2}
+  local projects=""
+  local getProjectsRequest='http://localhost:9000/sonar/api/projects/search?ps=500'
+
+  local exitCode=0
+  projects=$(curl ${CURL_LOG_LEVEL} -f -u "admin:admin1" "${getProjectsRequest}" | jq '.components[] | .id + "=" + .key' | sed 's/"//g') || exitCode=$?
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Fetching projects failed with code ${exitCode}. Abort granting project permissions to group ${groupToAdd}..."
+    return
+  fi
+
+  local projectKey
+  local projectId
+
+  for project in ${projects}; do
+    projectKey="${project#*=}"
+    projectId="${project%=*}"
+    echo "Adding group ${groupToAdd} to project ${projectKey}..."
+    # use projectKey for logging (easy to find in UI) and projectId for requests (projectKey may contain nasty special characters)
+    addCesAdminGroupToProjectWithPermissions "${groupToAdd}" "${projectId}" "${authUser}" "${authPassword}"
+  done
+}
+
+function addCesAdminGroupToProjectWithPermissions() {
+  local groupToAdd=${1}
+  local projectId=${2}
+  local authUser=${3}
+  local authPassword=${4}
+  local additionalParams="projectId=${projectId}"
+
+  for projectPermissionToGrant in ${PROJECT_PERMISSIONS}; do
+    grant_permission_to_group_via_rest_api "${groupToAdd}" "${projectPermissionToGrant}" "${additionalParams}" "${authUser}" "${authPassword}"
+  done
+}
+
+function resetAddCesAdminGroupToProjectKey() {
+  local exitCode=0
+  KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
+  result=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}" "none") || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Writing the registry key '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}' failed with exitCode ${exitCode}."
+    return 1
   fi
 }
 
@@ -261,11 +334,13 @@ function grant_admin_group_permissions() {
   local ADMIN_GROUP=${1}
   local ADMIN_USER=${2}
   local ADMIN_PASSWORD=${3}
+  local noAdditionalParams=""
+
   printf "Adding admin privileges to CES admin group...\\n"
     for permission in ${ADMIN_PERMISSIONS}
     do
     printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${ADMIN_GROUP}"
-    grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+    grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${noAdditionalParams}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
   done
 }
 
@@ -511,6 +586,12 @@ update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 
 if existsPermissionTemplate "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
   addCesAdminGroupToPermissionTemplate "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+fi
+
+if shouldCesAdminGroupToAllProjects ; then
+  addCesAdminGroupToProject "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  # adding a group is a time-expensive action (~2 sec per project). Resetting the key avoids unnecessary downtime.
+  resetAddCesAdminGroupToProjectKey
 fi
 
 echo "Setting sonar.core.serverBaseURL..."
