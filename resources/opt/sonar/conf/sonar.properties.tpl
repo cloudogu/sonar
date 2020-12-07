@@ -403,7 +403,29 @@ sonar.log.console=true
 
 # java opts
 # Always set javax.net.ssl.trustStore to SONARQUBE_HOME/truststore.jks
-sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit -Djdk.http.auth.tunneling.disabledSchemes=""
+sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom \
+                             -Djava.awt.headless=true \
+                             -Djava.net.preferIPv4Stack=true \
+                             -Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks \
+                             -Djavax.net.ssl.trustStorePassword=changeit \
+                             -Djdk.http.auth.tunneling.disabledSchemes=""
+
+{{ if .Config.Exists "container_config/memory_limit" }}
+# Use javaOpts to override -Xmx options for sonar web
+sonar.web.javaOpts=-XX:MaxRAMPercentage=15.0 \
+                   -XX:MinRAMPercentage=15.0 \
+                   -XX:InitialRAMPercentage=15.0
+
+# Use javaOpts to override -Xmx options for sonar search
+sonar.search.javaOpts=-XX:MaxRAMPercentage=15.0 \
+                      -XX:MinRAMPercentage=15.0 \
+                      -XX:InitialRAMPercentage=15.0
+
+# Use javaOpts to override -Xmx options for sonar compute engine
+sonar.ce.javaOpts=-XX:MaxRAMPercentage=15.0 \
+                  -XX:MinRAMPercentage=15.0 \
+                  -XX:InitialRAMPercentage=15.0
+{{ end }}
 
 {{ if .Config.Exists "sonar.updatecenter.url" }}
 sonar.updatecenter.url = {{ .Config.Get "sonar.updatecenter.url" }}
