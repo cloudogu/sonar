@@ -142,24 +142,6 @@ function writeProxyAuthenticationCredentialsTo(){
 }
 
 function render_properties_template() {
-  # Sed memory limits for subprocesses. Has an advantage against storing them in the template file
-  # as the default values only needs to be maintained in the dogu.json
-  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" != "empty" ]];  then
-
-    # Retrieve configurable java limits from etcd, valid default values exist
-    WEB_MINMAX=$(doguctl config "container_config/java_sonar_web_max_min_ram_percentage")
-    echo "Setting memory limits for sonar web process to MaxRAMPercentage: ${WEB_MINMAX} and MinRAMPercentage: ${WEB_MINMAX}..."
-    sed -i "s/java_sonar_web_max_min_ram_percentage/${WEB_MINMAX}/"  "${SONAR_PROPERTIES_FILE}.tpl"
-
-    SEARCH_MINMAX=$(doguctl config "container_config/java_sonar_search_max_min_ram_percentage")
-    echo "Setting memory limits for sonar search process to MaxRAMPercentage: ${SEARCH_MINMAX} and MinRAMPercentage: ${SEARCH_MINMAX}..."
-    sed -i "s/java_sonar_search_max_min_ram_percentage/${SEARCH_MINMAX}/"  "${SONAR_PROPERTIES_FILE}.tpl"
-
-    CENGINE_MINMAX=$(doguctl config "container_config/java_sonar_cengine_max_min_ram_percentage")
-    echo "Setting memory limits for sonar compute engine process to MaxRAMPercentage: ${CENGINE_MINMAX} and MinRAMPercentage: ${CENGINE_MINMAX}..."
-    sed -i "s/java_sonar_cengine_max_min_ram_percentage/${CENGINE_MINMAX}/"  "${SONAR_PROPERTIES_FILE}.tpl"
-  fi
-
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 }
 
