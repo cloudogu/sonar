@@ -142,6 +142,24 @@ function writeProxyAuthenticationCredentialsTo(){
 }
 
 function render_properties_template() {
+  # Sed memory limits for subprocesses. Has an advantage against storing them in the template file
+  # as the default values only needs to be maintained in the dogu.json
+  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" != "empty" ]];  then
+
+    # Retrieve configurable java limits from etcd, valid default values exist
+    WEB_MINMAX=$(doguctl config "container_config/java_sonar_web_max_min_ram_percentage")
+    echo "Setting memory limits for sonar web process to MaxRAMPercentage: ${WEB_MINMAX} and MinRAMPercentage: ${WEB_MINMAX}..."
+    sed -i "s/java_sonar_web_max_min_ram_percentage/${WEB_MINMAX}/"  "${SONAR_PROPERTIES_FILE}.tpl"
+
+    SEARCH_MINMAX=$(doguctl config "container_config/java_sonar_search_max_min_ram_percentage")
+    echo "Setting memory limits for sonar search process to MaxRAMPercentage: ${SEARCH_MINMAX} and MinRAMPercentage: ${SEARCH_MINMAX}..."
+    sed -i "s/java_sonar_search_max_min_ram_percentage/${SEARCH_MINMAX}/"  "${SONAR_PROPERTIES_FILE}.tpl"
+
+    CENGINE_MINMAX=$(doguctl config "container_config/java_sonar_cengine_max_min_ram_percentage")
+    echo "Setting memory limits for sonar compute engine process to MaxRAMPercentage: ${CENGINE_MINMAX} and MinRAMPercentage: ${CENGINE_MINMAX}..."
+    sed -i "s/java_sonar_cengine_max_min_ram_percentage/${CENGINE_MINMAX}/"  "${SONAR_PROPERTIES_FILE}.tpl"
+  fi
+
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 }
 
@@ -237,10 +255,12 @@ function startSonarQubeInBackground() {
     java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
        & SONAR_PROCESS_ID=$!
   else
-    echo "Starting SonarQube with memory limits for ${reason}... "
-    java -XX:MaxRAMPercentage=40.0 \
-         -XX:MinRAMPercentage=40.0 \
-                  -XX:+PrintFlagsFinal \
+    MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
+    MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
+
+    echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE} for ${reason}..."
+    java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
+         -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
          -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
          & SONAR_PROCESS_ID=$!
   fi
@@ -500,8 +520,12 @@ if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" 
   echo "Starting SonarQube without memory limits..."
   exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
 else
-  echo "Starting SonarQube with memory limits..."
-  exec java -XX:MaxRAMPercentage=40.0 \
-            -XX:MinRAMPercentage=40.0 \
+  # Retrieve configurable java limits from etcd, valid default values exist
+  MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
+  MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
+
+  echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
+  exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
+            -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
             -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
 fi

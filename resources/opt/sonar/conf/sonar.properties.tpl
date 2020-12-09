@@ -412,19 +412,19 @@ sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom \
 
 {{ if .Config.Exists "container_config/memory_limit" }}
 # Use javaOpts to override -Xmx options for sonar web
-sonar.web.javaOpts=-XX:MaxRAMPercentage=15.0 \
-                   -XX:MinRAMPercentage=15.0 \
-                   -XX:InitialRAMPercentage=15.0
+sonar.web.javaOpts=-XX:MaxRAMPercentage=java_sonar_web_max_min_ram_percentage \
+                   -XX:MinRAMPercentage=java_sonar_web_max_min_ram_percentage \
+                   -XX:InitialRAMPercentage=java_sonar_web_max_min_ram_percentage
 
 # Use javaOpts to override -Xmx options for sonar search
-sonar.search.javaOpts=-XX:MaxRAMPercentage=15.0 \
-                      -XX:MinRAMPercentage=15.0 \
-                      -XX:InitialRAMPercentage=15.0
+sonar.search.javaOpts=-XX:MaxRAMPercentage=java_sonar_search_max_min_ram_percentage  \
+                      -XX:MinRAMPercentage=java_sonar_search_max_min_ram_percentage \
+                      -XX:InitialRAMPercentage=java_sonar_search_max_min_ram_percentage
 
 # Use javaOpts to override -Xmx options for sonar compute engine
-sonar.ce.javaOpts=-XX:MaxRAMPercentage=15.0 \
-                  -XX:MinRAMPercentage=15.0 \
-                  -XX:InitialRAMPercentage=15.0
+sonar.ce.javaOpts=-XX:MaxRAMPercentage=java_sonar_cengine_max_min_ram_percentage \
+                  -XX:MinRAMPercentage=java_sonar_cengine_max_min_ram_percentage \
+                  -XX:InitialRAMPercentage=java_sonar_cengine_max_min_ram_percentage
 {{ end }}
 
 {{ if .Config.Exists "sonar.updatecenter.url" }}

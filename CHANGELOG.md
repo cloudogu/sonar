@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added the ability to configure the memory limits with `cesapp edit-config`
-- Optimized max heap size in limited dockerized environments (#51)
+- Ability to configure the `MaxRamPercentage` and `MinRamPercentage` for the sonar main/web/search/compute processes inside the container via `cesapp edit-conf` (#51)
 
 ## [v7.9.4-1] - 2020-11-13
 ### Changed
