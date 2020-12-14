@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added the ability to configure the memory limits with `cesapp edit-config`
+- Ability to configure the `MaxRamPercentage` and `MinRamPercentage` for the sonar main/web/search/compute processes inside the container via `cesapp edit-conf` (#51)
+
 ## [v7.9.4-1] - 2020-11-13
 ### Changed
 - Upgrade to SonarQube 7.9.4 LTS; #49

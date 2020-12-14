@@ -232,9 +232,20 @@ function run_first_start_tasks() {
 function startSonarQubeInBackground() {
   local reason="${1}"
 
-  echo "Starting SonarQube for ${reason}... "
-  java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar &
-  SONAR_PROCESS_ID=$!
+  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]];  then
+    echo "Starting SonarQube without memory limits for ${reason}... "
+    java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
+       & SONAR_PROCESS_ID=$!
+  else
+    MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
+    MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
+
+    echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE} for ${reason}..."
+    java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
+         -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
+         -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
+         & SONAR_PROCESS_ID=$!
+  fi
 
   wait_for_sonar_status_endpoint "${HEALTH_TIMEOUT}"
 
@@ -486,5 +497,17 @@ ensure_correct_branch_plugin_state
 doguctl state "ready"
 
 exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
-echo "Starting SonarQube..."
-exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+
+if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]];  then
+  echo "Starting SonarQube without memory limits..."
+  exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+else
+  # Retrieve configurable java limits from etcd, valid default values exist
+  MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
+  MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
+
+  echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
+  exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
+            -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
+            -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+fi
