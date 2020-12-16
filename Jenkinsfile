@@ -1,5 +1,5 @@
 #!groovy
-@Library(['github.com/cloudogu/ces-build-lib@1.44.2', 'github.com/cloudogu/dogu-build-lib@v1.1.0', 'github.com/cloudogu/zalenium-build-lib@30923630'])
+@Library(['github.com/cloudogu/ces-build-lib@1.44.2', 'github.com/cloudogu/dogu-build-lib@v1.1.1', 'github.com/cloudogu/zalenium-build-lib@v2.1.0'])
 import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
 import com.cloudogu.ces.zaleniumbuildlib.*
@@ -22,7 +22,8 @@ node('vagrant') {
                 // Parameter to activate dogu upgrade test on demand
                 parameters([
                         booleanParam(defaultValue: false, description: 'Test dogu upgrade from latest release or optionally from defined version below', name: 'TestDoguUpgrade'),
-                        string(defaultValue: '', description: 'Old Dogu version for the upgrade test (optional; e.g. 2.222.1-1)', name: 'OldDoguVersionForUpgradeTest')
+                        string(defaultValue: '', description: 'Old Dogu version for the upgrade test (optional; e.g. 2.222.1-1)', name: 'OldDoguVersionForUpgradeTest'),
+                        booleanParam(defaultValue: false, description: 'Enables the video recording during the test execution', name: 'EnableVideoRecording'),
                 ])
         ])
 
@@ -67,7 +68,7 @@ node('vagrant') {
             }
 
             stage('Integration Tests') {
-                ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie')
+                ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie', [], params.EnableVideoRecording)
             }
 
             if (params.TestDoguUpgrade != null && params.TestDoguUpgrade){
@@ -92,7 +93,7 @@ node('vagrant') {
 
                 stage('Integration Tests - After Upgrade') {
                     // Run integration tests again to verify that the upgrade was successful
-                    ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie')
+                    ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie', [], params.EnableVideoRecording)
                 }
             }
 
