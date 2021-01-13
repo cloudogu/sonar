@@ -1,7 +1,7 @@
 #!groovy
 @Library(['github.com/cloudogu/ces-build-lib@1.44.2', 'github.com/cloudogu/dogu-build-lib@v1.1.1', 'github.com/cloudogu/zalenium-build-lib@v2.1.0'])
 import com.cloudogu.ces.cesbuildlib.*
-import com.cloudogu.ces.dogubuildlib.*
+//import com.cloudogu.ces.dogubuildlib.*
 import com.cloudogu.ces.zaleniumbuildlib.*
 
 node('vagrant') {
@@ -42,7 +42,7 @@ node('vagrant') {
         try {
 
             stage('Provision') {
-                ecoSystem.provision("/dogu");
+                ecoSystem.provision("/dogu")
             }
 
             stage('Setup') {
@@ -99,7 +99,7 @@ node('vagrant') {
 
 
             if (gitflow.isReleaseBranch()) {
-                String releaseVersion = git.getSimpleBranchName();
+                String releaseVersion = git.getSimpleBranchName()
 
                 stage('Finish Release') {
                     gitflow.finishRelease(releaseVersion)
