@@ -410,6 +410,9 @@ sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom \
                              -Djavax.net.ssl.trustStorePassword=changeit \
                              -Djdk.http.auth.tunneling.disabledSchemes=""
 
+sonar.ce.javaAdditionalOpts=-Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks \
+            -Djavax.net.ssl.trustStorePassword=changeit
+
 {{ if .Config.Exists "container_config/memory_limit" }}
 # Use javaOpts to override -Xmx options for sonar web
 sonar.web.javaOpts=-XX:MaxRAMPercentage={{ .Config.Get "container_config/java_sonar_web_max_min_ram_percentage"}} \
