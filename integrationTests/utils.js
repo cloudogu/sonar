@@ -11,7 +11,7 @@ chromeCapabilities.set('chromeOptions', chromeOptions);
 chromeCapabilities.set('name', "Sonar ITs");
 // set filename pattern for zalenium videos
 chromeCapabilities.set("testFileNameTemplate", "{testName}_{testStatus}");
-chromeCapabilities.setAcceptInsecureCerts(true);
+chromeCapabilities.set("acceptInsecureCerts", true);
 
 const By = webdriver.By;
 const until = webdriver.until;

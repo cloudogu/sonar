@@ -65,6 +65,10 @@ module.exports = class AdminFunctions{
         await driver.findElement(By.css('input[name="submit"]')).click();
     };
 
+    async logoutViaCas(driver){
+      await driver.get(config.baseUrl + "/cas/logout");
+    }
+
     async logoutUserViaUI(driver) {
         // opening user dropdown menu
         await this.showUserMenu(driver);
@@ -74,14 +78,14 @@ module.exports = class AdminFunctions{
         // timeout is set in https://github.com/cloudogu/sonar-cas-plugin/blob/develop/src/main/resources/casLogoutUrl.js
         await driver.sleep(500);
         // click logout link
-        await driver.findElement(By.className("popup is-bottom")).findElement(By.css("a[href*='#']")).click();
+        await driver.findElement(By.className("popup is-bottom")).findElement(By.linkText("Log out")).click();
     };
 
     async showUserMenu(driver) {
         // wait for user button
         await driver.wait(until.elementLocated(By.className("dropdown-toggle navbar-avatar")),5000);
         // click user button
-        await driver.findElement(By.className("dropdown-toggle navbar-avatar")).click();
+        await driver.findElement(By.className("dropdown-toggle")).click();
     };
 
 	async giveAdminRightsToTestUserViaUsermgt(){

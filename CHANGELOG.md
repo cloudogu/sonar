@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Members of the CES administrator group receive project admin permissions for new projects (#3)
 
+## [v7.9.4-3] - 2021-02-01
+### Fixed
+- pass truststore as jvm options to compute engine (#56)
+
+### Changed
+- Update dogu-build-lib to `v1.1.1`
+- Update zalenium-build-lib to `v2.1.0`
+- toggle video recording with build parameter (#53)
+
+## [v7.9.4-2] - 2020-12-14
+### Added
+- Added the ability to configure the memory limits with `cesapp edit-config`
+- Ability to configure the `MaxRamPercentage` and `MinRamPercentage` for the sonar main/web/search/compute processes inside the container via `cesapp edit-conf` (#51)
+
+## [v7.9.4-1] - 2020-11-13
+### Changed
+- Upgrade to SonarQube 7.9.4 LTS; #49
+- Upgrade java base image to 11.0.5-4
+
 ## [v7.9.3-3] - 2020-09-07
 ### Changed
 - Changed order of plugin installation and quality profile import (#46)
