@@ -273,7 +273,7 @@ function addCesAdminGroupToProject() {
   local getProjectsRequest='http://localhost:9000/sonar/api/projects/search?ps=500'
 
   local exitCode=0
-  projects=$(curl ${CURL_LOG_LEVEL} -f -u "admin:admin1" "${getProjectsRequest}" | jq '.components[] | .id + "=" + .key' | sed 's/"//g') || exitCode=$?
+  projects=$(curl ${CURL_LOG_LEVEL} -f -u  "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq '.components[] | .id + "=" + .key' | sed 's/"//g') || exitCode=$?
   if [[ "${exitCode}" != "0" ]]; then
     echo "ERROR: Fetching projects failed with code ${exitCode}. Abort granting project permissions to group ${groupToAdd}..."
     return
