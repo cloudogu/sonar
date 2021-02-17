@@ -47,6 +47,7 @@ KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_perm
 TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
 TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+API_ENDPOINT="http://localhost:9000/sonar/api"
 
 function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
@@ -74,7 +75,7 @@ function importQualityProfiles() {
     local importSuccesses=0
     local importFailures=0
     # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-    importResponse=$(curl ${CURL_LOG_LEVEL} -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@${file}" http://localhost:9000/sonar/api/qualityprofiles/restore)
+    importResponse=$(curl ${CURL_LOG_LEVEL} -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@${file}" ${API_ENDPOINT}/qualityprofiles/restore)
 
     # check if import is successful
     if ! (echo "${importResponse}" | grep -o errors); then
@@ -152,7 +153,7 @@ function set_property_via_rest_api() {
   VALUE=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/settings/set?key=${PROPERTY}&value=${VALUE}"
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
 function create_user_group_via_rest_api() {
@@ -160,7 +161,7 @@ function create_user_group_via_rest_api() {
   DESCRIPTION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
   # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
   printf "\\n"
 }
@@ -171,7 +172,7 @@ function grant_permission_to_group_via_rest_api() {
   local additionalParams=${3}
   local authUser=${4}
   local authPassword=${5}
-  local addGroupRequest="http://localhost:9000/sonar/api/permissions/add_group?permission=${permission}&groupName=${groupName}&${additionalParams}"
+  local addGroupRequest="${API_ENDPOINT}/permissions/add_group?permission=${permission}&groupName=${groupName}&${additionalParams}"
 
   local exitCode=0
   curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
@@ -187,7 +188,7 @@ function remove_permission_of_group_via_rest_api() {
   PERMISSION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
 function existsPermissionTemplate() {
@@ -197,7 +198,7 @@ function existsPermissionTemplate() {
 
   local searchResult
   local exitCode=0
-  local templateSearchRequest="http://localhost:9000/sonar/api/permissions/search_templates?q=${permissionTemplate}"
+  local templateSearchRequest="${API_ENDPOINT}/permissions/search_templates?q=${permissionTemplate}"
   searchResult=$(curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" "${templateSearchRequest}") || exitCode=$?
 
   if [[ "${exitCode}" != "0" ]]; then
@@ -237,7 +238,7 @@ function addGroupToPermissionTemplateViaRestAPI() {
   local authUser=${4}
   local authPassword=${5}
 
-  local addGroupRequest="http://localhost:9000/sonar/api/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
+  local addGroupRequest="${API_ENDPOINT}/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
   local exitCode=0
   curl ${CURL_LOG_LEVEL} -f -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
 
@@ -270,7 +271,7 @@ function addCesAdminGroupToProject() {
   local authUser=${1}
   local authPassword=${2}
   local projects=""
-  local getProjectsRequest='http://localhost:9000/sonar/api/projects/search?ps=500'
+  local getProjectsRequest='${API_ENDPOINT}/projects/search?ps=500'
 
   local exitCode=0
   projects=$(curl ${CURL_LOG_LEVEL} -f -u  "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq '.components[] | .id + "=" + .key' | sed 's/"//g') || exitCode=$?
@@ -317,7 +318,7 @@ function resetAddCesAdminGroupToProjectKey() {
 function get_out_of_date_plugins_via_rest_api() {
   AUTH_USER=$1
   AUTH_PASSWORD=$2
-  OUT_OF_DATE_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X GET "http://localhost:9000/sonar/api/plugins/updates" | jq '.plugins' | jq '.[]' | jq -r '.key')
+  OUT_OF_DATE_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X GET "${API_ENDPOINT}/plugins/updates" | jq '.plugins' | jq '.[]' | jq -r '.key')
 }
 
 function set_updatecenter_url_if_configured_in_registry() {
@@ -450,7 +451,7 @@ function resetCesAdmin() {
   local TEMPORARY_ADMIN_PASSWORD="${2}"
 
   # Create CES admin group if not existent or if it has changed
-  GROUP_NAME=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "http://localhost:9000/sonar/api/user_groups/search" | jq ".groups[] | select(.name==\"${CES_ADMIN_GROUP}\")" | jq '.name')
+  GROUP_NAME=$(curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET "${API_ENDPOINT}/user_groups/search" | jq ".groups[] | select(.name==\"${CES_ADMIN_GROUP}\")" | jq '.name')
 
   if [[ -z "${GROUP_NAME}" ]]; then
     echo "Adding CES admin group '${CES_ADMIN_GROUP}'..."
