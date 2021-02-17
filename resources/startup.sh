@@ -271,7 +271,7 @@ function addCesAdminGroupToProject() {
   local authUser=${1}
   local authPassword=${2}
   local projects=""
-  local getProjectsRequest='${API_ENDPOINT}/projects/search?ps=500'
+  local getProjectsRequest="${API_ENDPOINT}/projects/search?ps=500"
 
   local exitCode=0
   projects=$(curl ${CURL_LOG_LEVEL} -f -u  "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq '.components[] | .id + "=" + .key' | sed 's/"//g') || exitCode=$?
