@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Members of the CES administrator group receive project admin permissions for new projects (#3)
-- CES-ADMIN group can be enabled to administer all projects using the key `amend_projects_with_ces_admin_permissions`
+- CES_ADMIN group can be enabled to administer all projects using the key `amend_projects_with_ces_admin_permissions`
 (see `dogu.json` for details)
 
 ## [v7.9.4-3] - 2021-02-01
