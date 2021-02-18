@@ -28,11 +28,10 @@ RUN set -x \
     && echo "${CAS_PLUGIN_JAR_SHA256} *${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" | sha256sum -c - \
     # create sonar user
     && addgroup -S -g 1000 sonar \
-    && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar
+    && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar \
+    && chown -R sonar:sonar ${SONARQUBE_HOME}
 
-COPY ./resources /
-
-RUN chown -R sonar:sonar ${SONARQUBE_HOME}
+COPY --chown=1000:1000 ./resources /
 
 EXPOSE 9000
 
