@@ -8,8 +8,8 @@ file:
     contains: []
   /startup.sh:
     exists: true
-    owner: root
-    group: root
+    owner: sonar
+    group: sonar
     filetype: file
     contains: []
   /opt/sonar/extensions/plugins/sonar-cas-plugin-2.0.1.jar:
