@@ -1,7 +1,4 @@
-## Benutzung des SonarQube-Dogus
-
-### Import von Qualitätsprofilen
-
+# Import von Qualitätsprofilen
 
 Um Qualitätsprofile in das SonarQube-Dogu zu importieren, führen Sie bitte folgende Schritte durch:
 

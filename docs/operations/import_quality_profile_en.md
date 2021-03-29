@@ -1,6 +1,4 @@
-## Using the SonarQube dogu
-
-### Importing quality profiles
+# Importing quality profiles
 
 To import quality profiles into the SonarQube dogu please follow these steps:
 
