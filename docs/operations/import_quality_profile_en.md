@@ -1,4 +1,4 @@
-# Importing quality profiles
+# Operations
 
 To import quality profiles into the SonarQube dogu please follow these steps:
 
