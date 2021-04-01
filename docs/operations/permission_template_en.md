@@ -5,7 +5,7 @@ during the dogu startup to ensure that the CES_ADMIN group has access to adminis
 permissions will be set (admin codeviewer issueadmin securityhotspotadmin scan user ) this setup can be verified
 (`Administration -> Security -> Permisssion Templates`). *see setup.json for further details*
 
-![default template overview](../assets/default_template_ces_admin_permissions.png)
+![default template overview](figures/default_template_ces_admin_permissions.png)
 
 
 The permissions for projects created without correct CES_ADMIN group permissions can be changed later using a specific config-key.
