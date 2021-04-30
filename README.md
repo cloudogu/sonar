@@ -14,6 +14,8 @@
 
 **Website:** https://www.sonarqube.org/
 
+**Docs:** https://docs.sonarqube.org/display/SONAR/Documentation
+
 **Dependencies:** postgresql, cas, nginx, postfix
 
 **Persistent Dogu Admin User:**
