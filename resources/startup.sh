@@ -620,7 +620,7 @@ stopSonarQube ${SONAR_PROCESS_ID}
 if [[ "${IS_FIRST_START}" == "true" ]]; then
   # remove the es6 cache since it contains leftovers of the default admin
   echo "Removing es6 cache..."
-  rm -r /opt/sonar/data/es6
+#  rm -r /opt/sonar/data/es6
 fi
 
 echo "Removing temporary admin..."

@@ -34,14 +34,14 @@ function add_temporary_admin_user_sonar6() {
   SALT=${3}
   sql "INSERT INTO users (login, name, crypted_password, salt, active, external_identity, user_local, is_root, onboarded)
   VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', true, '${TEMPORARY_ADMIN_USER}', true, true, true);"
-  ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT id FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
+  ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT uuid FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
   ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
   if [[ -z ${ADMIN_ID} ]]; then
     # id has only one digit
     ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
   fi
-  sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 1);"
-  sql "INSERT INTO groups_users (user_id, group_id) VALUES (${ADMIN_ID}, 2);"
+  sql "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 1);"
+  sql "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 2);"
 }
 
 function getSHA1PW() {

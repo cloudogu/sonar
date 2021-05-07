@@ -4,12 +4,12 @@ LABEL NAME="official/sonar" \
     VERSION="7.9.4-4" \
     maintainer="robert.auer@cloudogu.com"
 
-ENV SONAR_VERSION=7.9.4 \
+ENV SONAR_VERSION=8.9.0.43852 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
     CAS_PLUGIN_VERSION=2.0.1 \
-    SONARQUBE_ZIP_SHA256=67fd0e9b2f4a1cf481ac9c5487173e4b1aa05381e6219428f53de510c8f2289d \
+    SONARQUBE_ZIP_SHA256=6facb9d373b0ba32b188704883ecb792135474681cb2d05ce027918a41d04623 \
     CAS_PLUGIN_JAR_SHA256=c0df47e82e888d44b5e08bb407f6f2c95ae5b64ed53fa8526db4b387da071acc
 
 RUN set -x \

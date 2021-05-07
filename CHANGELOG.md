@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- update to new LTS version 8.9
+
 ## [v7.9.4-4] - 2021-02-18
 ### Changed
 - Members of the CES administrator group receive project admin permissions for new projects (#3)
