@@ -360,6 +360,7 @@ sonar.web.context=/sonar
 #sonar.search.httpPort=-1
 
 # ces properties
+sonar.plugins.risk.consent=ACCEPTED
 sonar.jdbc.username={{ .Config.GetAndDecrypt "sa-postgresql/username" }}
 sonar.jdbc.password={{ .Config.GetAndDecrypt "sa-postgresql/password" }}
 sonar.jdbc.url=jdbc:postgresql://postgresql:5432/{{ .Config.GetAndDecrypt "sa-postgresql/database" }}
