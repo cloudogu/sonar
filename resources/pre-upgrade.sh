@@ -19,8 +19,6 @@ function run_pre_upgrade() {
   FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
   TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
 
-  echo "FROM_VERSION=${FROM_VERSION} TO_VERSION=${TO_VERSION} FROM_MAJOR_VERSION=${FROM_MAJOR_VERSION} TO_MAJOR_VERSION=${TO_MAJOR_VERSION}"
-
   DATABASE_USER=$(doguctl config -e sa-postgresql/username)
   DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
   DATABASE_DB=$(doguctl config -e sa-postgresql/database)
