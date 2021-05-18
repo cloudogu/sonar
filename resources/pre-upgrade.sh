@@ -53,7 +53,7 @@ function run_pre_upgrade() {
     SAVED_PLUGIN_NAMES=""
     while read -r PLUGIN; do
       SAVED_PLUGIN_NAMES+=${PLUGIN},
-    done <<< "${INSTALLED_PLUGINS}"
+    done <<<"${INSTALLED_PLUGINS}"
 
     echo "Remove temporary admin user"
     remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
@@ -72,15 +72,14 @@ function run_pre_upgrade() {
   fi
 
   if [[ "${TO_MAJOR_VERSION}" -ge 8 ]] && [[ "${FROM_MAJOR_VERSION}" -lt 8 ]]; then
-      echo "Removing obsolete plugins that now come with SonarQube 8..."
-      echo "Finished removing obsolete plugins."
+    migrateDeprecatedPluginsForSQ8
   fi
 
   # set this so the startup.sh waits for the post_upgrade to finish
   doguctl config post_upgrade_running true
 }
 
-function sql(){
+function sql() {
   PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
   return $?
 }
@@ -103,14 +102,70 @@ function add_temporary_admin_user_sonar6() {
 }
 
 function getSHA1PW() {
-    PW="${1}"
-    SALT="${2}"
-    echo -n "--${SALT}--${PW}--" | sha1sum | awk '{print $1}'
+  PW="${1}"
+  SALT="${2}"
+  echo -n "--${SALT}--${PW}--" | sha1sum | awk '{print $1}'
 }
 
 function remove_temporary_admin_user() {
   TEMPORARY_ADMIN_USER=${1}
   sql "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
+}
+
+function migrateDeprecatedPluginsForSQ8() {
+  echo "Moving obsolete plugins that now come with SonarQube 8..."
+  local targetDir="${SONARQUBE_HOME}/extensions/deprecated-plugins"
+
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-auth-github-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-auth-saml-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-abap-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-apex-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-csharp-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-cfamily-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-css-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-cobol-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-flex-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-go-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-html-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-jacoco-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-java-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-javascript-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-kotlin-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-php-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-pli-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-plsql-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-python-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-rpg-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-ruby-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-scala-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-scm-git-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-scm-svn-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-swift-svn-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-tsql-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-typescript-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-vb-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-vbnet-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-xml-plugin-*.jar" "${targetDir}"
+
+  echo "Finished moving obsolete plugins."
+}
+
+# moveFileByGlob moves files to a directory identified by the given glob and prints a message. The glob must be
+# double-quoted. If the directory does not exist it will be created. The file glob must not contain whitespace.
+# Example: moveFileByGlob "/dir/a*.zip" "/dir2"
+function moveFileByGlob() {
+  local fileGlob="${1}"
+  local targetDir="${2}"
+
+  mkdir -p "${targetDir}"
+
+# shellcheck disable=SC2086
+  if ls ${fileGlob} &> /dev/null ; then
+    for file in ${fileGlob}; do
+      echo "Move ${file} to ${targetDir}..."
+      mv "${file}" "${targetDir}"
+    done
+  fi
 }
 
 # make the script only run when executed, not when sourced from bats tests)
