@@ -8,7 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- update to new LTS version 8.9
+
+- update to new LTS version 8.9 (#59)
+- SonarQube inlines a lot of functionality that was previously supplied as plugin. Please refer to the SonarQube [documentation](https://docs.sonarqube.org/latest/instance-administration/plugin-version-matrix/) for detailed information. The following plugins will be moved to `extensions/deprecated-plugins` if the upgrade script detects them (#59):
+  - C# Code Quality and Security
+  - CFamily Code Quality and Security
+  - COBOL Code Quality
+  - Git
+  - GitHub Authentication for SonarQube
+  - JaCoCo
+  - Java Code Quality and Security
+  - PHP Code Quality and Security
+  - Python Code Quality and Security
+  - RPG Code Quality
+  - SAML 2.0 Authentication for SonarQube 	Bundled
+  - SonarABAP
+  - SonarApex
+  - SonarCSS
+  - SonarFlex
+  - SonarGo
+  - SonarHTML
+  - SonarJS
+  - SonarKotlin
+  - SonarPLI
+  - SonarPLSQL
+  - SonarRuby
+  - SonarScala
+  - SonarSwift
+  - SonarTS
+  - SonarTSQL
+  - SonarVB6
+  - SonarXML
+  - Svn
+  - VB.NET Code Quality and Security
 
 ## [v7.9.4-4] - 2021-02-18
 ### Changed
