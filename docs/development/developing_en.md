@@ -123,3 +123,25 @@ fi
 ```
 
 At least make sure that the variables are properly set into the production (f. i. `Dockerfile`)and test environment (set-up an env var in your test).
+
+## Test SonarQube Dogu
+
+Due to communication problems caused by self-signed SSL certificates in a development CES instance, it is a good idea to run SonarScanner via Jenkins in the same instance. The following procedure has proven successful:
+
+1. install SCM Manager and Jenkins.
+   - `cesapp install official/scm; cesapp install official/scm; cesapp start scm; cesapp start jenkins`
+1. SCMM: install Spring Petclinic in SCM manager by SCMM repo import into a new repository
+1. sonarQube: create local user or API token if necessary
+1. jenkins
+   1. add credentials for SCMM and SonarQube in Jenkins Credential Manager
+      - for SCMM e.g. under the ID `scmCredentials
+      - for SonarQube pay attention to credential type!
+         - username/password for Basic Authentication
+         - `Secret text` for SQ API token
+   1. create build job
+      1. create element -> select `SCM-Manager Namespace` -> configure job
+         - Server URL: https://192.198.56.2/scm
+         - Credentials: as configured above
+      1. save job
+      1. cancel surplus/non-functioning jobs if necessary
+      1. adjust and build master/main branch
