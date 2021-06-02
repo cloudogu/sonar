@@ -146,6 +146,7 @@ function migrateDeprecatedPluginsForSQ8() {
   moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-vb-plugin-*.jar" "${targetDir}"
   moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-vbnet-plugin-*.jar" "${targetDir}"
   moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonar-xml-plugin-*.jar" "${targetDir}"
+  moveFileByGlob "${SONARQUBE_HOME}/extensions/plugins/sonarqube-community-branch-plugin-*.jar" "${targetDir}"
 
   echo "Finished moving obsolete plugins."
 }

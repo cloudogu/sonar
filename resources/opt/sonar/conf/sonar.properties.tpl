@@ -409,10 +409,12 @@ sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom \
                              -Djava.net.preferIPv4Stack=true \
                              -Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks \
                              -Djavax.net.ssl.trustStorePassword=changeit \
+                             {{ .Env.Get "BRANCH_PLUGIN_WEB_OPTS" }}
                              -Djdk.http.auth.tunneling.disabledSchemes=""
 
 sonar.ce.javaAdditionalOpts=-Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks \
-            -Djavax.net.ssl.trustStorePassword=changeit
+                            {{ .Env.Get "BRANCH_PLUGIN_CE_OPTS" }}
+                            -Djavax.net.ssl.trustStorePassword=changeit
 
 {{ if .Config.Exists "container_config/memory_limit" }}
 # Use javaOpts to override -Xmx options for sonar web
