@@ -8,9 +8,9 @@ ENV SONAR_VERSION=8.9.0.43852 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    CAS_PLUGIN_VERSION=2.0.1 \
+    CAS_PLUGIN_VERSION=3.0.0 \
     SONARQUBE_ZIP_SHA256=6facb9d373b0ba32b188704883ecb792135474681cb2d05ce027918a41d04623 \
-    CAS_PLUGIN_JAR_SHA256=c0df47e82e888d44b5e08bb407f6f2c95ae5b64ed53fa8526db4b387da071acc \
+    CAS_PLUGIN_JAR_SHA256=11aa898e8ec42c25285a6699c466fd717b42a41d51a5f038af64023a32dc9db1 \
     STARTUP_DIR="/"
 
 RUN set -x \
@@ -29,6 +29,7 @@ RUN set -x \
     && curl --fail --location https://github.com/cloudogu/sonar-cas-plugin/releases/download/v${CAS_PLUGIN_VERSION}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar --output ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar \
     && echo "${CAS_PLUGIN_JAR_SHA256} *${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" | sha256sum -c - \
     # create sonar user
+    && mkdir -p /opt/sonar/lib/common \
     && addgroup -S -g 1000 sonar \
     && adduser -S -h "$SONARQUBE_HOME" -s /bin/bash -G sonar -u 1000 sonar \
     && chown -R sonar:sonar ${SONARQUBE_HOME}

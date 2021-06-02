@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- agent settings for the new version of the community-branch-plugin (1.8.0+)
+
 ### Changed
 
 - update to new LTS version 8.9 (#59)
+- any installed versions of the community-branch-plugin will be removed when upgrading to SonarQube 8.9
 - SonarQube inlines a lot of functionality that was previously supplied as plugin. Please refer to the SonarQube [documentation](https://docs.sonarqube.org/latest/instance-administration/plugin-version-matrix/) for detailed information. The following plugins will be moved to `extensions/deprecated-plugins` if the upgrade script detects them (#59):
   - C# Code Quality and Security
   - CFamily Code Quality and Security
