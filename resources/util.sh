@@ -213,10 +213,11 @@ function install_plugin_via_api() {
 function add_temporary_admin_group() {
   GROUP_NAME=${1}
   # Add group to "groups" table
-  local group_uuid="$(doguctl random)"
+  local group_uuid group_role_uuid
+  group_uuid="$(doguctl random)"
+  group_role_uuid="$(doguctl random)"
   execute_sql_statement_on_database "INSERT INTO groups (name, description, uuid) VALUES ('${GROUP_NAME}', 'Temporary admin group', '${group_uuid}');"
   local GROUP_ID_QUERY="SELECT uuid from groups WHERE name='${GROUP_NAME}'"
-  local group_role_uuid="$(doguctl random)"
   # Grant admin permissions in "group_roles" table
   execute_sql_statement_on_database "INSERT INTO group_roles (group_uuid, role, uuid) VALUES ((${GROUP_ID_QUERY}), 'admin', '${group_role_uuid}');"
 }
