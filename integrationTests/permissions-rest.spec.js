@@ -23,7 +23,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await adminFunctions.removeTestUser(driver);
+  await adminFunctions.removeTestUser();
 });
 
 
