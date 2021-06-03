@@ -10,17 +10,17 @@ if (!webdriverType) {
 }
 
 module.exports = {
-    fqdn: cesFqdn,
-    baseUrl: 'https://' + cesFqdn,
-    sonarContextPath: '/sonar',
-    username: 'ces-admin',
-    password: 'ecosystem2016',
-    firstname:'admin',
-    lastname: 'admin',
-    displayName: 'admin',
-    email: 'ces-admin@cloudogu.com',
-    webdriverType: webdriverType,
-    debug: true,
-    adminGroup: 'CesAdministrators',
-	sonarqubeToken: 'sonarqubeToken'
+  fqdn: cesFqdn,
+  baseUrl: 'https://' + cesFqdn,
+  sonarContextPath: '/sonar',
+  username: 'ces-admin',
+  password: 'ecosystem2016',
+  firstname: 'admin',
+  lastname: 'admin',
+  displayName: 'admin',
+  email: 'ces-admin@cloudogu.com',
+  webdriverType: webdriverType,
+  debug: true,
+  adminGroup: 'CesAdministrators',
+  sonarqubeToken: 'sonarqubeToken'
 };

@@ -520,14 +520,21 @@ function ensure_correct_branch_plugin_state() {
     rm "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
   fi
 
+  BRANCH_PLUGIN_WEB_OPTS=""
+  BRANCH_PLUGIN_CE_OPTS=""
   # the branch plugin could be in the plugins dir or in the downloads dir if it is new
   for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar
   do
     if [[  -e "$f" ]]; then
       echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
       cp "$f" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+      BRANCH_PLUGIN_FILENAME="-javaagent:./extensions/plugins/$(basename "${f}")"
+      BRANCH_PLUGIN_WEB_OPTS="${BRANCH_PLUGIN_FILENAME}=web \\"
+      BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
     fi
   done
+  export BRANCH_PLUGIN_WEB_OPTS
+  export BRANCH_PLUGIN_CE_OPTS
 }
 
 ### End of function declarations, work is done now
@@ -557,6 +564,9 @@ echo "Creating truststore..."
 create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks > /dev/null
 
 doguctl state "configuring..."
+
+echo "Ensure correct branch plugin state"
+ensure_correct_branch_plugin_state
 
 echo "Rendering sonar properties template..."
 render_properties_template
@@ -620,7 +630,7 @@ stopSonarQube ${SONAR_PROCESS_ID}
 if [[ "${IS_FIRST_START}" == "true" ]]; then
   # remove the es6 cache since it contains leftovers of the default admin
   echo "Removing es6 cache..."
-  rm -r /opt/sonar/data/es6
+#  rm -r /opt/sonar/data/es6
 fi
 
 echo "Removing temporary admin..."
@@ -638,9 +648,6 @@ if areQualityProfilesPresentToImport; then
   stopSonarQube "${SONAR_PROCESS_ID}"
   remove_temporary_admin_user_and_group
 fi
-
-echo "Ensure correct branch plugin state"
-ensure_correct_branch_plugin_state
 
 doguctl state "ready"
 
