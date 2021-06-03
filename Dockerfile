@@ -1,7 +1,7 @@
 FROM registry.cloudogu.com/official/java:11.0.5-4
 
 LABEL NAME="official/sonar" \
-    VERSION="7.9.4-4" \
+    VERSION="8.9.0-1" \
     maintainer="hello@cloudogu.com"
 
 ENV SONAR_VERSION=8.9.0.43852 \
