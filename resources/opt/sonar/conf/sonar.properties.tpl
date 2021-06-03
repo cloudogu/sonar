@@ -360,6 +360,7 @@ sonar.web.context=/sonar
 #sonar.search.httpPort=-1
 
 # ces properties
+sonar.plugins.risk.consent=ACCEPTED
 sonar.jdbc.username={{ .Config.GetAndDecrypt "sa-postgresql/username" }}
 sonar.jdbc.password={{ .Config.GetAndDecrypt "sa-postgresql/password" }}
 sonar.jdbc.url=jdbc:postgresql://postgresql:5432/{{ .Config.GetAndDecrypt "sa-postgresql/database" }}
@@ -408,10 +409,12 @@ sonar.web.javaAdditionalOpts=-Djava.security.egd=file:/dev/./urandom \
                              -Djava.net.preferIPv4Stack=true \
                              -Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks \
                              -Djavax.net.ssl.trustStorePassword=changeit \
+                             {{ .Env.Get "BRANCH_PLUGIN_WEB_OPTS" }}
                              -Djdk.http.auth.tunneling.disabledSchemes=""
 
 sonar.ce.javaAdditionalOpts=-Djavax.net.ssl.trustStore=/opt/sonar/truststore.jks \
-            -Djavax.net.ssl.trustStorePassword=changeit
+                            {{ .Env.Get "BRANCH_PLUGIN_CE_OPTS" }}
+                            -Djavax.net.ssl.trustStorePassword=changeit
 
 {{ if .Config.Exists "container_config/memory_limit" }}
 # Use javaOpts to override -Xmx options for sonar web

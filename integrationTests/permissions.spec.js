@@ -9,57 +9,63 @@ jest.setTimeout(60000);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-
 let driver;
 let adminFunctions;
 
 beforeEach(async () => {
-    driver = utils.createDriver(webdriver);
-    await driver.manage().window().maximize();
-    adminFunctions = await new AdminFunctions(userName, userName, userName, userName+'@test.de', 'testuserpassword');
-	await adminFunctions.createTestUser();
+  driver = utils.createDriver(webdriver);
+  await driver.manage().window().maximize();
+  let user = userName + getRandomInt(1, 9999999)
+  adminFunctions = await new AdminFunctions(user, user, user, user + '@test.de', 'testuserpassword');
+  await adminFunctions.createTestUser();
 });
 
-afterEach(async() => {
-    await adminFunctions.logoutUserViaUI(driver);
-    await adminFunctions.removeTestUser(driver);
-    await driver.quit();
+afterEach(async () => {
+  await adminFunctions.logoutUserViaUI(driver);
+  await adminFunctions.removeTestUser();
+  await driver.quit();
 });
 
 
 describe('user permissions', () => {
-	
-	test('user (testUser) has admin privileges', async() => {
 
-		await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
-		await driver.get(utils.getCasUrl(driver));
-		await adminFunctions.testUserLogin(driver);
+  test('user (testUser) has admin privileges', async () => {
 
-        const isAdministrator = await utils.isAdministrator(driver);
-        expect(isAdministrator).toBe(true);
-    });
+    await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
+    await driver.get(utils.getCasUrl(driver));
+    await adminFunctions.testUserLogin(driver);
 
-	test('user (testUser) has no admin privileges', async() => {
-        await driver.get(utils.getCasUrl(driver));
-        await adminFunctions.testUserLogin(driver);
+    const isAdministrator = await utils.isAdministrator(driver);
+    expect(isAdministrator).toBe(true);
+  });
 
-        const adminPermissions = await utils.isAdministrator(driver);
-		expect(adminPermissions).toBe(false);
-    });
+  test('user (testUser) has no admin privileges', async () => {
+    await driver.get(utils.getCasUrl(driver));
+    await adminFunctions.testUserLogin(driver);
 
-	test('user (testUser) remove admin privileges', async() => {
+    const adminPermissions = await utils.isAdministrator(driver);
+    expect(adminPermissions).toBe(false);
+  });
 
-        await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
-        await driver.get(utils.getCasUrl(driver));
+  test('user (testUser) remove admin privileges', async () => {
 
-		await adminFunctions.testUserLogin(driver);
-		await adminFunctions.logoutUserViaUI(driver);
+    await adminFunctions.giveAdminRightsToTestUserViaUsermgt(driver);
+    await driver.get(utils.getCasUrl(driver));
 
-		await adminFunctions.takeAdminRightsUsermgt(driver);
+    await adminFunctions.testUserLogin(driver);
+    await adminFunctions.logoutUserViaUI(driver);
 
-		await driver.get(utils.getCasUrl(driver));
-		await adminFunctions.testUserLogin(driver);
-        const isAdministrator = await utils.isAdministrator(driver);
-        expect(isAdministrator).toBe(false);
-    });	
+    await adminFunctions.takeAdminRightsUsermgt(driver);
+
+    await driver.get(utils.getCasUrl(driver));
+    await adminFunctions.testUserLogin(driver);
+    const isAdministrator = await utils.isAdministrator(driver);
+    expect(isAdministrator).toBe(false);
+  });
 });
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
