@@ -75,7 +75,7 @@ describe('cas browser login', () => {
     const issues_subpage = config.baseUrl + config.sonarContextPath + '/issues?resolved=false'
     await driver.get(issues_subpage);
     // make sure you landed on cas login page
-    var url = await driver.getCurrentUrl();
+    let url = await driver.getCurrentUrl();
     expectations.expectCasLogin(url);
     // login via cas
     await utils.login(driver);

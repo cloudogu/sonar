@@ -24,8 +24,11 @@ describe('cas rest basic authentication', () => {
 
   test('authentication with API key', async () => {
     driver = utils.createDriver(webdriver);
+    await driver.manage().window().maximize();
     // Login and go to user tokens page
     await driver.get(utils.getCasUrl(driver));
+    //Close warp menu tooltip
+    await driver.findElement(By.className('warp-onboarding-msg')).click();
     await utils.login(driver);
     await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
     await driver.wait(until.elementLocated(By.className("display-flex-center")), 5000);
@@ -40,8 +43,6 @@ describe('cas rest basic authentication', () => {
         .get(config.sonarContextPath + "/api/system/health")
         .auth(apikey)
         .expect(200);
-    //Close warp menu tooltip
-    await driver.findElement(By.className('warp-onboarding-msg')).click();
     //Deleting user Token
     await driver.get(config.baseUrl + config.sonarContextPath + "/account/security");
     await driver.wait(until.elementLocated(By.className("display-flex-center")), 5000);
