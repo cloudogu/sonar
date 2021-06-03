@@ -9,14 +9,14 @@ jest.setTimeout(60000);
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-
 let driver;
 let adminFunctions;
 
 beforeEach(async () => {
   driver = utils.createDriver(webdriver);
   await driver.manage().window().maximize();
-  adminFunctions = await new AdminFunctions(userName, userName, userName, userName + '@test.de', 'testuserpassword');
+  let user = userName + getRandomInt(1, 9999999)
+  adminFunctions = await new AdminFunctions(user, user, user, user + '@test.de', 'testuserpassword');
   await adminFunctions.createTestUser();
 });
 
@@ -63,3 +63,9 @@ describe('user permissions', () => {
     expect(isAdministrator).toBe(false);
   });
 });
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
