@@ -105,45 +105,6 @@ function importQualityProfiles() {
   echo "Quality profile import finished..."
 }
 
-function set_proxy_configuration(){
-  removeProxyRelatedEntriesFrom ${SONAR_PROPERTIES_FILE}
-  # Write proxy settings if enabled in etcd
-  if [[ "true" == "$(doguctl config --global proxy/enabled)" ]]; then
-    if PROXYSERVER=$(doguctl config --global proxy/server) && PROXYPORT=$(doguctl config --global proxy/port); then
-      writeProxyCredentialsTo ${SONAR_PROPERTIES_FILE}
-      if PROXYUSER=$(doguctl config --global proxy/username) && PROXYPASSWORD=$(doguctl config --global proxy/password); then
-        writeProxyAuthenticationCredentialsTo ${SONAR_PROPERTIES_FILE}
-      else
-        echo "Proxy authentication credentials are incomplete or not existent."
-      fi
-    else
-      echo "Proxy server or port configuration missing in etcd."
-    fi
-  fi
-}
-
-function removeProxyRelatedEntriesFrom() {
-  sed -i '/http.proxyHost=.*/d' "$1"
-  sed -i '/http.proxyPort=.*/d' "$1"
-  sed -i '/http.proxyUser=.*/d' "$1"
-  sed -i '/http.proxyPassword=.*/d' "$1"
-}
-
-function writeProxyCredentialsTo(){
-  echo http.proxyHost="${PROXYSERVER}" >> "$1"
-  echo http.proxyPort="${PROXYPORT}" >> "$1"
-}
-
-function writeProxyAuthenticationCredentialsTo(){
-  # Check for java option and add it if not existent
-  if ! grep sonar.web.javaAdditionalOpts= "$1" | grep -q Djdk.http.auth.tunneling.disabledSchemes= ; then
-    sed -i '/^sonar.web.javaAdditionalOpts=/ s/$/ -Djdk.http.auth.tunneling.disabledSchemes=/' "$1"
-  fi
-  # Add proxy authentication credentials
-  echo http.proxyUser="${PROXYUSER}" >> ${SONAR_PROPERTIES_FILE}
-  echo http.proxyPassword="${PROXYPASSWORD}" >> ${SONAR_PROPERTIES_FILE}
-}
-
 function render_properties_template() {
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
 }
@@ -570,9 +531,6 @@ ensure_correct_branch_plugin_state
 
 echo "Rendering sonar properties template..."
 render_properties_template
-
-echo "Setting proxy configuration, if existent..."
-set_proxy_configuration
 
 startSonarQubeInBackground "configuration api"
 
