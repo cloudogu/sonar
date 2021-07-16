@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- Fix CAS authentication error with previously logged-in users after migration (#63)
+- Fix CAS authentication error with previously logged-in users during migration (#63)
 
 ## [v8.9.0-2] - 2021-06-16
 ### Removed

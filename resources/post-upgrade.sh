@@ -126,7 +126,7 @@ function run_post_upgrade() {
     curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=provisioning&groupName=${CES_ADMIN_GROUP}"
   fi
 
-  if [[ "${TO_MAJOR_VERSION}" -ge 8 ]] && [[ "${FROM_MAJOR_VERSION}" -lt 8 ]]; then
+  if [[ "${TO_MAJOR_VERSION}" -eq 8 ]]; then
     migrate_cas_identity_provider_in_db
   fi
 

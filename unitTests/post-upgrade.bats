@@ -61,3 +61,31 @@ teardown() {
   assert_equal "$(mock_get_call_args "${doguctl}" "5")" "config post_upgrade_running false"
   assert_equal "$(mock_get_call_num "${psql}")" "1"
 }
+
+@test "run_post_upgrade should db-migrate for upgrade from 8.9.0-2 to 8.9.0-3" {
+  mock_set_status "${doguctl}" 0
+  mock_set_output "${doguctl}" "sql-username"
+  mock_set_output "${doguctl}" "sql-password"
+  mock_set_output "${doguctl}" "sql-database"
+  mock_set_status "${curl}" 0
+  mock_set_status "${jq}" 0
+
+  run /workspace/resources/post-upgrade.sh "8.9.0-2" "8.9.0-3"
+
+  assert_success
+  assert_line 'Running post-upgrade script...'
+  assert_line --partial 'Waiting for SonarQube status endpoint to be available'
+  assert_line --partial 'SonarQube status endpoint is available'
+  assert_line --partial 'Checking if db migration is needed'
+  assert_line --partial 'No db migration is needed'
+  refute_line --partial "Database migration is required"
+  refute_line --partial "Plugin"
+  assert_line 'Migrating DB: Update accounts associated with identity provider CAS to SonarQube...'
+  assert_equal "$(mock_get_call_num "${doguctl}")" "5"
+  assert_equal "$(mock_get_call_args "${doguctl}" "1")" "config -e sa-postgresql/username"
+  assert_equal "$(mock_get_call_args "${doguctl}" "2")" "config -e sa-postgresql/password"
+  assert_equal "$(mock_get_call_args "${doguctl}" "3")" "config -e sa-postgresql/database"
+  assert_equal "$(mock_get_call_args "${doguctl}" "4")" "wait-for-http --timeout 600 --method GET http://localhost:9000/sonar/api/system/status"
+  assert_equal "$(mock_get_call_args "${doguctl}" "5")" "config post_upgrade_running false"
+  assert_equal "$(mock_get_call_num "${psql}")" "1"
+}
