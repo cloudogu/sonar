@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -13,15 +13,7 @@ set -o pipefail
 # wait_for_sonar_to_get_healthy()
 # set_successful_first_start_flag()
 # shellcheck disable=SC1091
-source util.sh
-
-FROM_VERSION="${1}"
-TO_VERSION="${2}"
-WAIT_TIMEOUT=600
-CURL_LOG_LEVEL="--silent"
-FAILED_PLUGIN_NAMES=""
-
-##### functions declaration
+source "${STARTUP_DIR}/util.sh"
 
 function reinstall_plugins() {
   while IFS=',' read -ra ADDR; do
@@ -72,13 +64,13 @@ function run_post_upgrade() {
 
   echo "Checking if db migration is needed..."
   DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
-  if [[ "${DB_MIGRATION_STATUS}" = "MIGRATION_REQUIRED" ]]; then
+  if [[ "${DB_MIGRATION_STATUS}" == "MIGRATION_REQUIRED" ]]; then
     echo "Database migration is required. Migrating database now..."
     curl "${CURL_LOG_LEVEL}" --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
     printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" ${WAIT_TIMEOUT}
     for i in $(seq 1 "${WAIT_TIMEOUT}"); do
       DB_MIGRATION_STATE=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
-      if [[ "${DB_MIGRATION_STATE}" = "MIGRATION_SUCCEEDED" ]]; then
+      if [[ "${DB_MIGRATION_STATE}" == "MIGRATION_SUCCEEDED" ]]; then
         echo "Database migration has been successful: ${DB_MIGRATION_STATE}"
         break
       fi
