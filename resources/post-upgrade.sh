@@ -50,6 +50,14 @@ function migrate_cas_identity_provider_in_db() {
 }
 
 function run_post_upgrade() {
+  FROM_VERSION="${1}"
+  TO_VERSION="${2}"
+  FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
+  TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
+  WAIT_TIMEOUT=600
+  CURL_LOG_LEVEL="--silent"
+  FAILED_PLUGIN_NAMES=""
+
   echo "Running post-upgrade script..."
 
   # Migrate saved extensions folder to its own volume
@@ -74,7 +82,7 @@ function run_post_upgrade() {
         echo "Database migration has been successful: ${DB_MIGRATION_STATE}"
         break
       fi
-      if [[ "$i" -eq ${WAIT_TIMEOUT} ]] ; then
+      if [[ "$i" -eq ${WAIT_TIMEOUT} ]]; then
         echo "Database migration did not succeed within ${WAIT_TIMEOUT} seconds; status is ${DB_MIGRATION_STATE}."
         exit 1
       fi
@@ -92,7 +100,7 @@ function run_post_upgrade() {
     HASH=$(getSHA1PW "${PW}" "${SALT}")
     add_temporary_admin_user "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
     # reinstall missing plugins if there are any
-    if doguctl config install_plugins > /dev/null; then
+    if doguctl config install_plugins >/dev/null; then
 
       echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
       wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
@@ -126,11 +134,9 @@ function run_post_upgrade() {
     curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=provisioning&groupName=${CES_ADMIN_GROUP}"
   fi
 
-
   if [[ "${TO_MAJOR_VERSION}" -ge 8 ]] && [[ "${FROM_MAJOR_VERSION}" -lt 8 ]]; then
     migrate_cas_identity_provider_in_db
   fi
-
 
   doguctl config post_upgrade_running false
 }
