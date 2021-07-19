@@ -37,14 +37,14 @@ function run_upgrade_notification() {
     echo "Upgrade problems are rare, but you may want backup in case anything goes wrong."
     echo "Some plugins will be uninstalled because SonarQube 8.9 includes the plugin functionality into its core."
     echo "Please check the SonarQube plugin compatibility in the release notes. Concerned plugins will move to"
-    echo "$(extensions/deprecated-plugins/) in case you need them."
+    echo "the sonar dogu volume extensions/deprecated-plugins/ in case you need them."
     echo "Please check the log output for plugins which could not be installed."
   fi
 
   return 0
 }
 
-# make the script only run when executed, not when sourced from bats tests)
+# make the script only run when executed, not when sourced from bats tests
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   run_upgrade_notification "$@"
 fi
