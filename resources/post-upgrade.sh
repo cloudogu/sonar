@@ -19,7 +19,7 @@ function reinstall_plugins() {
   while IFS=',' read -ra ADDR; do
     for PLUGIN in "${ADDR[@]}"; do
       echo "Checking if plugin ${PLUGIN} is installed already..."
-      INSTALLED_PLUGINS=$(curl ${CURL_LOG_LEVEL} --fail -u "${1}":"${2}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+      INSTALLED_PLUGINS=$(curl "${CURL_LOG_LEVEL}" --fail -u "${1}":"${2}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
       if [[ ${INSTALLED_PLUGINS} == *"${PLUGIN}"* ]]; then
         echo "Plugin ${PLUGIN} is installed already"
       else
@@ -44,7 +44,6 @@ function migrate_cas_identity_provider_in_db() {
 function run_post_upgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
-  FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
   TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
   WAIT_TIMEOUT=600
   CURL_LOG_LEVEL="--silent"
