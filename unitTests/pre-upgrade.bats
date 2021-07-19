@@ -38,8 +38,8 @@ teardown() {
 
   assert_success
   assert_line 'Running pre-upgrade script...'
-  assert_line 'Removing obsolete plugins that now come with SonarQube 8...'
-  assert_line 'Finished removing obsolete plugins.'
+  assert_line 'Moving obsolete plugins that now come with SonarQube 8...'
+  assert_line 'Finished moving obsolete plugins.'
   assert_equal "$(mock_get_call_num "${doguctl}")" "4"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" "config -e sa-postgresql/username"
   assert_equal "$(mock_get_call_args "${doguctl}" "2")" "config -e sa-postgresql/password"

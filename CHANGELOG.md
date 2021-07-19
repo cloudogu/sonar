@@ -1,4 +1,4 @@
-# Changelog
+# SonarQube Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v8.9.0-3] - 2021-07-19
+### Fixed
+- Fix CAS authentication error with previously logged-in users during migration (#63)
 
 ## [v8.9.0-2] - 2021-06-16
 ### Removed

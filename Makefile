@@ -45,7 +45,6 @@ unit-test-shell-local: $(BASH_SRC) $(PASSWD) $(ETCGROUP) $(HOME_DIR) buildTestIm
 	@docker run --rm \
 		-u "$(UID_NR):$(GID_NR)" \
 		-v $(PASSWD):/etc/passwd:ro \
-		-v $(ETCGROUP):/etc/group:ro \
 		-v $(HOME_DIR):/home/$(USER) \
 		-v $(WORKDIR):$(WORKSPACE) \
 		-w $(WORKSPACE) \

@@ -21,13 +21,15 @@ There are two alternatives for testing development versions of the [Sonar CAS Pl
     - add a new line for `COPY`ing your plugin, like so:
         - `COPY --chown=1000:1000 sonar-cas-plugin-3.0.0-SNAPSHOT.jar ${SONARQUBE_HOME}/sonar-cas-plugin-3.0.0-SNAPSHOT.jar`
 
-## Shell testing
+## Shell testing with BATS
 
 You can create and amend bash tests in the `unitTests` directory. The make target `unit-test-shell` will support you with a generalized bash test environment.
 
 ```bash
 make unit-test-shell
 ```
+
+BATS is configured to leave JUnit compatible reports in `target/shell_test_reports/`.
 
 In order to write testable shell scripts these aspects should be respected:
 
