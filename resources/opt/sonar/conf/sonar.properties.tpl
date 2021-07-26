@@ -383,6 +383,7 @@ sonar.cas.rolesAttributes=groups,roles
 sonar.cas.eMailAttribute=mail
 sonar.cas.disableCertValidation=false
 sonar.cas.fullNameAttribute=displayName
+sonar.cas.proxyTicketing.services=^https://{{ .GlobalConfig.Get "fqdn" }}/.*$
 # Sets the expiration time for the cookie. An integer specifying the maximum age of the cookie in seconds
 # # if negative, means the cookie is only stored until the browser exits; if zero, deletes the cookie
 sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
