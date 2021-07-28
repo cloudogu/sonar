@@ -1,16 +1,16 @@
 FROM registry.cloudogu.com/official/java:11.0.5-4
 
 LABEL NAME="official/sonar" \
-    VERSION="8.9.0-3" \
+    VERSION="8.9.0-4" \
     maintainer="hello@cloudogu.com"
 
 ENV SONAR_VERSION=8.9.0.43852 \
     SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    CAS_PLUGIN_VERSION=4.0.0 \
+    CAS_PLUGIN_VERSION=4.1.0 \
     SONARQUBE_ZIP_SHA256=6facb9d373b0ba32b188704883ecb792135474681cb2d05ce027918a41d04623 \
-    CAS_PLUGIN_JAR_SHA256=bda0588b12b1e26bfb98c63934a365c15efe2e404dbf51e85ab875e78fc56164 \
+    CAS_PLUGIN_JAR_SHA256=1eb099fe2702fbb9ee617e63ec100be82fc17dc17c7898adae7040ae732642b0 \
     STARTUP_DIR="/"
 
 RUN set -x \

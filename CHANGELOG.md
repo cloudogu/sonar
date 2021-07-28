@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.9.0-4] - 2021-07-28
+### Added
+- Add CAS proxy ticketing (#65)
+
+### Changed
+- Switch from CAS specification 2.0 to 3.0 (#65)
+
 ## [v8.9.0-3] - 2021-07-19
 ### Fixed
 - Fix CAS authentication error with previously logged-in users during migration (#63)
@@ -101,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The pre-Upgrade script now will delete es6 cache when upgrading from 7.9.1-4 or lower
 
 ### Changed 
-* Update Sonar from 7.9.1 to 7.9.3
+* Update SonarQube from 7.9.1 to 7.9.3
 
 ## [7.9.1-4] - 2020-01-29
 
