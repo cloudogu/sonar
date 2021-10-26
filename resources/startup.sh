@@ -114,6 +114,7 @@ function set_property_via_rest_api() {
   VALUE=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
+  echo "Setting configuration property ${PROPERTY}..."
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
@@ -314,8 +315,8 @@ function run_first_start_tasks() {
   echo "Setting email configuration..."
   set_property_via_rest_api "email.smtp_host.secured" "postfix" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   set_property_via_rest_api "email.smtp_port.secured" "25" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.prefix" "[SONARQUBE]" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-
+  set_property_via_rest_api "email.prefix" "\[SONARQUBE\]" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  echo "Getting out-of-date plugins..."
   get_out_of_date_plugins_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   if [[ -n "${OUT_OF_DATE_PLUGINS}" ]]; then
     echo "The following plugins are not up-to-date:"
@@ -325,6 +326,8 @@ function run_first_start_tasks() {
       curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
       echo "Plugin ${PLUGIN} updated"
     done <<< "${OUT_OF_DATE_PLUGINS}"
+  else
+    echo "There are no out-of-date plugins"
   fi
 }
 
