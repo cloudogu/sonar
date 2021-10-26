@@ -289,7 +289,7 @@ sonar.web.context=/sonar
 
 # Global level of logs (applies to all 4 processes).
 # Supported values are INFO (default), DEBUG and TRACE
-#sonar.log.level=INFO
+sonar.log.level={{ .Env.Get "SONAR_LOGLEVEL" }}
 
 # Level of logs of each process can be controlled individually with their respective properties.
 # When specified, they overwrite the level defined at global level.

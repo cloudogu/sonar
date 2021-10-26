@@ -501,6 +501,31 @@ function ensure_correct_branch_plugin_state() {
   export BRANCH_PLUGIN_CE_OPTS
 }
 
+function setDoguLogLevel() {
+  currentLogLevel=$(doguctl config "logging/root")
+
+  if ! doguctl validate logging/root --silent ; then
+    echo "WARNING: Found invalid value in logging/root. Resetting it to INFO"
+    doguctl config logging/root INFO
+  fi
+
+  echo "Mapping configured log level to available log levels..."
+  case "${currentLogLevel}" in
+    "TRACE")
+      export SONAR_LOGLEVEL="TRACE"
+    ;;
+    "DEBUG")
+      export SONAR_LOGLEVEL="DEBUG"
+    ;;
+    *)
+      export SONAR_LOGLEVEL="INFO"
+    ;;
+  esac
+  echo "Log level is now: ${SONAR_LOGLEVEL}"
+}
+
+
+
 ### End of function declarations, work is done now
 
 if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
@@ -531,6 +556,9 @@ doguctl state "configuring..."
 
 echo "Ensure correct branch plugin state"
 ensure_correct_branch_plugin_state
+
+echo "Configuring log level..."
+setDoguLogLevel
 
 echo "Rendering sonar properties template..."
 render_properties_template
