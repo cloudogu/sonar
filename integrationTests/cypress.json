@@ -1,0 +1,10 @@
+{
+    "baseUrl": "https://192.168.56.2",
+    "env": {
+        "DoguName": "sonar",
+        "MaxLoginRetries": 3,
+        "AdminUsername": "admin",
+        "AdminPassword": "adminpw",
+        "AdminGroup": "cesAdmin"
+    }
+}
