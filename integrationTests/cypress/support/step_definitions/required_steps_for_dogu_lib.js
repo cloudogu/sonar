@@ -4,11 +4,11 @@ const env = require('@cloudogu/dogu-integration-test-library/lib/environment_var
 doguTestLibrary.registerSteps()
 
 When(/^the user clicks the dogu logout button$/, function () {
-    cy.loginSecondTimeIfNecessary()
     cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
     // Click user menu button
-    cy.get('html.kkhevqlt.idc0_332.sidebar-page body.sidebar-page div#content div.global-container div#container.page-wrapper div.page-container nav#global-navigation.navbar.navbar-global div.navbar-inner div.clearfix.navbar-limited ul.global-navbar-menu.global-navbar-menu-right li.dropdown.js-user-authenticated a.dropdown-toggle.navbar-avatar div.rounded').click();
-    cy.get('#Log out').click();
+    cy.get('*[class^="dropdown-toggle navbar-avatar"]').scrollIntoView().click();
+    // Click logout button
+    cy.get('*[class^="popup is-bottom"]').contains("Log out").click();
 });
 
 Then(/^the user has administrator privileges in the dogu$/, function () {
