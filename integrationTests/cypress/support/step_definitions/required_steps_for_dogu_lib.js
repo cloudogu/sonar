@@ -12,9 +12,11 @@ When(/^the user clicks the dogu logout button$/, function () {
 });
 
 Then(/^the user has administrator privileges in the dogu$/, function () {
-    // TODO: Bestimme, dass der derzeitige User Adminrechte im Dogu besitzt
+    cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
+    cy.get('*[class^="global-navbar-menu"]').contains("Administration")
 });
 
 Then(/^the user has no administrator privileges in the dogu$/, function () {
-    // TODO: Bestimme, dass der derzeitige User keine Adminrechte im Dogu besitzt
+    cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
+    cy.get('*[class^="global-navbar-menu"]').contains("Administration").should('not.exist')
 });
