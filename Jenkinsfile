@@ -68,7 +68,11 @@ node('vagrant') {
             }
 
             stage('Integration Tests') {
-                ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie', [], params.EnableVideoRecording)
+                ecoSystem.runCypressIntegrationTests([
+                    cypressImage:"cypress/included:8.6.0",
+                    enableVideo: params.EnableVideoRecording,
+                    enableScreenshots: params.EnableScreenshotRecording
+                ])
             }
 
             if (params.TestDoguUpgrade != null && params.TestDoguUpgrade){
