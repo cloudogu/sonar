@@ -17,3 +17,7 @@ When(/^the user is redirected to the account site$/, function () {
         expect(currentURL).to.eq(Cypress.config().baseUrl + "/" + env.GetDoguName() + "/account")
     })
 });
+
+When(/^the user opens the SonarQube issue page$/, function () {
+    cy.visit("/" + env.GetDoguName() + "/issues?resolved=false", {failOnStatusCode: false})
+});
