@@ -14,10 +14,22 @@
   "Url": "http://www.sonarqube.org/",
   "Image": "registry.cloudogu.com/official/sonar",
   "Dependencies": [
-    "postgresql",
-    "cas",
-    "nginx",
-    "postfix"
+    {
+      "type": "dogu",
+      "name": "postgresql"
+    },
+    {
+      "type": "dogu",
+      "name": "cas"
+    },
+    {
+      "type": "dogu",
+      "name": "nginx"
+    },
+    {
+      "type": "dogu",
+      "name": "postfix"
+    }
   ],
   "Volumes": [
     {
