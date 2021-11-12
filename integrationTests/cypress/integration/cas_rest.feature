@@ -27,8 +27,13 @@ Feature: API-based CAS login and logout functionality
     Then the user's attributes should include the admin group
 
   @requires_testuser
-  Scenario: rest - user (testUser) has admin privileges if added to admin group in usermgt (via usermgt api)
-    Given I would have implemented this test
+  Scenario: testUser has admin privileges if added to admin group in usermgt (via usermgt api)
+    Given the user is member of the admin user group
+    Then the user can access the /users/groups Web API endpoint
+
+  @requires_testuser
+  Scenario: test user has no admin privileges
+    Then the user can not access the /users/groups Web API endpoint
 
   @requires_testuser
   Scenario: rest - user (testUser) has no admin privileges
