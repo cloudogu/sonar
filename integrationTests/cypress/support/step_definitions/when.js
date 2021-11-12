@@ -57,3 +57,19 @@ When(/^the user's attributes are requested via Web API$/, function () {
         })
     })
 });
+
+When(/^the admin user's attributes are requested via Web API$/, function () {
+    cy.clearCookies()
+    cy.request({
+        method: "GET",
+        url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/search?q=" + env.GetAdminUsername(),
+        auth: {
+            'user': env.GetAdminUsername(),
+            'pass': env.GetAdminPassword()
+        }
+    }).then((response) => {
+        expect(response.status).to.eq(200)
+        // save data inside a cookie for the following (Then) steps
+        cy.setCookie("adminuserattributes", JSON.stringify(response.body))
+    })
+});

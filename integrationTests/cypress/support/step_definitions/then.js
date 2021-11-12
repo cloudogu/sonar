@@ -82,3 +82,12 @@ Then(/^the user's attributes are matching those in the user backend$/, function 
         })
     })
 });
+
+Then(/^the user's attributes should include the admin group$/, function () {
+    cy.getCookie("adminuserattributes").should('exist').then((cookie) => {
+        //check if response body (from cookie) holds admin group
+        const responseBody = JSON.parse(cookie.value)
+        expect(responseBody["users"][0]["groups"]).to.contain(env.GetAdminGroup())
+        expect(responseBody["users"][0]["name"]).to.equal(env.GetAdminUsername())
+    })
+});
