@@ -54,28 +54,15 @@ Then(/^the user is redirected to the SonarQube issue page$/, function () {
     cy.url().should('contain', Cypress.config().baseUrl + "/" + env.GetDoguName() + "/issues?resolved=false")
 });
 
-Then(/^the user can create a User Token$/, function () {
-    // go to User Token page
-    cy.visit("/" + env.GetDoguName() + "/account/security", {failOnStatusCode: false})
-    // type in token name
+Then(/^the user can access the Web API with the User Token$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.get('input[type=\'text\']').type(testuserdata.sonarqubeToken)
-    })
-    // click to create Token
-    cy.get('*[class^="button js-generate-token"]').click()
-    // get token id field
-    cy.get('*[class^="big-spacer-left text-success"]').as("tokenIDField")
-});
-
-Then(/^the user can access the SonarQube API with the User Token$/, function () {
-    cy.fixture("testuser_data").then((testuserdata) => {
-        cy.get('@tokenIDField').then((tokenIDField) => {
+        cy.getCookie(testuserdata.sonarqubeToken).should('exist').then((cookie) => {
             cy.request({
                 method: "GET",
                 url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/system/health",
                 auth: {
-                    'user': testuserdata.username,
-                    'pass': tokenIDField.text()
+                    'user': cookie.value,
+                    'pass': ""
                 }
             }).then((response) => {
                 expect(response.status).to.eq(200)

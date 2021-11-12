@@ -13,11 +13,9 @@ Feature: API-based CAS login and logout functionality
   @requires_testuser
   @requires_api_token_to_be_removed_afterwards
   Scenario: API authentication with User Token
-    Given the warp menu hint is turned off
-    And the user is member of the admin user group
-    When the user logs into the CES
-    Then the user can create a User Token
-    And the user can access the SonarQube API with the User Token
+    Given the user is member of the admin user group
+    When the user can create a User Token via the Web API
+    Then the user can access the Web API with the User Token
 
   @requires_testuser
   Scenario: rest - check user attributes

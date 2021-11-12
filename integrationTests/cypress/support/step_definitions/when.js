@@ -21,3 +21,21 @@ When(/^the user is redirected to the account site$/, function () {
 When(/^the user opens the SonarQube issue page$/, function () {
     cy.visit("/" + env.GetDoguName() + "/issues?resolved=false", {failOnStatusCode: false})
 });
+
+When(/^the user can create a User Token via the Web API$/, function () {
+    cy.fixture("testuser_data").then(function (testuserdata) {
+        cy.clearCookies()
+        cy.request({
+            method: "POST",
+            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/user_tokens/generate?name=" + testuserdata.sonarqubeToken,
+            auth: {
+                'user': testuserdata.username,
+                'pass': testuserdata.password
+            }
+        }).then((response) => {
+            expect(response.status).to.eq(200)
+            // save token inside a cookie for the following (Then) steps
+            cy.setCookie(testuserdata.sonarqubeToken, response.body["token"])
+        })
+    })
+});
