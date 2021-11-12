@@ -18,8 +18,9 @@ Feature: API-based CAS login and logout functionality
     Then the user can access the Web API with the User Token
 
   @requires_testuser
-  Scenario: rest - check user attributes
-    Given I would have implemented this test
+  Scenario: /users API responds with correct user attributes
+    When the user's attributes are requested via Web API
+    Then the user's attributes are matching those in the user backend
 
   @requires_testuser
   Scenario: rest - admin user is in admin group

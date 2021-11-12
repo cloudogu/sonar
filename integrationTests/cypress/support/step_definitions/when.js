@@ -39,3 +39,21 @@ When(/^the user can create a User Token via the Web API$/, function () {
         })
     })
 });
+
+When(/^the user's attributes are requested via Web API$/, function () {
+    cy.fixture("testuser_data").then(function (testuserdata) {
+        cy.clearCookies()
+        cy.request({
+            method: "GET",
+            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/search?q=" + testuserdata.username,
+            auth: {
+                'user': testuserdata.username,
+                'pass': testuserdata.password
+            }
+        }).then((response) => {
+            expect(response.status).to.eq(200)
+            // save data inside a cookie for the following (Then) steps
+            cy.setCookie("userattributes", JSON.stringify(response.body))
+        })
+    })
+});

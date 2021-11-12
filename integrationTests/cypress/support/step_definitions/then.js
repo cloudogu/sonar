@@ -3,7 +3,7 @@ const {
 } = require("cypress-cucumber-preprocessor/steps");
 
 const env = require('@cloudogu/dogu-integration-test-library/lib/environment_variables')
-//const config = require("./config");
+
 
 
 
@@ -67,6 +67,18 @@ Then(/^the user can access the Web API with the User Token$/, function () {
             }).then((response) => {
                 expect(response.status).to.eq(200)
             })
+        })
+    })
+});
+Then(/^the user's attributes are matching those in the user backend$/, function () {
+    cy.fixture("testuser_data").then((testuserdata) => {
+        cy.getCookie("userattributes").should('exist').then((cookie) => {
+            //check if response body (from cookie) holds correct user data
+            const responseBody = JSON.parse(cookie.value)
+            expect(responseBody["users"][0]["login"]).to.equal(testuserdata.username)
+            expect(responseBody["users"][0]["name"]).to.equal(testuserdata.displayName)
+            expect(responseBody["users"][0]["email"]).to.equal(testuserdata.mail)
+            expect(responseBody["users"][0]["externalIdentity"]).to.equal(testuserdata.username)
         })
     })
 });
