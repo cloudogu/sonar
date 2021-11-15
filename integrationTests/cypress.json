@@ -3,8 +3,8 @@
     "env": {
         "DoguName": "sonar",
         "MaxLoginRetries": 3,
-        "AdminUsername": "admin",
-        "AdminPassword": "adminpw",
-        "AdminGroup": "cesAdmin"
+        "AdminUsername": "ces-admin",
+        "AdminPassword": "ecosystem2016",
+        "AdminGroup": "CesAdministrators"
     }
 }
