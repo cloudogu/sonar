@@ -92,7 +92,7 @@ node('vagrant') {
 
                     // Wait for upgraded dogu to get healthy
                     ecoSystem.waitForDogu(doguName)
-                    ecosystem.waitUntilAvailable(doguName)
+                    ecoSystem.waitUntilAvailable(doguName)
                 }
 
                 stage('Integration Tests - After Upgrade') {
