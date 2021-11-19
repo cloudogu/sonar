@@ -12,12 +12,6 @@ When(/^the user clicks the My Account button$/, function () {
     cy.get('*[class^="popup is-bottom"]').contains("My Account").click();
 });
 
-When(/^the user is redirected to the account site$/, function () {
-    cy.url().then(currentURL => {
-        expect(currentURL).to.eq(Cypress.config().baseUrl + "/" + env.GetDoguName() + "/account")
-    })
-});
-
 When(/^the user opens the SonarQube issue page$/, function () {
     cy.visit("/" + env.GetDoguName() + "/issues?resolved=false", {failOnStatusCode: false})
 });
