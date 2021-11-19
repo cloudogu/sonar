@@ -20,7 +20,10 @@ Feature: API-based CAS login and logout functionality
   @requires_testuser
   Scenario: /users API responds with correct user attributes
     When the user's attributes are requested via Web API
-    Then the user's attributes are matching those in the user backend
+    Then the user's login attribute matches the username attribute in the user backend
+    And the user's name attribute matches the displayName attribute in the user backend
+    And the user's email attribute matches the mail attribute in the user backend
+    And the user's externalIdentity attribute matches the username attribute in the user backend
 
   Scenario: /users API's respond contains admin group for admin user
     When the admin user's attributes are requested via Web API

@@ -69,14 +69,38 @@ Then(/^the user can access the Web API with the User Token$/, function () {
         })
     })
 });
-Then(/^the user's attributes are matching those in the user backend$/, function () {
+
+Then(/^the user's login attribute matches the username attribute in the user backend$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.getCookie("userattributes").should('exist').then((cookie) => {
-            //check if response body (from cookie) holds correct user data
             const responseBody = JSON.parse(cookie.value)
             expect(responseBody["users"][0]["login"]).to.equal(testuserdata.username)
+        })
+    })
+});
+
+Then(/^the user's name attribute matches the displayName attribute in the user backend$/, function () {
+    cy.fixture("testuser_data").then((testuserdata) => {
+        cy.getCookie("userattributes").should('exist').then((cookie) => {
+            const responseBody = JSON.parse(cookie.value)
             expect(responseBody["users"][0]["name"]).to.equal(testuserdata.displayName)
+        })
+    })
+});
+
+Then(/^the user's email attribute matches the mail attribute in the user backend$/, function () {
+    cy.fixture("testuser_data").then((testuserdata) => {
+        cy.getCookie("userattributes").should('exist').then((cookie) => {
+            const responseBody = JSON.parse(cookie.value)
             expect(responseBody["users"][0]["email"]).to.equal(testuserdata.mail)
+        })
+    })
+});
+
+Then(/^the user's externalIdentity attribute matches the username attribute in the user backend$/, function () {
+    cy.fixture("testuser_data").then((testuserdata) => {
+        cy.getCookie("userattributes").should('exist').then((cookie) => {
+            const responseBody = JSON.parse(cookie.value)
             expect(responseBody["users"][0]["externalIdentity"]).to.equal(testuserdata.username)
         })
     })
