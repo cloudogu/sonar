@@ -22,7 +22,7 @@ When(/^the user opens the SonarQube issue page$/, function () {
     cy.visit("/" + env.GetDoguName() + "/issues?resolved=false", {failOnStatusCode: false})
 });
 
-When(/^the user can create a User Token via the Web API$/, function () {
+When(/^the user creates a User Token via the Web API$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.clearCookies()
         cy.request({
