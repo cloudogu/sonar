@@ -13,12 +13,13 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
-
+const commands_sonarqube_api = require('./commands/sonarqube_api')
 // Loads all commands from the dogu integration library into this project
 const doguTestLibrary = require('@cloudogu/dogu-integration-test-library')
 doguTestLibrary.registerCommands()
 
+commands_sonarqube_api.register()
+
 // local commands
 import './commands/required_commands_for_dogu_lib'
+import './commands/sonarqube_api'

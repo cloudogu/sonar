@@ -4,9 +4,6 @@ const {
 
 const env = require('@cloudogu/dogu-integration-test-library/lib/environment_variables')
 
-
-
-
 Then(/^the test user's replicated user data is visible$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.get("[id=login]").then(loginFromSite => {
@@ -20,33 +17,15 @@ Then(/^the test user's replicated user data is visible$/, function () {
         })
     })
 });
+
 Then(/^the user can access the SonarQube API with username and password$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.request({
-            method: "GET",
-            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/search",
-            auth: {
-                'user': testuserdata.username,
-                'pass': testuserdata.password
-            }
-        }).then((response) => {
-            expect(response.status).to.eq(200)
-        })
+        cy.requestSonarAPI("/users/search", testuserdata.username, testuserdata.password)
     })
 });
 
 Then(/^the user can not access the SonarQube API with wrong username and password$/, function () {
-    cy.request({
-        method: "GET",
-        url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/search",
-        auth: {
-            'user': "NoVaLiDUSRnam33",
-            'pass': "ThIsIsNoTaP4$$worD"
-        },
-        failOnStatusCode: false
-    }).then((response) => {
-        expect(response.status).to.eq(401)
-    })
+    cy.requestSonarAPI("/users/search", "NoVaLiDUSRnam33", "ThIsIsNoTaP4$$worD", false, 401)
 });
 
 Then(/^the user is redirected to the SonarQube issue page$/, function () {
@@ -56,16 +35,7 @@ Then(/^the user is redirected to the SonarQube issue page$/, function () {
 Then(/^the user can access the Web API with the User Token$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.getCookie(testuserdata.sonarqubeToken).should('exist').then((cookie) => {
-            cy.request({
-                method: "GET",
-                url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/system/health",
-                auth: {
-                    'user': cookie.value,
-                    'pass': ""
-                }
-            }).then((response) => {
-                expect(response.status).to.eq(200)
-            })
+            cy.requestSonarAPI("/system/health", cookie.value)
         })
     })
 });
@@ -112,22 +82,12 @@ Then(/^the user's attributes should include the admin group$/, function () {
         const responseBody = JSON.parse(cookie.value)
         cy.log("DEBUG: " + cookie.value)
         expect(responseBody["users"][0]["groups"]).to.contain(env.GetAdminGroup())
-        expect(responseBody["users"][0]["login"]).to.equal(env.GetAdminUsername())
     })
 });
 
 Then(/^the user can access the \/users\/groups Web API endpoint$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.request({
-            method: "GET",
-            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/groups?login=" + testuserdata.username,
-            auth: {
-                'user': testuserdata.username,
-                'pass': testuserdata.password
-            }
-        }).then((response) => {
-            expect(response.status).to.eq(200)
-        })
+        cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, testuserdata.username, testuserdata.password)
     })
 });
 
@@ -139,16 +99,6 @@ Then(/^the user is redirected to the account site$/, function () {
 
 Then(/^the user can not access the \/users\/groups Web API endpoint$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.request({
-            method: "GET",
-            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/groups?login=" + testuserdata.username,
-            auth: {
-                'user': testuserdata.username,
-                'pass': testuserdata.password
-            },
-            failOnStatusCode: false
-        }).then((response) => {
-            expect(response.status).to.eq(403)
-        })
+        cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, testuserdata.username, testuserdata.password, false, 403)
     })
 });
