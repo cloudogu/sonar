@@ -1,8 +1,7 @@
 #!groovy
-@Library(['github.com/cloudogu/ces-build-lib@1.44.2', 'github.com/cloudogu/dogu-build-lib@v1.1.1', 'github.com/cloudogu/zalenium-build-lib@v2.1.0'])
+@Library(['github.com/cloudogu/ces-build-lib@v1.48.0', 'github.com/cloudogu/dogu-build-lib@v1.5.1'])
 import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
-import com.cloudogu.ces.zaleniumbuildlib.*
 
 node('vagrant') {
 
@@ -68,7 +67,11 @@ node('vagrant') {
             }
 
             stage('Integration Tests') {
-                ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie', [], params.EnableVideoRecording)
+                ecoSystem.runCypressIntegrationTests([
+                    cypressImage:"cypress/included:8.7.0",
+                    enableVideo: params.EnableVideoRecording,
+                    enableScreenshots: params.EnableScreenshotRecording
+                ])
             }
 
             if (params.TestDoguUpgrade != null && params.TestDoguUpgrade){
@@ -89,11 +92,16 @@ node('vagrant') {
 
                     // Wait for upgraded dogu to get healthy
                     ecoSystem.waitForDogu(doguName)
+                    ecoSystem.waitUntilAvailable(doguName)
                 }
 
                 stage('Integration Tests - After Upgrade') {
                     // Run integration tests again to verify that the upgrade was successful
-                    ecoSystem.runYarnIntegrationTests(15, 'node:10.16.3-jessie', [], params.EnableVideoRecording)
+                    ecoSystem.runCypressIntegrationTests([
+                        cypressImage:"cypress/included:8.7.0",
+                        enableVideo: params.EnableVideoRecording,
+                        enableScreenshots: params.EnableScreenshotRecording
+                ])
                 }
             }
 
