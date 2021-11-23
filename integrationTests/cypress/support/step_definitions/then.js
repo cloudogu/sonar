@@ -6,15 +6,9 @@ const env = require('@cloudogu/dogu-integration-test-library/lib/environment_var
 
 Then(/^the page shows the replicated data of the user in tabular form$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.get("[id=login]").then(loginFromSite => {
-            expect(loginFromSite.text()).to.eq(testuserdata.username)
-        })
-        cy.get("[id=email]").then(loginFromSite => {
-            expect(loginFromSite.text()).to.eq(testuserdata.mail)
-        })
-        cy.get("[id=name]").then(loginFromSite => {
-            expect(loginFromSite.text()).to.eq(testuserdata.displayName)
-        })
+        cy.get("[id=login]").contains(testuserdata.username)
+        cy.get("[id=email]").contains(testuserdata.mail)
+        cy.get("[id=name]").contains(testuserdata.displayName)
     })
 });
 
