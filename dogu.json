@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "8.9.0-4",
+  "Version": "8.9.0-5",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -14,10 +14,22 @@
   "Url": "http://www.sonarqube.org/",
   "Image": "registry.cloudogu.com/official/sonar",
   "Dependencies": [
-    "postgresql",
-    "cas",
-    "nginx",
-    "postfix"
+    {
+      "type": "dogu",
+      "name": "postgresql"
+    },
+    {
+      "type": "dogu",
+      "name": "cas"
+    },
+    {
+      "type": "dogu",
+      "name": "nginx"
+    },
+    {
+      "type": "dogu",
+      "name": "postfix"
+    }
   ],
   "Volumes": [
     {
@@ -123,6 +135,22 @@
       "Name": "amend_projects_with_ces_admin_permissions",
       "Description": "If set to 'all', the ces-admin group will be enabled to administer all project. This key will automatically reset to 'none' afterwards.",
       "Optional": true
+    },
+    {
+      "Name": "logging/root",
+      "Description": "Set the root log level to one of ERROR, WARN, INFO, DEBUG, TRACE.",
+      "Optional": true,
+      "Default": "INFO",
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "WARN",
+          "DEBUG",
+          "INFO",
+          "ERROR",
+          "TRACE"
+        ]
+      }
     }
   ],
   "HealthChecks": [
