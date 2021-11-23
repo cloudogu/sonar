@@ -8,10 +8,11 @@ const env = require("@cloudogu/dogu-integration-test-library/lib/environment_var
  * @param {String} password - The password for the user. Can be left empty if token is used for username.  Default: empty
  * @param {boolean} failOnStatusCode - Set to "false" to not make this command fail on response codes other than 2xx and 3xx.  Default: false
  * @param {number} expectedResponseStatusCode - The status code you expect the request to respond with.  Default: 200
+ * @param {String} method - The request method, e.g. GET or POST. Default: GET
  */
-const requestSonarAPI = (APIEndpoint, username, password= "", failOnStatusCode = true, expectedResponseStatusCode = 200) => {
+const requestSonarAPI = (APIEndpoint, username, password= "", failOnStatusCode = true, expectedResponseStatusCode = 200, method = "GET") => {
     cy.request({
-        method: "GET",
+        method: method,
         url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api" + APIEndpoint,
         auth: {
             'user': username,
@@ -20,6 +21,7 @@ const requestSonarAPI = (APIEndpoint, username, password= "", failOnStatusCode =
         failOnStatusCode: failOnStatusCode
     }).then((response) => {
         expect(response.status).to.eq(expectedResponseStatusCode)
+        return response
     })
 }
 

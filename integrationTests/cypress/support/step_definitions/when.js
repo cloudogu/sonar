@@ -19,16 +19,7 @@ When(/^the user opens the SonarQube issue page$/, function () {
 When(/^the user creates a User Token via the Web API$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.clearCookies()
-        cy.request({
-            method: "POST",
-            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/user_tokens/generate?name=" + testuserdata.sonarqubeToken,
-            auth: {
-                'user': testuserdata.username,
-                'pass': testuserdata.password
-            }
-        }).then((response) => {
-            expect(response.status).to.eq(200)
-            // save token inside a cookie for the following (Then) steps
+        cy.requestSonarAPI("/user_tokens/generate?name=" + testuserdata.sonarqubeToken, testuserdata.username, testuserdata.password, true, 200, "POST").then(function (response) {
             cy.setCookie(testuserdata.sonarqubeToken, response.body["token"])
         })
     })
@@ -37,16 +28,7 @@ When(/^the user creates a User Token via the Web API$/, function () {
 When(/^the user requests his\/her attributes via the \/users API endpoint$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.clearCookies()
-        cy.request({
-            method: "GET",
-            url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/search?q=" + testuserdata.username,
-            auth: {
-                'user': testuserdata.username,
-                'pass': testuserdata.password
-            }
-        }).then((response) => {
-            expect(response.status).to.eq(200)
-            // save data inside a cookie for the following (Then) steps
+        cy.requestSonarAPI("/users/search?q=" + testuserdata.username, testuserdata.username, testuserdata.password).then(function (response) {
             cy.setCookie("userattributes", JSON.stringify(response.body))
         })
     })
@@ -54,16 +36,7 @@ When(/^the user requests his\/her attributes via the \/users API endpoint$/, fun
 
 When(/^the admin user requests his\/her attributes via the \/users API endpoint$/, function () {
     cy.clearCookies()
-    cy.request({
-        method: "GET",
-        url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/search?q=" + env.GetAdminUsername(),
-        auth: {
-            'user': env.GetAdminUsername(),
-            'pass': env.GetAdminPassword()
-        }
-    }).then((response) => {
-        expect(response.status).to.eq(200)
-        // save data inside a cookie for the following (Then) steps
+    cy.requestSonarAPI("/users/search?q=" + env.GetAdminUsername(), env.GetAdminUsername(), env.GetAdminPassword()).then(function (response) {
         cy.setCookie("adminuserattributes", JSON.stringify(response.body))
     })
 });
