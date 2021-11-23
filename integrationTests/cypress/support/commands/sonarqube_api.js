@@ -5,9 +5,9 @@ const env = require("@cloudogu/dogu-integration-test-library/lib/environment_var
  * Sends a GET request to the SonarQube API endpoint and checks the response status code
  * @param {String} APIEndpoint - The API endpoint, appended to "https://FQDN/sonar/api"
  * @param {String} username - The username or token
- * @param {String} password - The password for the user. Can be left empty if token is used for username.
- * @param {boolean} failOnStatusCode - Set to "false" to not make this command fail on response codes other than 2xx and 3xx
- * @param {number} expectedResponseStatusCode - The status code you expect the request to respond with
+ * @param {String} password - The password for the user. Can be left empty if token is used for username.  Default: empty
+ * @param {boolean} failOnStatusCode - Set to "false" to not make this command fail on response codes other than 2xx and 3xx.  Default: false
+ * @param {number} expectedResponseStatusCode - The status code you expect the request to respond with.  Default: 200
  */
 const requestSonarAPI = (APIEndpoint, username, password= "", failOnStatusCode = true, expectedResponseStatusCode = 200) => {
     cy.request({
