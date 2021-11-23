@@ -34,7 +34,7 @@ When(/^the user creates a User Token via the Web API$/, function () {
     })
 });
 
-When(/^the user's attributes are requested via Web API$/, function () {
+When(/^the user requests his\/her attributes via the \/users API endpoint$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.clearCookies()
         cy.request({
@@ -52,7 +52,7 @@ When(/^the user's attributes are requested via Web API$/, function () {
     })
 });
 
-When(/^the admin user's attributes are requested via Web API$/, function () {
+When(/^the admin user requests his\/her attributes via the \/users API endpoint$/, function () {
     cy.clearCookies()
     cy.request({
         method: "GET",

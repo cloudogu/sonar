@@ -7,4 +7,4 @@ Feature: CAS user data replication
     And the user clicks the user menu button
     And the user clicks the My Account button
     Then the user is redirected to the account site
-    And the test user's replicated user data is visible
+    And the page shows the replicated data of the user in tabular form
