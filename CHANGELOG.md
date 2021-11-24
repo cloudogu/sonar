@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.9.2-1] - 2021-11-24
+- there are no changes
+
 ## [v8.9.0-5] - 2021-11-23
 ### Added
 - Make log level configurable
