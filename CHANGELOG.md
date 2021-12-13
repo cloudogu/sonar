@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.9.2-2] - 2021-12-13
+
 ### Fixed
-- disable jndi lookup due to a vulbarability (69, https://community.sonarsource.com/t/sonarqube-and-the-log4j-vulnerability/54721)
+- disable jndi lookup due to a vulnerability (69, https://community.sonarsource.com/t/sonarqube-and-the-log4j-vulnerability/54721)
 
 ## [v8.9.2-1] - 2021-11-24
 - Re-release of 8.9.0-5 to use correct version
