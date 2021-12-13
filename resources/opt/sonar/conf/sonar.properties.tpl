@@ -212,7 +212,7 @@ sonar.web.context=/sonar
 # -XX:+HeapDumpOnOutOfMemoryError
 
 # Same as previous property, but allows to not repeat all other settings like -Xmx
-#sonar.search.javaAdditionalOpts=
+sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
 
 # Elasticsearch port. Default is 9001. Use 0 to get a free port.
 # As a security precaution, should be blocked by a firewall and not exposed to the Internet.
