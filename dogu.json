@@ -1,5 +1,5 @@
 {
-  "Name": "official/sonar",
+  "Name": "itz-bund/sonar",
   "Version": "8.9.0-3",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
@@ -12,7 +12,7 @@
   ],
   "Logo": "https://cloudogu.com/images/dogus/sonarqube.png",
   "Url": "http://www.sonarqube.org/",
-  "Image": "registry.cloudogu.com/official/sonar",
+  "Image": "registry.cloudogu.com/itz-bund/sonar",
   "Dependencies": [
     "postgresql",
     "cas",

@@ -78,10 +78,10 @@ node('vagrant') {
 
                     if (params.OldDoguVersionForUpgradeTest != '' && !params.OldDoguVersionForUpgradeTest.contains('v')){
                         println "Installing user defined version of dogu: " + params.OldDoguVersionForUpgradeTest
-                        ecoSystem.installDogu("official/" + doguName + " " + params.OldDoguVersionForUpgradeTest)
+                        ecoSystem.installDogu("itz-bund/" + doguName + " " + params.OldDoguVersionForUpgradeTest)
                     } else {
                         println "Installing latest released version of dogu..."
-                        ecoSystem.installDogu("official/" + doguName)
+                        ecoSystem.installDogu("itz-bund/" + doguName)
                     }
                     ecoSystem.startDogu(doguName)
                     ecoSystem.waitForDogu(doguName)

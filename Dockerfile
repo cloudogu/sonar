@@ -1,6 +1,6 @@
 FROM registry.cloudogu.com/official/java:11.0.5-4
 
-LABEL NAME="official/sonar" \
+LABEL NAME="itz-bund/sonar" \
     VERSION="8.9.0-3" \
     maintainer="hello@cloudogu.com"
 
