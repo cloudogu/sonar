@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switch to Cypress/Cucumber integration tests
 - Upgrade to sonar-cas-plugin v4.2.0
 
+## [v8.9.0-6] - 2021-12-15
+### Fixed
+- disable jndi lookup due to a vulnerability (69, https://community.sonarsource.com/t/sonarqube-and-the-log4j-vulnerability/54721)
+
 ## [v8.9.0-4] - 2021-07-28
 ### Added
 - Add CAS proxy ticketing (#65)
