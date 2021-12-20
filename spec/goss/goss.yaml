@@ -12,7 +12,7 @@ file:
     group: sonar
     filetype: file
     contains: []
-  /opt/sonar/extensions/plugins/sonar-cas-plugin-4.0.0.jar:
+  /opt/sonar/extensions/plugins/sonar-cas-plugin-4.2.0.jar:
     exists: true
     filetype: file
     contains: []
@@ -22,7 +22,7 @@ package:
   procps:
     installed: true
     versions:
-    - 3.3.16-r0
+    - 3.3.17-r0
 user:
   sonar:
     exists: true

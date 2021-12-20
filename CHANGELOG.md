@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Upgrade sonar to 8.9.5 to fix jndi vulnerability
+
+## [v8.9.2-2] - 2021-12-13
+
+### Fixed
+- disable jndi lookup due to a vulnerability (69, https://community.sonarsource.com/t/sonarqube-and-the-log4j-vulnerability/54721)
+
+## [v8.9.2-1] - 2021-11-24
+- Re-release of 8.9.0-5 to use correct version
+
+## [v8.9.0-5] - 2021-11-23
+### Added
+- Make log level configurable
+
+### Changed
+- Upgrade to SonarQube 8.9.2; #67
+- Upgrade to java base image 11.0.11-2
+- Switch to dogu.json format v2
+- Switch to Cypress/Cucumber integration tests
+- Upgrade to sonar-cas-plugin v4.2.0
+
+## [v8.9.0-6] - 2021-12-15
+### Fixed
+- disable jndi lookup due to a vulnerability (69, https://community.sonarsource.com/t/sonarqube-and-the-log4j-vulnerability/54721)
+
+## [v8.9.0-4] - 2021-07-28
+### Added
+- Add CAS proxy ticketing (#65)
+
+### Changed
+- Switch from CAS specification 2.0 to 3.0 (#65)
+
 ## [v8.9.0-3] - 2021-07-19
 ### Fixed
 - Fix CAS authentication error with previously logged-in users during migration (#63)
@@ -101,7 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The pre-Upgrade script now will delete es6 cache when upgrading from 7.9.1-4 or lower
 
 ### Changed 
-* Update Sonar from 7.9.1 to 7.9.3
+* Update SonarQube from 7.9.1 to 7.9.3
 
 ## [7.9.1-4] - 2020-01-29
 

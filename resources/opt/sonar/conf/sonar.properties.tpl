@@ -212,7 +212,7 @@ sonar.web.context=/sonar
 # -XX:+HeapDumpOnOutOfMemoryError
 
 # Same as previous property, but allows to not repeat all other settings like -Xmx
-#sonar.search.javaAdditionalOpts=
+sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
 
 # Elasticsearch port. Default is 9001. Use 0 to get a free port.
 # As a security precaution, should be blocked by a firewall and not exposed to the Internet.
@@ -289,7 +289,7 @@ sonar.web.context=/sonar
 
 # Global level of logs (applies to all 4 processes).
 # Supported values are INFO (default), DEBUG and TRACE
-#sonar.log.level=INFO
+sonar.log.level={{ .Env.Get "SONAR_LOGLEVEL" }}
 
 # Level of logs of each process can be controlled individually with their respective properties.
 # When specified, they overwrite the level defined at global level.
@@ -374,7 +374,7 @@ sonar.notifications.delay=60
 sonar.security.realm=cas
 sonar.authenticator.createUsers=true
 sonar.cas.forceCasLogin=true
-sonar.cas.protocol=cas2
+sonar.cas.protocol=cas3
 sonar.cas.casServerLoginUrl=https://{{ .GlobalConfig.Get "fqdn" }}/cas/login
 sonar.cas.casServerUrlPrefix=https://{{ .GlobalConfig.Get "fqdn" }}/cas
 sonar.cas.sonarServerUrl=https://{{ .GlobalConfig.Get "fqdn" }}/sonar
@@ -383,6 +383,7 @@ sonar.cas.rolesAttributes=groups,roles
 sonar.cas.eMailAttribute=mail
 sonar.cas.disableCertValidation=false
 sonar.cas.fullNameAttribute=displayName
+sonar.cas.proxyTicketing.services=^https://{{ .GlobalConfig.Get "fqdn" }}/.*$
 # Sets the expiration time for the cookie. An integer specifying the maximum age of the cookie in seconds
 # # if negative, means the cookie is only stored until the browser exits; if zero, deletes the cookie
 sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
