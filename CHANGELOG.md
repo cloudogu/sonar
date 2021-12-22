@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Upgrade sonar to 8.9.6 to fix jndi vulnerability of version 2.16.0 (#74)
+
 ## [v8.9.5-1] - 2021-12-20
 
 ### Changed
