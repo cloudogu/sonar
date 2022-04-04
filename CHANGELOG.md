@@ -7,18 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v8.9.6-1] - 2021-12-22
+## [v8.9.6-2] - 2022-04-04
+### Changed
+- Upgrade java base image to 11.0.14-3
 
+## [v8.9.6-1] - 2021-12-22
 ### Changed
 - Upgrade sonar to 8.9.6 to fix jndi vulnerability of version 2.16.0 (#74)
 
 ## [v8.9.5-1] - 2021-12-20
-
 ### Changed
 - Upgrade sonar to 8.9.5 to fix jndi vulnerability
 
 ## [v8.9.2-2] - 2021-12-13
-
 ### Fixed
 - disable jndi lookup due to a vulnerability (69, https://community.sonarsource.com/t/sonarqube-and-the-log4j-vulnerability/54721)
 

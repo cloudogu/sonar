@@ -1,7 +1,7 @@
-FROM registry.cloudogu.com/official/java:11.0.11-2
+FROM registry.cloudogu.com/official/java:11.0.14-3
 
 LABEL NAME="official/sonar" \
-    VERSION="8.9.6-1" \
+    VERSION="8.9.6-2" \
     maintainer="hello@cloudogu.com"
 
 ENV SONAR_VERSION=8.9.6.50800 \
@@ -13,8 +13,10 @@ ENV SONAR_VERSION=8.9.6.50800 \
     CAS_PLUGIN_JAR_SHA256=0245e7edf9bf82a3f2cae6e0e17bb204fc4fbf69174f7c6864925daaf7bcc2d3 \
     STARTUP_DIR="/"
 
-RUN set -x \
-    && apk add --no-cache procps postgresql-client \
+RUN set -e \
+    && apk update \
+    && apk upgrade \
+    && apk add --no-cache procps postgresql14-client \
     && mkdir -p /opt \
     && cd /tmp \
     && rm -rf /var/cache/apk/* \
