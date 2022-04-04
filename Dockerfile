@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/java:11.0.11-2
+FROM registry.cloudogu.com/official/java:11.0.14-3
 
 LABEL NAME="official/sonar" \
     VERSION="8.9.6-1" \
