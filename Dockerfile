@@ -14,6 +14,8 @@ ENV SONAR_VERSION=8.9.6.50800 \
     STARTUP_DIR="/"
 
 RUN set -e \
+    && apk update \
+    && apk upgrade \
     && apk add --no-cache procps postgresql14-client \
     && mkdir -p /opt \
     && cd /tmp \
