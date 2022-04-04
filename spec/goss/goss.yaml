@@ -17,7 +17,7 @@ file:
     filetype: file
     contains: []
 package:
-  postgresql-client:
+  postgresql14-client:
     installed: true
   procps:
     installed: true
