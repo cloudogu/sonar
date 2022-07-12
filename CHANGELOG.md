@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.9.8-1] - 2022-07-12
+### Changed
+- Upgrade sonar to version 8.9.8-54436 (#76)
+- Update Makefiles to 6.0.3
+
 ## [v8.9.6-2] - 2022-04-04
 ### Changed
 - Upgrade java base image to 11.0.14-3
