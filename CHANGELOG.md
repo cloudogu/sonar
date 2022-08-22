@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v8.9.8-2] - 2022-08-22
+### Changed
+- Update sonar-cas-plugin to version [4.2.1](https://github.com/cloudogu/sonar-cas-plugin/releases/tag/v4.2.1) (#78)
+- Add missing makefile content from v6.0.3
+
 ## [v8.9.8-1] - 2022-07-12
 ### Changed
 - Upgrade sonar to version 8.9.8-54436 (#76)
