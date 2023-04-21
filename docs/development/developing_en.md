@@ -142,7 +142,7 @@ Due to communication problems caused by self-signed SSL certificates in a develo
          - `Secret text` for SQ API token
    1. create build job
       1. create element -> select `SCM-Manager Namespace` -> configure job
-         - Server URL: https://192.198.56.2/scm
+         - Server URL: https://192.198.56.2/scm <!-- markdown-link-check-disable-line -->
          - Credentials: as configured above
       1. save job
       1. cancel surplus/non-functioning jobs if necessary
