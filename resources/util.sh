@@ -230,7 +230,9 @@ function remove_permission_from_group() {
 
 function create_temporary_system_admin_user_with_default_password() {
   local TEMP_SYSTEM_ADMIN=${1}
+  # shellcheck disable=SC2016
   local SALT='k9x9eN127/3e/hf38iNiKwVfaVk='
+  # shellcheck disable=SC2016
   local HASHED_PW='100000$t2h8AtNs1AlCHuLobDjHQTn9XppwTIx88UjqUm4s8RsfTuXQHSd/fpFexAnewwPsO6jGFQUv/24DnO55hY6Xew=='
 
   execute_sql_statement_on_database "INSERT INTO users (login, name, reset_password, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, uuid, external_id)
@@ -250,7 +252,8 @@ function create_temporary_admin_user_with_temporary_admin_group() {
   local PASSWORD=${2}
   local TEMPORARY_ADMIN_GROUP=${3}
   local LOGLEVEL=${4}
-  local TEMP_SYSTEM_ADMIN="$(doguctl random)"
+  local TEMP_SYSTEM_ADMIN
+  TEMP_SYSTEM_ADMIN="$(doguctl random)"
 
   create_temporary_system_admin_user_with_default_password "${TEMP_SYSTEM_ADMIN}"
 
