@@ -391,6 +391,7 @@ sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
 # persistent across server or container restarts or even container recreations in order to properly handle issued
 # authentications. Administrators may want to mount this as its own volume in order to scale with number of unexpired
 # sessions.
+# This path should not be in the sonar-home-directory ("/opt/sonar/..."), because sonar blocks write-access to this directory
 sonar.cas.sessionStorePath = /tmp/cas/sessionstore
 # The CAS session store stores JWT tokens which have an expiration date. These are kept for black- and whitelisting JWTs
 # from a user in order to prohibit attackers which gained access to a user's old JWT tokens. Once these JWTs are expired
