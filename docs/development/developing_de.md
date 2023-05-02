@@ -140,7 +140,7 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
          - `Secret text` für SQ API Token
    1. Build-Job anlegen
       1. Element anlegen -> `SCM-Manager Namespace` auswählen -> Job konfigurieren
-         - Repo: https://192.198.56.2/scm
+         - Repo: https://192.198.56.2/scm <!-- markdown-link-check-disable-line -->
          - Credentials: wie oben konfiguriert
       1. Job speichern
       1. ggf. überzählige/nicht funktionierende Jobs abbrechen

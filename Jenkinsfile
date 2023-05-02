@@ -1,5 +1,5 @@
 #!groovy
-@Library(['github.com/cloudogu/ces-build-lib@v1.48.0', 'github.com/cloudogu/dogu-build-lib@v1.5.1'])
+@Library(['github.com/cloudogu/ces-build-lib@1.64.1', 'github.com/cloudogu/dogu-build-lib@v2.0.0'])
 import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
 
@@ -12,6 +12,8 @@ node('vagrant') {
     GitFlow gitflow = new GitFlow(this, git)
     GitHub github = new GitHub(this, git)
     Changelog changelog = new Changelog(this)
+    Markdown markdown = new Markdown(this, "3.11.0")
+
     timestamps{
         properties([
                 // Keep only the last x builds to preserve space
@@ -38,10 +40,14 @@ node('vagrant') {
             shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
 
+        stage('Check Markdown Links') {
+            markdown.check()
+        }
+
         try {
 
             stage('Provision') {
-                ecoSystem.provision("/dogu");
+                ecoSystem.provision("/dogu")
             }
 
             stage('Setup') {
@@ -107,7 +113,7 @@ node('vagrant') {
 
 
             if (gitflow.isReleaseBranch()) {
-                String releaseVersion = git.getSimpleBranchName();
+                String releaseVersion = git.getSimpleBranchName()
 
                 stage('Finish Release') {
                     gitflow.finishRelease(releaseVersion)
