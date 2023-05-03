@@ -145,6 +145,9 @@ sonar.web.context=/sonar
 # By default feature is disabled.
 #sonar.web.systemPasscode=
 
+# Set the wait-timout when stopping the web-server to 1 minute (60000 milliseconds) before the web-server is killed
+# Sonar adds a 1 minute grace-period to this timeout, so that in fact the wait-timeout is 2 minutes
+sonar.web.gracefulStopTimeOutInMs=60000
 
 #--------------------------------------------------------------------------------------------------
 # SSO AUTHENTICATION
