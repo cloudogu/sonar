@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Upgrade sonar to version 9.9.1.69595 (#80)
+- Set the wait-timeout when stopping sonar to 2 minutes
 
 ## [v8.9.8-3] - 2023-04-21
 ### Fixed
