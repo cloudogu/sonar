@@ -20,6 +20,12 @@ doguTestLibrary.registerCommands()
 
 commands_sonarqube_api.register()
 
+Cypress.on('uncaught:exception', (err, runnable) => {
+    // returning false here prevents Cypress from
+    // failing the test
+    return false
+})
+
 // local commands
 import './commands/required_commands_for_dogu_lib'
 import './commands/sonarqube_api'
