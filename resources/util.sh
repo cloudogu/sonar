@@ -40,25 +40,7 @@ function wait_for_sonar_to_get_up() {
   done
 }
 
-function add_temporary_admin_user() {
-  # temporarily create admin user and add to admin groups
-  TEMPORARY_ADMIN_USER=${1}
-  TEMPORARY_ADMIN_PASSWORD=${2}
-  SALT=$(doguctl random)
-  HASHED_PW=$(getSHA1PW "${TEMPORARY_ADMIN_PASSWORD}" "${SALT}")
-  execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
-  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
-
-  ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT uuid FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
-  ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
-  if [[ -z ${ADMIN_ID} ]]; then
-    # id has only one digit
-    ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
-  fi
-  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 1);"
-  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 2);"
-}
-
+# DEPRECATED - Since SonarQube 9.4 the support for SHA1 hashed password has been removed.
 function getSHA1PW() {
     PW="${1}"
     SALT="${2}"
@@ -246,21 +228,39 @@ function remove_permission_from_group() {
   execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
 }
 
+function create_temporary_system_admin_user_with_default_password() {
+  local TEMP_SYSTEM_ADMIN=${1}
+  # shellcheck disable=SC2016
+  local SALT='k9x9eN127/3e/hf38iNiKwVfaVk='
+  # shellcheck disable=SC2016
+  local HASHED_PW='100000$t2h8AtNs1AlCHuLobDjHQTn9XppwTIx88UjqUm4s8RsfTuXQHSd/fpFexAnewwPsO6jGFQUv/24DnO55hY6Xew=='
+
+  execute_sql_statement_on_database "INSERT INTO users (login, name, reset_password, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, uuid, external_id)
+    VALUES ('${TEMP_SYSTEM_ADMIN}', 'Temporary System Administrator', false, '${HASHED_PW}', '${SALT}', 'PBKDF2', true, '${TEMP_SYSTEM_ADMIN}', 'sonarqube', true, '${TEMP_SYSTEM_ADMIN}', '${TEMP_SYSTEM_ADMIN}');"
+  execute_sql_statement_on_database "INSERT INTO user_roles(uuid, user_uuid, role) VALUES ('$(doguctl random)', (SELECT uuid from users WHERE login='${TEMP_SYSTEM_ADMIN}'), 'admin');"
+}
+
+function delete_temporary_system_admin_user() {
+  local TEMP_SYSTEM_ADMIN=${1}
+
+  execute_sql_statement_on_database "DELETE FROM user_roles where user_uuid=(SELECT uuid from users WHERE login='${TEMP_SYSTEM_ADMIN}');"
+  execute_sql_statement_on_database "DELETE FROM users where login='${TEMP_SYSTEM_ADMIN}';"
+}
+
 function create_temporary_admin_user_with_temporary_admin_group() {
-  # create temporary admin user
   local TEMPORARY_ADMIN_USER=${1}
   local PASSWORD=${2}
   local TEMPORARY_ADMIN_GROUP=${3}
-  local SALT
-  local HASHED_PW
-  SALT=$(doguctl random)
-  HASHED_PW=$(getSHA1PW "${PASSWORD}" "${SALT}")
-  execute_sql_statement_on_database "INSERT INTO users (login, name, reset_password, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
-  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', false, '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
-  # add temporary admin user to temporary admin group
-  local ADMIN_ID_QUERY="SELECT uuid from users WHERE login='${TEMPORARY_ADMIN_USER}'"
-  local GROUP_ID_QUERY="SELECT uuid from groups WHERE name='${TEMPORARY_ADMIN_GROUP}'"
-  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES ((${ADMIN_ID_QUERY}), (${GROUP_ID_QUERY}));"
+  local LOGLEVEL=${4}
+  local TEMP_SYSTEM_ADMIN
+  TEMP_SYSTEM_ADMIN="$(doguctl random)"
+
+  create_temporary_system_admin_user_with_default_password "${TEMP_SYSTEM_ADMIN}"
+
+  create_user_via_rest_api "${TEMPORARY_ADMIN_USER}" "TemporaryAdministrator" "${PASSWORD}" "${TEMP_SYSTEM_ADMIN}" "admin" "${LOGLEVEL}"
+  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" "${TEMP_SYSTEM_ADMIN}" "admin" "${LOGLEVEL}"
+
+  delete_temporary_system_admin_user "${TEMP_SYSTEM_ADMIN}"
 }
 
 function create_temporary_admin_user_via_rest_api_with_default_credentials() {

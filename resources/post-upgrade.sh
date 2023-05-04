@@ -5,7 +5,6 @@ set -o pipefail
 
 # import util functions:
 # execute_sql_statement_on_database()
-# add_temporary_admin_user()
 # getSHA1PW()
 # remove_temporary_admin_user functions()
 # wait_for_sonar_status_endpoint()
@@ -39,6 +38,25 @@ function reinstall_plugins() {
 function migrate_cas_identity_provider_in_db() {
   echo "Migrating DB: Update accounts associated with identity provider CAS to SonarQube..."
   execute_sql_statement_on_database "update users set external_identity_provider='sonarqube' where external_identity_provider='cas';"
+}
+
+function add_temporary_admin_user_sonar_7() {
+  # temporarily create admin user and add to admin groups
+  TEMPORARY_ADMIN_USER=${1}
+  TEMPORARY_ADMIN_PASSWORD=${2}
+  SALT=$(doguctl random)
+  HASHED_PW=$(getSHA1PW "${TEMPORARY_ADMIN_PASSWORD}" "${SALT}")
+  execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
+  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
+
+  ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT uuid FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
+  ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
+  if [[ -z ${ADMIN_ID} ]]; then
+    # id has only one digit
+    ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
+  fi
+  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 1);"
+  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 2);"
 }
 
 function run_post_upgrade() {
@@ -89,7 +107,7 @@ function run_post_upgrade() {
     PW=$(doguctl random)
     SALT=$(doguctl random)
     HASH=$(getSHA1PW "${PW}" "${SALT}")
-    add_temporary_admin_user "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
+    add_temporary_admin_user_sonar_7 "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
     # reinstall missing plugins if there are any
     if doguctl config install_plugins >/dev/null; then
 

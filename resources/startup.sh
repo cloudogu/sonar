@@ -20,8 +20,6 @@ echo "                       'V/(/////////////////////////////V'      "
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
-# add_temporary_admin_user()
-# getSHA1PW()
 # create_user_via_rest_api()
 # add_user_to_group_via_rest_api()
 # set_successful_first_start_flag()
@@ -394,7 +392,7 @@ function create_temporary_admin_for_subsequent_start(){
   echo "Creating Temporary admin user..."
   # Create temporary admin only in database
   add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-  create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}"
+  create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
 }
 
 function subsequent_sonar_start() {

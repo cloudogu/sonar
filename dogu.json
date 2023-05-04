@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "8.9.8-3",
+  "Version": "9.9.1-1",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",

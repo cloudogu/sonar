@@ -1,17 +1,17 @@
-FROM registry.cloudogu.com/official/java:11.0.18-1 as BASE
+FROM registry.cloudogu.com/official/java:17.0.6-1 as BASE
 
 ENV SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    SONAR_VERSION=8.9.8.54436 \
-    CAS_PLUGIN_VERSION=4.2.1 \
+    SONAR_VERSION=9.9.1.69595 \
+    CAS_PLUGIN_VERSION=5.0.0 \
     STARTUP_DIR="/"
 
 FROM BASE as builder
 
-ENV SONARQUBE_ZIP_SHA256=a491240b2066222680d9770c6da4d5f0cf9873c86e0d0e3fbe4d1383bbf3ce85 \
-    CAS_PLUGIN_JAR_SHA256=9b78f59f2c58221ea79a0b161bc2a9ed77ad5202bc615750cce1be7540bc2c8c
-ENV BUILDER_HOME="/builder/sonar"
+ENV SONARQUBE_ZIP_SHA256=40bb45f551c7959ba1d3a5ff7b5432a558a5b2ad2efa5e9e1fcf52b83142897b \
+    CAS_PLUGIN_JAR_SHA256=c5f45bed9d4dc748a28f14bd2d1885996ae6c63361be4d1818da258e985ead81 \
+    BUILDER_HOME="/builder/sonar"
 
 WORKDIR /builder
 
@@ -27,7 +27,7 @@ RUN echo "${CAS_PLUGIN_JAR_SHA256} *${BUILDER_HOME}/sonar-cas-plugin-${CAS_PLUGI
 FROM BASE
 
 LABEL NAME="official/sonar" \
-    VERSION="8.9.8-3" \
+    VERSION="9.9.1-1" \
     maintainer="hello@cloudogu.com"
 
 RUN set -eux \
