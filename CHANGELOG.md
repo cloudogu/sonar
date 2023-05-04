@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v9.9.1-1] - 2023-05-04
 ### Changed
 - Upgrade sonar to version 9.9.1.69595 (#80)
 - Update sonar-cas-plugin to version [5.0.0](https://github.com/cloudogu/sonar-cas-plugin/releases/tag/v5.0.0) (#80)
