@@ -27,7 +27,7 @@ RUN echo "${CAS_PLUGIN_JAR_SHA256} *${BUILDER_HOME}/sonar-cas-plugin-${CAS_PLUGI
 FROM BASE
 
 LABEL NAME="official/sonar" \
-    VERSION="8.9.8-3" \
+    VERSION="9.9.1-1" \
     maintainer="hello@cloudogu.com"
 
 RUN set -eux \
