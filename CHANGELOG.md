@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.1-2] - 2023-05-11
+### Fixed
+- Update installed plugins when upgrading to sonar 9.9.1
+
 ## [v9.9.1-1] - 2023-05-04
 ### Changed
 - Upgrade sonar to version 9.9.1.69595 (#80)

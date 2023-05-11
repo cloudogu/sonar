@@ -11,6 +11,10 @@ set -o pipefail
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
 # set_successful_first_start_flag()
+# remove_temporary_admin_user()
+# remove_temporary_admin_group()
+# add_temporary_admin_group()
+# create_temporary_admin_user_with_temporary_admin_group()
 # shellcheck disable=SC1091
 source "${STARTUP_DIR}/util.sh"
 
@@ -145,6 +149,38 @@ function run_post_upgrade() {
 
   if [[ "${TO_MAJOR_VERSION}" -eq 8 ]]; then
     migrate_cas_identity_provider_in_db
+  fi
+
+  if [[ ${FROM_VERSION} == "8"* ]] && [[ ${TO_VERSION} == "9.9"* ]]; then
+    # reinstall missing plugins if there are any
+    if doguctl config install_plugins >/dev/null; then
+      TEMPORARY_ADMIN_GROUP=$(doguctl random)
+      TEMPORARY_ADMIN_USER=$(doguctl random)
+      TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+
+      # remove user in case it already exists
+      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+      remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+
+      echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
+      wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
+
+      echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
+      add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+      create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
+
+      echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
+      # default admin credentials (admin, admin) are used
+      wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+
+      reinstall_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+
+      echo "Remove temporary admin user"
+      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
+      remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+
+      doguctl config --remove install_plugins
+    fi
   fi
 
   doguctl config post_upgrade_running false
