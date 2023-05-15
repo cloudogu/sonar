@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.1-3] - 2023-05-15
+### Changed
+- Update CAS plugin to version v5.0.2 (#86)
+
 ## [v9.9.1-2] - 2023-05-11
 ### Fixed
 - Update installed plugins when upgrading to sonar 9.9.1
