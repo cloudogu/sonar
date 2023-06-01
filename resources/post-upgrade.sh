@@ -4,17 +4,13 @@ set -o nounset
 set -o pipefail
 
 # import util functions:
-# execute_sql_statement_on_database()
-# getSHA1PW()
-# remove_temporary_admin_user functions()
+# functions()
 # wait_for_sonar_status_endpoint()
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
-# set_successful_first_start_flag()
-# remove_temporary_admin_user()
-# remove_temporary_admin_group()
+# remove_user()
+# remove_group()
 # add_temporary_admin_group()
-# create_temporary_admin_user_with_temporary_admin_group()
 # shellcheck disable=SC1091
 source "${STARTUP_DIR}/util.sh"
 
@@ -39,46 +35,14 @@ function reinstall_plugins() {
   fi
 }
 
-function migrate_cas_identity_provider_in_db() {
-  echo "Migrating DB: Update accounts associated with identity provider CAS to SonarQube..."
-  execute_sql_statement_on_database "update users set external_identity_provider='sonarqube' where external_identity_provider='cas';"
-}
-
-function add_temporary_admin_user_sonar_7() {
-  # temporarily create admin user and add to admin groups
-  TEMPORARY_ADMIN_USER=${1}
-  TEMPORARY_ADMIN_PASSWORD=${2}
-  SALT=$(doguctl random)
-  HASHED_PW=$(getSHA1PW "${TEMPORARY_ADMIN_PASSWORD}" "${SALT}")
-  execute_sql_statement_on_database "INSERT INTO users (login, name, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, is_root, onboarded, uuid, external_id)
-  VALUES ('${TEMPORARY_ADMIN_USER}', 'Temporary Administrator', '${HASHED_PW}', '${SALT}', 'SHA1', true, '${TEMPORARY_ADMIN_USER}', 'sonarqube', true, true, true, '${TEMPORARY_ADMIN_USER}', '${TEMPORARY_ADMIN_USER}');"
-
-  ADMIN_ID_PSQL_OUTPUT=$(PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "SELECT uuid FROM users WHERE login='${TEMPORARY_ADMIN_USER}';")
-  ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 2)
-  if [[ -z ${ADMIN_ID} ]]; then
-    # id has only one digit
-    ADMIN_ID=$(echo "${ADMIN_ID_PSQL_OUTPUT}" | awk 'NR==3' | cut -d " " -f 3)
-  fi
-  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 1);"
-  execute_sql_statement_on_database "INSERT INTO groups_users (user_uuid, group_uuid) VALUES (${ADMIN_ID}, 2);"
-}
-
 function run_post_upgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
-  TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
   WAIT_TIMEOUT=600
   CURL_LOG_LEVEL="--silent"
   FAILED_PLUGIN_NAMES=""
 
   echo "Running post-upgrade script..."
-
-  # Migrate saved extensions folder to its own volume
-  if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
-    mkdir -p /opt/sonar/extensions
-    cp -R /opt/sonar/data/extensions/* /opt/sonar/extensions/
-    rm -rf /opt/sonar/data/extensions
-  fi
 
   echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
   wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
@@ -106,51 +70,6 @@ function run_post_upgrade() {
     echo "No db migration is needed"
   fi
 
-  if [[ ${FROM_VERSION} == "6"* ]] && [[ ${TO_VERSION} == "7.9"* ]]; then
-    TEMPORARY_ADMIN_USER=$(doguctl random)
-    PW=$(doguctl random)
-    SALT=$(doguctl random)
-    HASH=$(getSHA1PW "${PW}" "${SALT}")
-    add_temporary_admin_user_sonar_7 "${TEMPORARY_ADMIN_USER}" "${HASH}" "${SALT}"
-    # reinstall missing plugins if there are any
-    if doguctl config install_plugins >/dev/null; then
-
-      echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
-      wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
-
-      echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
-      # default admin credentials (admin, admin) are used
-      wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${PW}" ${CURL_LOG_LEVEL}
-
-      reinstall_plugins "${TEMPORARY_ADMIN_USER}" "${PW}"
-
-      doguctl config --remove install_plugins
-    fi
-
-    remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-  fi
-
-  if [[ ${FROM_VERSION} == "6.7.6-1" ]]; then
-    # grant further permissions to CES admin group via API
-    # TODO: Extract grant_permission_to_group_via_rest_api function from startup.sh into util.sh and use it instead
-    CES_ADMIN_GROUP=$(doguctl config --global admin_group)
-    DOGU_ADMIN_PASSWORD=$(doguctl config -e dogu_admin_password)
-    echo "Waiting for SonarQube to get up (max. ${WAIT_TIMEOUT} seconds)..."
-    wait_for_sonar_to_get_up "${WAIT_TIMEOUT}"
-    echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
-    wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${DOGU_ADMIN}" "${DOGU_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
-    # grant profileadmin permission
-    curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=profileadmin&groupName=${CES_ADMIN_GROUP}"
-    # grant gateadmin permission
-    curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=gateadmin&groupName=${CES_ADMIN_GROUP}"
-    # grant provisioning permission
-    curl ${CURL_LOG_LEVEL} --fail -u "${DOGU_ADMIN}":"${DOGU_ADMIN_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?permission=provisioning&groupName=${CES_ADMIN_GROUP}"
-  fi
-
-  if [[ "${TO_MAJOR_VERSION}" -eq 8 ]]; then
-    migrate_cas_identity_provider_in_db
-  fi
-
   if [[ ${FROM_VERSION} == "8"* ]] && [[ ${TO_VERSION} == "9.9"* ]]; then
     # reinstall missing plugins if there are any
     if doguctl config install_plugins >/dev/null; then
@@ -159,15 +78,16 @@ function run_post_upgrade() {
       TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
 
       # remove user in case it already exists
-      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-      remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+      remove_user "${TEMPORARY_ADMIN_USER}"
+      remove_group "${TEMPORARY_ADMIN_GROUP}"
 
       echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
       wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
 
       echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
       add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-      create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
+      add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+      assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 
       echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
       # default admin credentials (admin, admin) are used
@@ -176,8 +96,8 @@ function run_post_upgrade() {
       reinstall_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
       echo "Remove temporary admin user"
-      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-      remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+      remove_user "${TEMPORARY_ADMIN_USER}"
+      remove_group "${TEMPORARY_ADMIN_GROUP}"
 
       doguctl config --remove install_plugins
     fi

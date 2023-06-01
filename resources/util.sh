@@ -40,19 +40,6 @@ function wait_for_sonar_to_get_up() {
   done
 }
 
-# DEPRECATED - Since SonarQube 9.4 the support for SHA1 hashed password has been removed.
-function getSHA1PW() {
-    PW="${1}"
-    SALT="${2}"
-    echo -n "--${SALT}--${PW}--" | sha1sum | awk '{print $1}'
-}
-
-function remove_temporary_admin_user() {
-  local TEMPORARY_ADMIN_USER=${1}
-  execute_sql_statement_on_database "DELETE FROM groups_users WHERE user_uuid=(SELECT uuid FROM users WHERE login='${TEMPORARY_ADMIN_USER}');"
-  execute_sql_statement_on_database "DELETE FROM users WHERE login='${TEMPORARY_ADMIN_USER}';"
-}
-
 function wait_for_sonar_to_get_healthy() {
   WAIT_TIMEOUT=${1}
   USER=$2
@@ -71,6 +58,28 @@ function wait_for_sonar_to_get_healthy() {
     # waiting for SonarQube to get healthy
     sleep 1
   done
+}
+
+function set_successful_first_start_flag() {
+  echo "Setting successfulFirstStart registry key..."
+  doguctl config successfulFirstStart true
+}
+
+function install_plugin_via_api() {
+  PLUGIN=${1}
+  USER=${2}
+  PASSWORD=${3}
+  INSTALL_RESPONSE=$(curl "${CURL_LOG_LEVEL}" -u "${USER}":"${PASSWORD}" -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
+  # check response for error messages
+  if [[ -n ${INSTALL_RESPONSE} ]]; then
+    ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
+    if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
+      echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
+      FAILED_PLUGIN_NAMES+=${PLUGIN},
+    fi
+  else
+    echo "Plugin ${PLUGIN} installed."
+  fi
 }
 
 function create_user_via_rest_api() {
@@ -99,21 +108,90 @@ function create_group_via_rest_api() {
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?description=tempadmingroup&name=${GROUP_NAME}"
 }
 
+function create_user_group_via_rest_api() {
+  NAME=$1
+  DESCRIPTION=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
+  printf "\\n"
+}
+
+function grant_permission_to_group_via_rest_api() {
+  local groupName=${1}
+  local permission=${2}
+  local additionalParams=${3}
+  local authUser=${4}
+  local authPassword=${5}
+  local addGroupRequest="${API_ENDPOINT}/permissions/add_group?permission=${permission}&groupName=${groupName}&${additionalParams}"
+
+  local exitCode=0
+  curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Granting permission to group ${groupName} failed with code ${exitCode}."
+    exit 1
+  fi
+}
+
+function remove_permission_of_group_via_rest_api() {
+  GROUPNAME=$1
+  PERMISSION=$2
+  AUTH_USER=$3
+  AUTH_PASSWORD=$4
+  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+}
+
+function addCesAdminGroupToPermissionTemplate() {
+  local groupToAdd="${CES_ADMIN_GROUP}"
+  local permissionTemplate="default_template"
+  local authUser=${1}
+  local authPassword=${2}
+
+  echo "Adding group '${groupToAdd}' to permission template '${permissionTemplate}'..."
+
+  for projectPermissionToGrant in ${PROJECT_PERMISSIONS}; do
+    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplate}" "${projectPermissionToGrant}" "${authUser}" "${authPassword}"
+  done
+}
+
+function addGroupToPermissionTemplateViaRestAPI() {
+  local groupToAdd="${1}"
+  local permissionTemplate="${2}"
+  local projectPermissionToGrant="${3}"
+  local authUser=${4}
+  local authPassword=${5}
+
+  local addGroupRequest="${API_ENDPOINT}/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
+  local exitCode=0
+  curl ${CURL_LOG_LEVEL} -f -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Permission template add group request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
+  fi
+}
+
+function grant_admin_group_permissions() {
+  local ADMIN_GROUP=${1}
+  local ADMIN_USER=${2}
+  local ADMIN_PASSWORD=${3}
+  local noAdditionalParams=""
+
+  printf "Adding admin privileges to CES admin group...\\n"
+    for permission in ${ADMIN_PERMISSIONS}
+    do
+    printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${ADMIN_GROUP}"
+    grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${noAdditionalParams}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
+  done
+}
+
 function grant_admin_permissions_to_group() {
   GROUP_NAME=$1
   AUTH_USER=$2
   AUTH_PASSWORD=$3
   LOG_LEVEL=$4
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/permissions/add_group?groupName=${GROUP_NAME}&permission=admin"
-}
-
-function add_user_to_group_via_rest_api() {
-  USERNAME=$1
-  GROUPNAME=$2
-  AUTH_USER=$3
-  AUTH_PASSWORD=$4
-  LOG_LEVEL=$5
-  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/add_user?name=${GROUPNAME}&login=${USERNAME}"
 }
 
 function deactivate_default_admin_user() {
@@ -123,11 +201,6 @@ function deactivate_default_admin_user() {
   RANDOM_PASSWORD=$(doguctl random)
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
-}
-
-function set_successful_first_start_flag() {
-  echo "Setting successfulFirstStart registry key..."
-  doguctl config successfulFirstStart true
 }
 
 # get_last_admin_group_or_global_admin_group echoes admin_group__last value from the registry if it was set, otherwise
@@ -171,29 +244,24 @@ function remove_last_temp_admin() {
   ADMIN_USERNAME=$(doguctl config "last_tmp_admin_name" --default " ")
   ADMIN_GROUP=$(doguctl config "last_tmp_admin_group" --default " ")
 
-  remove_temporary_admin_user "${ADMIN_USERNAME}"
-  remove_temporary_admin_group "${ADMIN_GROUP}"
+  remove_user "${ADMIN_USERNAME}"
+  remove_group "${ADMIN_GROUP}"
 }
 
-function install_plugin_via_api() {
-  PLUGIN=${1}
-  USER=${2}
-  PASSWORD=${3}
-  INSTALL_RESPONSE=$(curl "${CURL_LOG_LEVEL}" -u "${USER}":"${PASSWORD}" -X POST http://localhost:9000/sonar/api/plugins/install?key="${PLUGIN}")
-  # check response for error messages
-  if [[ -n ${INSTALL_RESPONSE} ]]; then
-    ERROR_MESSAGE=$(echo "${INSTALL_RESPONSE}"|jq '.errors[0]'|jq '.msg')
-    if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
-      echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
-      FAILED_PLUGIN_NAMES+=${PLUGIN},
-    fi
-  else
-    echo "Plugin ${PLUGIN} installed."
-  fi
+function add_user() {
+  local username=${1} password=${2} password_hashed salt salt_base64
+
+  salt="$(doguctl random)"
+  salt_base64="$(echo "$salt" | base64)"
+  password_hashed="$(echo -n "$(java /PasswordHasher.java "${salt_base64}" "${password}")")"
+
+  execute_sql_statement_on_database "INSERT INTO users (login, name, reset_password, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, uuid, external_id)
+    VALUES ('${username}', 'Temporary System Administrator', false, '${password_hashed}', '${salt_base64}', 'PBKDF2', true, '${username}', 'sonarqube', true, '${username}', '${username}');"
 }
 
 function add_temporary_admin_group() {
   GROUP_NAME=${1}
+  GROUP_ROLE=${2:-admin}
   # Add group to "groups" table
   local group_uuid group_role_uuid
   group_uuid="$(doguctl random)"
@@ -201,74 +269,24 @@ function add_temporary_admin_group() {
   execute_sql_statement_on_database "INSERT INTO groups (name, description, uuid) VALUES ('${GROUP_NAME}', 'Temporary admin group', '${group_uuid}');"
   local GROUP_ID_QUERY="SELECT uuid from groups WHERE name='${GROUP_NAME}'"
   # Grant admin permissions in "group_roles" table
-  execute_sql_statement_on_database "INSERT INTO group_roles (group_uuid, role, uuid) VALUES ((${GROUP_ID_QUERY}), 'admin', '${group_role_uuid}');"
+  execute_sql_statement_on_database "INSERT INTO group_roles (group_uuid, role, uuid) VALUES ((${GROUP_ID_QUERY}), '${GROUP_ROLE}', '${group_role_uuid}');"
 }
 
-function add_temporary_admin_group_via_rest_api_with_default_credentials() {
-  local GROUP_NAME=${1}
-  local LOGLEVEL=${2}
-  create_group_via_rest_api "${GROUP_NAME}" admin admin "${LOGLEVEL}"
-  grant_admin_permissions_to_group "${GROUP_NAME}" admin admin "${LOGLEVEL}"
+function assign_group() {
+  local user=${1} group=${2}
+  execute_sql_statement_on_database "INSERT INTO groups_users (group_uuid, user_uuid) VALUES ((SELECT uuid FROM groups where name='${group}'),(SELECT uuid FROM users where login='${user}'));"
 }
 
-function remove_temporary_admin_group() {
+function remove_user() {
+  local username=${1}
+  execute_sql_statement_on_database "DELETE FROM groups_users WHERE user_uuid=(SELECT uuid FROM users WHERE login='${username}');"
+  execute_sql_statement_on_database "DELETE FROM users WHERE login='${username}';"
+}
+
+function remove_group() {
   local GROUP_NAME=${1}
   # Remove group entry from "group_roles" table
   execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_uuid=(SELECT uuid from groups WHERE name='${GROUP_NAME}');"
   # Remove group from "groups" table
   execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
-}
-
-function remove_permission_from_group() {
-  local GROUP_NAME=${1}
-  local PERMISSION=${2}
-  # Remove group entry from "group_roles" table
-  execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_uuid=(SELECT uuid from groups WHERE name='${GROUP_NAME}' and role='${PERMISSION}');"
-  # Remove group from "groups" table
-  execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
-}
-
-function create_temporary_system_admin_user_with_default_password() {
-  local TEMP_SYSTEM_ADMIN=${1}
-  # shellcheck disable=SC2016
-  local SALT='k9x9eN127/3e/hf38iNiKwVfaVk='
-  # shellcheck disable=SC2016
-  local HASHED_PW='100000$t2h8AtNs1AlCHuLobDjHQTn9XppwTIx88UjqUm4s8RsfTuXQHSd/fpFexAnewwPsO6jGFQUv/24DnO55hY6Xew=='
-
-  execute_sql_statement_on_database "INSERT INTO users (login, name, reset_password, crypted_password, salt, hash_method, active, external_login, external_identity_provider, user_local, uuid, external_id)
-    VALUES ('${TEMP_SYSTEM_ADMIN}', 'Temporary System Administrator', false, '${HASHED_PW}', '${SALT}', 'PBKDF2', true, '${TEMP_SYSTEM_ADMIN}', 'sonarqube', true, '${TEMP_SYSTEM_ADMIN}', '${TEMP_SYSTEM_ADMIN}');"
-  execute_sql_statement_on_database "INSERT INTO user_roles(uuid, user_uuid, role) VALUES ('$(doguctl random)', (SELECT uuid from users WHERE login='${TEMP_SYSTEM_ADMIN}'), 'admin');"
-}
-
-function delete_temporary_system_admin_user() {
-  local TEMP_SYSTEM_ADMIN=${1}
-
-  execute_sql_statement_on_database "DELETE FROM user_roles where user_uuid=(SELECT uuid from users WHERE login='${TEMP_SYSTEM_ADMIN}');"
-  execute_sql_statement_on_database "DELETE FROM users where login='${TEMP_SYSTEM_ADMIN}';"
-}
-
-function create_temporary_admin_user_with_temporary_admin_group() {
-  local TEMPORARY_ADMIN_USER=${1}
-  local PASSWORD=${2}
-  local TEMPORARY_ADMIN_GROUP=${3}
-  local LOGLEVEL=${4}
-  local TEMP_SYSTEM_ADMIN
-  TEMP_SYSTEM_ADMIN="$(doguctl random)"
-
-  create_temporary_system_admin_user_with_default_password "${TEMP_SYSTEM_ADMIN}"
-
-  create_user_via_rest_api "${TEMPORARY_ADMIN_USER}" "TemporaryAdministrator" "${PASSWORD}" "${TEMP_SYSTEM_ADMIN}" "admin" "${LOGLEVEL}"
-  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" "${TEMP_SYSTEM_ADMIN}" "admin" "${LOGLEVEL}"
-
-  delete_temporary_system_admin_user "${TEMP_SYSTEM_ADMIN}"
-}
-
-function create_temporary_admin_user_via_rest_api_with_default_credentials() {
-  # create temporary admin user
-  local TEMPORARY_ADMIN_USER=${1}
-  local PASSWORD=${2}
-  local TEMPORARY_ADMIN_GROUP=${3}
-  local LOGLEVEL=${4}
-  create_user_via_rest_api "${TEMPORARY_ADMIN_USER}" "TemporaryAdministrator" "${PASSWORD}" admin admin "${LOGLEVEL}"
-  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" "admin" "admin" "${LOGLEVEL}"
 }

@@ -21,9 +21,9 @@ echo "                       'V/(/////////////////////////////V'      "
 # wait_for_sonar_to_get_up()
 # wait_for_sonar_to_get_healthy()
 # create_user_via_rest_api()
+# add_user
 # add_user_to_group_via_rest_api()
 # set_successful_first_start_flag()
-# remove_permission_from_group()
 # shellcheck disable=SC1091
 source util.sh
 
@@ -36,8 +36,8 @@ CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
 FQDN=$(doguctl config --global fqdn)
 DOMAIN=$(doguctl config --global domain)
 MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
-QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 CURL_LOG_LEVEL="--silent"
+API_ENDPOINT="http://localhost:9000/sonar/api"
 HEALTH_TIMEOUT=600
 ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 PROJECT_PERMISSIONS="admin codeviewer issueadmin securityhotspotadmin scan user"
@@ -45,7 +45,10 @@ KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_perm
 TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
 TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
-API_ENDPOINT="http://localhost:9000/sonar/api"
+QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
+TEMPORARY_PROFILE_ADMIN_GROUP=$(doguctl random)
+TEMPORARY_PROFILE_ADMIN_USER=$(doguctl random)
+TEMPORARY_PROFILE_ADMIN_PASSWORD=$(doguctl random)
 
 function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
@@ -73,7 +76,7 @@ function importQualityProfiles() {
     local importSuccesses=0
     local importFailures=0
     # ignore CasAuthenticationExceptions in log file, because the credentials below only work locally
-    importResponse=$(curl ${CURL_LOG_LEVEL} -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@${file}" ${API_ENDPOINT}/qualityprofiles/restore)
+    importResponse=$(curl "${CURL_LOG_LEVEL}" -X POST -u "${AUTH_USER}":"${AUTH_PASSWORD}" -F "backup=@${file}" "${API_ENDPOINT}"/qualityprofiles/restore)
 
     # check if import is successful
     if ! (echo "${importResponse}" | grep -o errors); then
@@ -116,41 +119,6 @@ function set_property_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
-function create_user_group_via_rest_api() {
-  NAME=$1
-  DESCRIPTION=$2
-  AUTH_USER=$3
-  AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
-  # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
-  printf "\\n"
-}
-
-function grant_permission_to_group_via_rest_api() {
-  local groupName=${1}
-  local permission=${2}
-  local additionalParams=${3}
-  local authUser=${4}
-  local authPassword=${5}
-  local addGroupRequest="${API_ENDPOINT}/permissions/add_group?permission=${permission}&groupName=${groupName}&${additionalParams}"
-
-  local exitCode=0
-  curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
-
-  if [[ "${exitCode}" != "0" ]]; then
-    echo "ERROR: Granting permission to group ${groupName} failed with code ${exitCode}."
-    exit 1
-  fi
-}
-
-function remove_permission_of_group_via_rest_api() {
-  GROUPNAME=$1
-  PERMISSION=$2
-  AUTH_USER=$3
-  AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
-}
-
 function existsPermissionTemplate() {
   local permissionTemplate="default_template"
   local authUser=${1}
@@ -178,35 +146,6 @@ function existsPermissionTemplate() {
   fi
 }
 
-function addCesAdminGroupToPermissionTemplate() {
-  local groupToAdd="${CES_ADMIN_GROUP}"
-  local permissionTemplate="default_template"
-  local authUser=${1}
-  local authPassword=${2}
-
-  echo "Adding group '${groupToAdd}' to permission template '${permissionTemplate}'..."
-
-  for projectPermissionToGrant in ${PROJECT_PERMISSIONS}; do
-    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplate}" "${projectPermissionToGrant}" "${authUser}" "${authPassword}"
-  done
-}
-
-function addGroupToPermissionTemplateViaRestAPI() {
-  local groupToAdd="${1}"
-  local permissionTemplate="${2}"
-  local projectPermissionToGrant="${3}"
-  local authUser=${4}
-  local authPassword=${5}
-
-  local addGroupRequest="${API_ENDPOINT}/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
-  local exitCode=0
-  curl ${CURL_LOG_LEVEL} -f -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
-
-  if [[ "${exitCode}" != "0" ]]; then
-    echo "ERROR: Permission template add group request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
-  fi
-}
-
 function shouldCesAdminGroupToAllProjects() {
   local result
   local exitCode=0
@@ -218,7 +157,7 @@ function shouldCesAdminGroupToAllProjects() {
   fi
 
   if [[ "${result}" == "all" ]] ;  then
-    echo "All projects should amended with CES-Admin group permissions..."
+    echo "All projects should be amended with CES-Admin group permissions..."
     return 0
   fi
 
@@ -291,20 +230,6 @@ function set_updatecenter_url_if_configured_in_registry() {
   fi
 }
 
-function grant_admin_group_permissions() {
-  local ADMIN_GROUP=${1}
-  local ADMIN_USER=${2}
-  local ADMIN_PASSWORD=${3}
-  local noAdditionalParams=""
-
-  printf "Adding admin privileges to CES admin group...\\n"
-    for permission in ${ADMIN_PERMISSIONS}
-    do
-    printf "grant permission '%s' to group '%s'...\\n" "${permission}" "${ADMIN_GROUP}"
-    grant_permission_to_group_via_rest_api "${ADMIN_GROUP}" "${permission}" "${noAdditionalParams}" "${ADMIN_USER}" "${ADMIN_PASSWORD}"
-  done
-}
-
 function run_first_start_tasks() {
   echo "Adding CES admin group '${CES_ADMIN_GROUP}'..."
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
@@ -363,15 +288,15 @@ function stopSonarQube() {
   echo "SonarQube was stopped."
 }
 
-function create_temporary_admin_for_first_start() {
+function create_temporary_admin() {
+  echo "Creating Temporary admin user..."
+  # Create temporary admin only in database
   echo "Adding temporary admin group..."
-  add_temporary_admin_group_via_rest_api_with_default_credentials "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
-
+  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
   echo "Adding temporary admin user..."
-  create_temporary_admin_user_via_rest_api_with_default_credentials "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
-
+  add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   echo "Adding temporary admin user to temporary admin group..."
-  add_user_to_group_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}" admin admin "${CURL_LOG_LEVEL}"
+  assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 }
 
 function first_sonar_start() {
@@ -386,13 +311,6 @@ function first_sonar_start() {
   run_first_start_tasks
 
   set_successful_first_start_flag
-}
-
-function create_temporary_admin_for_subsequent_start(){
-  echo "Creating Temporary admin user..."
-  # Create temporary admin only in database
-  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-  create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" ${CURL_LOG_LEVEL}
 }
 
 function subsequent_sonar_start() {
@@ -423,11 +341,6 @@ function resetCesAdmin() {
   grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 }
 
-function remove_temporary_admin_user_and_group(){
-  remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-  remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-}
-
 function remove_permissions_from_last_admin_group() {
   local admin_group=${CES_ADMIN_GROUP_LAST}
   printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
@@ -435,7 +348,7 @@ function remove_permissions_from_last_admin_group() {
   for permission in ${ADMIN_PERMISSIONS}
   do
     printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
-    remove_permission_from_group "${admin_group}" "${permission}"
+    remove_group "${admin_group}"
   done
 }
 
@@ -500,6 +413,7 @@ function ensure_correct_branch_plugin_state() {
 }
 
 function setDoguLogLevel() {
+  local currentLogLevel SONAR_LOGLEVEL
   currentLogLevel=$(doguctl config "logging/root")
 
   if ! doguctl validate logging/root --silent ; then
@@ -521,8 +435,6 @@ function setDoguLogLevel() {
   esac
   echo "Log level is now: ${SONAR_LOGLEVEL}"
 }
-
-
 
 ### End of function declarations, work is done now
 
@@ -569,18 +481,19 @@ while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
   sleep 3
 done
 
-# add temporary admin to to configuration
+# add temporary admin to configuration
 remove_last_temp_admin
 update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+
+echo "Creating Temporary admin user..."
+create_temporary_admin
 
 # check whether firstSonarStart has already been performed
 if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
   IS_FIRST_START="true"
-  create_temporary_admin_for_first_start
   first_sonar_start
 else
   IS_FIRST_START="false"
-  create_temporary_admin_for_subsequent_start
   subsequent_sonar_start
 fi
 
@@ -621,19 +534,26 @@ if [[ "${IS_FIRST_START}" == "true" ]]; then
 fi
 
 echo "Removing temporary admin..."
-remove_temporary_admin_user_and_group
+remove_user "${TEMPORARY_ADMIN_USER}"
+remove_group "${TEMPORARY_ADMIN_GROUP}"
 
 # in order to import quality profiles the plugin installation must be finished along with a sonar restart
 if areQualityProfilesPresentToImport; then
   # the temporary admin has different permissions during first start and subsequent start
   # only the subsequent temporary admin has sufficient privileges to import quality profiles
-  create_temporary_admin_for_subsequent_start
   startSonarQubeInBackground "importing quality profiles"
 
-  importQualityProfiles "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  echo "Creating Temporary admin user for profile import..."
+  # Create temporary admin only in database
+  add_temporary_admin_group "${TEMPORARY_PROFILE_ADMIN_GROUP}" "profileadmin"
+  add_user "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
+  assign_group "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_GROUP}"
+
+  importQualityProfiles "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
 
   stopSonarQube "${SONAR_PROCESS_ID}"
-  remove_temporary_admin_user_and_group
+  remove_user "${TEMPORARY_PROFILE_ADMIN_USER}"
+  remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
 fi
 
 doguctl state "ready"
