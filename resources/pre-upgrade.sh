@@ -27,6 +27,7 @@ function run_pre_upgrade() {
 
   if [[ ${FROM_MAJOR_VERSION} -lt 8 ]]; then
     echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 8.9.8-3 before."
+    echo "It is not safe to migrate between several major versions in one step."
     exit 1
   fi
 
