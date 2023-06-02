@@ -41,6 +41,7 @@ API_ENDPOINT="http://localhost:9000/sonar/api"
 HEALTH_TIMEOUT=600
 ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 PROJECT_PERMISSIONS="admin codeviewer issueadmin securityhotspotadmin scan user"
+DEFAULT_PERMISSION_TEMPLATE_NAME="Default template"
 KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
 TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
@@ -117,33 +118,6 @@ function set_property_via_rest_api() {
   AUTH_PASSWORD=$4
   echo "Setting configuration property ${PROPERTY}..."
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/settings/set?key=${PROPERTY}&value=${VALUE}"
-}
-
-function existsPermissionTemplate() {
-  local permissionTemplate="default_template"
-  local authUser=${1}
-  local authPassword=${2}
-
-  local searchResult
-  local exitCode=0
-  local templateSearchRequest="${API_ENDPOINT}/permissions/search_templates?q=${permissionTemplate}"
-  searchResult=$(curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" "${templateSearchRequest}") || exitCode=$?
-
-  if [[ "${exitCode}" != "0" ]]; then
-    echo "ERROR: Permission template search request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
-    return 1
-  fi
-
-  local jqGetTemplateOrFalse=".permissionTemplates[] | select(.id==\"${permissionTemplate}\") // false"
-  local templateJsonOrFalse
-  templateJsonOrFalse=$(echo "${searchResult}" | jq "${jqGetTemplateOrFalse}")
-
-  if [[ "${templateJsonOrFalse}" == "" || "${templateJsonOrFalse}" == "false" ]]; then
-    echo "Skip updating permission template..."
-    return 1
-  else
-    return 0
-  fi
 }
 
 function shouldCesAdminGroupToAllProjects() {
@@ -506,8 +480,8 @@ fi
 
 update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 
-if existsPermissionTemplate "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
-  addCesAdminGroupToPermissionTemplate "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+if existsPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
+  addCesAdminGroupToPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 fi
 
 if shouldCesAdminGroupToAllProjects ; then

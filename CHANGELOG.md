@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Temporary user creation during dogu start (#88)
 - Permissions of the temporary admin user used to import quality profiles (#88)
+- Add admin group to default permission template if it exists (#88)
 
 ### Changed
 - Blocked updates from versions prior to 8.x

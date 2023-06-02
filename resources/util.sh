@@ -143,29 +143,100 @@ function remove_permission_of_group_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
+# encode special characters per RFC 3986
+#
+# usage: urlencode <string>
+#
+# taken from: https://gist.github.com/cdown/1163649?permalink_comment_id=4291617#gistcomment-4291617
+urlencode() {
+    local LC_ALL=C # support unicode = loop bytes, not characters
+    local c i n=${#1}
+    for (( i=0; i<n; i++ )); do
+        c="${1:i:1}"
+        case "$c" in
+            [-_.~A-Za-z0-9]) # also encode ;,/?:@&=+$!*'()# == encodeURIComponent in javascript
+            #[-_.~A-Za-z0-9\;,/?:@\&=+\$!*\'\(\)#]) # dont encode ;,/?:@&=+$!*'()# == encodeURI in javascript
+               printf '%s' "$c" ;;
+            *) printf '%%%02X' "'$c" ;;
+        esac
+    done
+    echo
+}
+
+# Checks whether a permission template exists
+#
+# usage: existsPermissionTemplate <template name> <user> <password>
+function existsPermissionTemplate() {
+  local permissionTemplate="${1}"
+  local authUser=${2}
+  local authPassword=${3}
+
+  local uui_or_false
+  uui_or_false="$(retrieve_permission_template_uuid_via_rest_api "${authUser}" "${authPassword}" "${permissionTemplate}")"
+  if [[ "${uui_or_false}" == "" || "${uui_or_false}" == "false" ]]; then
+    echo "Skip updating permission template..."
+    return 1
+  else
+    return 0
+  fi
+}
+
+# Adds the configured admin group to a permission template
+#
+# usage: addCesAdminGroupToPermissionTemplate <template name> <user> <password>
 function addCesAdminGroupToPermissionTemplate() {
   local groupToAdd="${CES_ADMIN_GROUP}"
-  local permissionTemplate="default_template"
-  local authUser=${1}
-  local authPassword=${2}
+  local permissionTemplate="${1}" permissionTemplateUuid
+  local authUser=${2}
+  local authPassword=${3}
+
+  permissionTemplateUuid="$(retrieve_permission_template_uuid_via_rest_api "${authUser}" "${authPassword}" "${permissionTemplate}")"
+  if [[ "${permissionTemplateUuid}" == "" || "${permissionTemplateUuid}" == "false" ]]; then
+    echo "Skip adding group '${groupToAdd}' to permission template '${permissionTemplate}'..."
+    echo "Cause: The template uuid could not be retrieved"
+    return 1
+  fi
 
   echo "Adding group '${groupToAdd}' to permission template '${permissionTemplate}'..."
-
   for projectPermissionToGrant in ${PROJECT_PERMISSIONS}; do
-    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplate}" "${projectPermissionToGrant}" "${authUser}" "${authPassword}"
+    addGroupToPermissionTemplateViaRestAPI "${groupToAdd}" "${permissionTemplateUuid}" "${projectPermissionToGrant}" "${authUser}" "${authPassword}"
   done
 }
 
+# Retrieves the uui for a given permission template via an api request
+#
+# usage: retrieve_permission_template_id_via_rest_api <username> <password> <template name>
+#
+# - <template name> will be automatically url encoded
+function retrieve_permission_template_uuid_via_rest_api() {
+  local permissionTemplate="${3}" permissionTemplateEncoded searchResult exitCode=0 authUser="${1}" authPassword="${2}"
+  permissionTemplateEncoded="$(urlencode "${permissionTemplate}")"
+
+  local templateSearchRequest="${API_ENDPOINT}/permissions/search_templates?q=${permissionTemplateEncoded}"
+  searchResult=$(curl "${CURL_LOG_LEVEL}" --fail -u "${authUser}":"${authPassword}" "${templateSearchRequest}") || exitCode=$?
+  if [[ "${exitCode}" != "0" ]]; then
+    echo "ERROR: Permission template search request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
+    return 1
+  fi
+  local jqGetTemplateOrFalse=".permissionTemplates[] | select(.name==\"${permissionTemplate}\").id // false"
+  # use '-r' to get the raw string without quotes
+  echo "${searchResult}" | jq -r "${jqGetTemplateOrFalse}"
+}
+
+# Adds the group with the given permission to the permission template identified by the templates uuid
+#
+# usage: addGroupToPermissionTemplateViaRestAPI <group> <template uuid> <permission name> <username> <password>
 function addGroupToPermissionTemplateViaRestAPI() {
   local groupToAdd="${1}"
-  local permissionTemplate="${2}"
+  local permissionTemplateId="${2}"
   local projectPermissionToGrant="${3}"
   local authUser=${4}
   local authPassword=${5}
 
-  local addGroupRequest="${API_ENDPOINT}/permissions/add_group_to_template?templateId=${permissionTemplate}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
+  local addGroupRequest="${API_ENDPOINT}/permissions/add_group_to_template?templateId=${permissionTemplateId}&groupName=${groupToAdd}&permission=${projectPermissionToGrant}"
   local exitCode=0
-  curl ${CURL_LOG_LEVEL} -f -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+  echo "Grant permission '${projectPermissionToGrant}' to group '${groupToAdd}' for template with uuid '${permissionTemplateId}'"
+  curl "${CURL_LOG_LEVEL}" -f -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
 
   if [[ "${exitCode}" != "0" ]]; then
     echo "ERROR: Permission template add group request failed with exit code ${exitCode}. SonarQube's API may not be ready, or the credentials may not be sufficient."
