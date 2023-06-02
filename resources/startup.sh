@@ -147,30 +147,28 @@ function addCesAdminGroupToProject() {
   local getProjectsRequest="${API_ENDPOINT}/projects/search?ps=500"
 
   local exitCode=0
-  projects=$(curl ${CURL_LOG_LEVEL} -f -u  "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq '.components[] | .id + "=" + .key' | sed 's/"//g') || exitCode=$?
+  projects=$(curl ${CURL_LOG_LEVEL} -f -u  "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq -r '.components[] | .key') || exitCode=$?
   if [[ "${exitCode}" != "0" ]]; then
     echo "ERROR: Fetching projects failed with code ${exitCode}. Abort granting project permissions to group ${groupToAdd}..."
     return
   fi
 
-  local projectKey
-  local projectId
-
-  for project in ${projects}; do
-    projectKey="${project#*=}"
-    projectId="${project%=*}"
+  for projectKey in ${projects}; do
     echo "Adding group ${groupToAdd} to project ${projectKey}..."
     # use projectKey for logging (easy to find in UI) and projectId for requests (projectKey may contain nasty special characters)
-    addCesAdminGroupToProjectWithPermissions "${groupToAdd}" "${projectId}" "${authUser}" "${authPassword}"
+    addCesAdminGroupToProjectWithPermissions "${groupToAdd}" "${projectKey}" "${authUser}" "${authPassword}"
   done
 }
 
+# Adds a group with permissions defined by the variable 'PROJECT_PERMISSIONS' to a specific project identified by its key
+#
+# usage: addCesAdminGroupToProjectWithPermissions <group> <project key> <user> <password>
 function addCesAdminGroupToProjectWithPermissions() {
   local groupToAdd=${1}
-  local projectId=${2}
+  local projectKey=${2}
   local authUser=${3}
   local authPassword=${4}
-  local additionalParams="projectId=${projectId}"
+  local additionalParams="projectKey=${projectKey}"
 
   for projectPermissionToGrant in ${PROJECT_PERMISSIONS}; do
     grant_permission_to_group_via_rest_api "${groupToAdd}" "${projectPermissionToGrant}" "${additionalParams}" "${authUser}" "${authPassword}"
