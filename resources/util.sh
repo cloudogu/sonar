@@ -113,7 +113,7 @@ function create_user_group_via_rest_api() {
   DESCRIPTION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
+  curl "${CURL_LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/user_groups/create?name=${NAME}&description=${DESCRIPTION}"
   # for unknown reasons the curl call prints the resulting JSON without newline to stdout which disturbs logging
   printf "\\n"
 }
@@ -127,7 +127,7 @@ function grant_permission_to_group_via_rest_api() {
   local addGroupRequest="${API_ENDPOINT}/permissions/add_group?permission=${permission}&groupName=${groupName}&${additionalParams}"
 
   local exitCode=0
-  curl ${CURL_LOG_LEVEL} --fail -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
+  curl "${CURL_LOG_LEVEL}" --fail -u "${authUser}":"${authPassword}" -X POST "${addGroupRequest}" || exitCode=$?
 
   if [[ "${exitCode}" != "0" ]]; then
     echo "ERROR: Granting permission to group ${groupName} failed with code ${exitCode}."
@@ -140,7 +140,7 @@ function remove_permission_of_group_via_rest_api() {
   PERMISSION=$2
   AUTH_USER=$3
   AUTH_PASSWORD=$4
-  curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
+  curl "${CURL_LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/permissions/remove_group?permission=${PERMISSION}&groupName=${GROUPNAME}"
 }
 
 # encode special characters per RFC 3986
