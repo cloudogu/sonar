@@ -203,9 +203,9 @@ function addCesAdminGroupToPermissionTemplate() {
   done
 }
 
-# Retrieves the uui for a given permission template via an api request
+# Retrieves the uuid for a given permission template via an api request
 #
-# usage: retrieve_permission_template_id_via_rest_api <username> <password> <template name>
+# usage: retrieve_permission_template_uuid_via_rest_api <username> <password> <template name>
 #
 # - <template name> will be automatically url encoded
 function retrieve_permission_template_uuid_via_rest_api() {

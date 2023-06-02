@@ -1,6 +1,6 @@
 # Permission template
 
-The permission template is a mechanism in SonarQube to setup *project permissions*. The default template will be changed
+The permission template is a mechanism in SonarQube to set up *project permissions*. The default template will be changed
 during the dogu startup to ensure that the CES_ADMIN group has access to administer new created projects. The following
 permissions will be set (admin codeviewer issueadmin securityhotspotadmin scan user ) this setup can be verified
 (`Administration -> Security -> Permisssion Templates`). *see setup.json for further details*
