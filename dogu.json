@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "9.9.1-3",
+  "Version": "9.9.1-4",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -133,7 +133,7 @@
     },
     {
       "Name": "amend_projects_with_ces_admin_permissions",
-      "Description": "If set to 'all', the ces-admin group will be enabled to administer all project. This key will automatically reset to 'none' afterwards.",
+      "Description": "If set to 'all', the ces-admin group will be enabled to administer all projects. This key will automatically reset to 'none' afterwards.",
       "Optional": true
     },
     {
