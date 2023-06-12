@@ -211,7 +211,13 @@ sonar.web.context=/sonar
 # -XX:+HeapDumpOnOutOfMemoryError
 
 # Same as previous property, but allows to not repeat all other settings like -Xmx
+{{ if .Env.Get "POD_NAMESPACE" }}
+# In k8s environments we restrict the usage of mmap, because running privileged containers (to vm.max_map_count kernel setting)
+# is not possible in all environments.
+sonar.search.javaAdditionalOpts=-Dnode.store.allow_mmap=false,-Dlog4j2.formatMsgNoLookups=true
+{{ else }}
 sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
+{{ end }}
 
 # Elasticsearch port. Default is 9001. Use 0 to get a free port.
 # As a security precaution, should be blocked by a firewall and not exposed to the Internet.

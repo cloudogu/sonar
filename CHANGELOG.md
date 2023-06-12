@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.1-5] - 2023-06-12
+### Fixed
+- Fixed elasticearch bootstrap error where `vm.max_map_count` is too low.
+  - Set `node.store.allow_mmap` to `false` and restrict the usage of `mmap` in k8s environments to avoid elasticsearch bootstrap error. This option is used to avoid usage of privileged containers.
+
 ## [v9.9.1-4] - 2023-06-05
 ### Fixed
 - Temporary user creation during dogu start (#88)
