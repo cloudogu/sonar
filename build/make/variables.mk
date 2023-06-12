@@ -15,12 +15,11 @@ GO_ENVIRONMENT?=
 # GO_CALL accomodates the go CLI command as well as necessary environment variables which are optional.
 GO_CALL=${GO_ENVIRONMENT} go
 PACKAGES=$(shell ${GO_CALL} list ./... | grep -v /vendor/)
-PACKAGES_FOR_INTEGRATION_TEST?=${PACKAGES}
 GO_BUILD_TAG_INTEGRATION_TEST?=integration
 GOMODULES=on
 UTILITY_BIN_PATH?=${WORKDIR}/.bin
 
-SRC:=$(shell find "${WORKDIR}" -type f -name "*.go" -not -path "./vendor/*")
+SRC:=$(shell find "${WORKDIR}" -type f -name "*.go" -not -path "*/vendor/*")
 
 # debian stuff
 DEBIAN_BUILD_DIR=$(BUILD_DIR)/deb
@@ -63,6 +62,10 @@ $(ETCGROUP): $(TMP_DIR)
 
 $(UTILITY_BIN_PATH):
 	@mkdir -p $@
+
+# Subdirectories of workdir where no mocks should be generated.
+# Multiple directories can be separated by space, comma or whatever is not a word to regex.
+MOCKERY_IGNORED=vendor,build,docs
 
 ##@ General
 
