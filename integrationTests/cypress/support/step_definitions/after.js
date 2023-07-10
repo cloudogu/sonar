@@ -1,4 +1,4 @@
-const {After} = require("cypress-cucumber-preprocessor/steps");
+const {After} = require("@badeball/cypress-cucumber-preprocessor");
 const env = require("@cloudogu/dogu-integration-test-library/lib/environment_variables");
 
 After({tags: "@requires_api_token_to_be_removed_afterwards"}, () => {
