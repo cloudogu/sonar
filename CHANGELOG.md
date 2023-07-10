@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Update installed plugins when upgrading to sonar 9.9.1
 
+### Changed
+- Update Cypress and Integration-Tests-Library to fix integration tests
+
 ## [v9.9.1-1] - 2023-05-04
 ### Changed
 - Upgrade sonar to version 9.9.1.69595 (#80)
