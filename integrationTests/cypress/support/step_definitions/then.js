@@ -22,10 +22,6 @@ Then(/^the user can not access the SonarQube API with wrong username and passwor
     cy.requestSonarAPI("/users/search", "NoVaLiDUSRnam33", "ThIsIsNoTaP4$$worD", false, 401)
 });
 
-Then(/^the user is redirected to the SonarQube issue page$/, function () {
-    cy.url().should('contain', Cypress.config().baseUrl + "/" + env.GetDoguName() + "/issues?resolved=false")
-});
-
 Then(/^the user can access the Web API with the User Token$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.getCookie(testuserdata.sonarqubeToken).should('exist').then((cookie) => {
@@ -83,10 +79,6 @@ Then(/^the user can access the \/users\/groups Web API endpoint$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, testuserdata.username, testuserdata.password)
     })
-});
-
-Then(/^the user is redirected to the account site$/, function () {
-   cy.url().should('eq', Cypress.config().baseUrl + "/" + env.GetDoguName() + "/account")
 });
 
 Then(/^the user can not access the \/users\/groups Web API endpoint$/, function () {
