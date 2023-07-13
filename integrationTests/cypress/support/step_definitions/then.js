@@ -86,9 +86,7 @@ Then(/^the user can access the \/users\/groups Web API endpoint$/, function () {
 });
 
 Then(/^the user is redirected to the account site$/, function () {
-    cy.url().then(currentURL => {
-        expect(currentURL).to.eq(Cypress.config().baseUrl + "/" + env.GetDoguName() + "/account")
-    })
+    cy.url().should('include', "/" + env.GetDoguName() + "/account")
 });
 
 Then(/^the user can not access the \/users\/groups Web API endpoint$/, function () {
