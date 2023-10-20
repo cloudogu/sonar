@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/java:17.0.6-2 as base
+FROM registry.cloudogu.com/official/java:17.0.8-1 as base
 
 ENV SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
