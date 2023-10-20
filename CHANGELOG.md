@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- [#96] Fixed CVE-2023-21930 CVE-2023-25193 CVE-2023-35945 CVE-2023-38039 CVE-2023-38545 CVE-2023-39417 CVE-2023-44487
+- [#96] Fixed CVE-2023-35945 CVE-2023-38039 CVE-2023-38545 CVE-2023-39417 CVE-2023-44487
 
 ### Changed
 - [#96] Update base image to reduce vulnerable packages
