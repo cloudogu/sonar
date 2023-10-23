@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.1-7] - 2023-10-23
+### Fixed
+- [#96] Fixed CVE-2023-35945 CVE-2023-38039 CVE-2023-38545 CVE-2023-39417 CVE-2023-44487
+
+### Changed
+- [#96] Update base image to reduce vulnerable packages
+
 ## [v9.9.1-6] - 2023-06-27
 ### Added
 - [#92] Configuration options for resource requirements
@@ -36,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v9.9.1-2] - 2023-05-11
 ### Fixed
 - Update installed plugins when upgrading to sonar 9.9.1
+
+### Changed
+- Update Cypress and Integration-Tests-Library to fix integration tests
 
 ## [v9.9.1-1] - 2023-05-04
 ### Changed

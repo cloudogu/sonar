@@ -1,6 +1,6 @@
 const {
     Then
-} = require("cypress-cucumber-preprocessor/steps");
+} = require("@badeball/cypress-cucumber-preprocessor");
 
 const env = require('@cloudogu/dogu-integration-test-library/lib/environment_variables')
 
@@ -20,10 +20,6 @@ Then(/^the user can access the SonarQube API with username and password$/, funct
 
 Then(/^the user can not access the SonarQube API with wrong username and password$/, function () {
     cy.requestSonarAPI("/users/search", "NoVaLiDUSRnam33", "ThIsIsNoTaP4$$worD", false, 401)
-});
-
-Then(/^the user is redirected to the SonarQube issue page$/, function () {
-    cy.url().should('contain', Cypress.config().baseUrl + "/" + env.GetDoguName() + "/issues?resolved=false")
 });
 
 Then(/^the user can access the Web API with the User Token$/, function () {
@@ -82,12 +78,6 @@ Then(/^the user's attributes should include the admin group$/, function () {
 Then(/^the user can access the \/users\/groups Web API endpoint$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, testuserdata.username, testuserdata.password)
-    })
-});
-
-Then(/^the user is redirected to the account site$/, function () {
-    cy.url().then(currentURL => {
-        expect(currentURL).to.eq(Cypress.config().baseUrl + "/" + env.GetDoguName() + "/account")
     })
 });
 
