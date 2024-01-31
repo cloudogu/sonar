@@ -19,7 +19,7 @@ file:
 package:
   postgresql14-client:
     installed: true
-  procps:
+  procps-ng:
     installed: true
 user:
   sonar:
