@@ -130,20 +130,26 @@ At least make sure that the variables are properly set into the production (f. i
 
 Due to communication problems caused by self-signed SSL certificates in a development CES instance, it is a good idea to run SonarScanner via Jenkins in the same instance. The following procedure has proven successful:
 
-1. install SCM Manager and Jenkins.
-   - `cesapp install official/scm; cesapp install official/scm; cesapp start scm; cesapp start jenkins`
-1. SCMM: install Spring Petclinic in SCM manager by SCMM repo import into a new repository
-1. sonarQube: create local user or API token if necessary
-1. jenkins
-   1. add credentials for SCMM and SonarQube in Jenkins Credential Manager
-      - for SCMM e.g. under the ID `scmCredentials
-      - for SonarQube pay attention to credential type!
-         - username/password for Basic Authentication
-         - `Secret text` for SQ API token
-   1. create build job
-      1. create element -> select `SCM-Manager Namespace` -> configure job
-         - Server URL: https://192.198.56.2/scm <!-- markdown-link-check-disable-line -->
-         - Credentials: as configured above
-      1. save job
-      1. cancel surplus/non-functioning jobs if necessary
-      1. adjust and build master/main branch
+1. install SCM Manager and Jenkins in CES
+   - `cesapp install official/scm; cesapp install official/scm; cesapp start scm; cesapp start jenkins`.
+2. SCMM:
+   - Import Spring Petclinic into a new repository in the SCM Manager via SCMM repo import
+   - Import: https://github.com/cloudogu/spring-petclinic/
+   - Admin credentials are sufficient for this test
+3. jenkins
+   1. insert credentials for SCMM and SonarQube in the [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) <!-- markdown-link-check-disable-line -->
+      - Store admin credentials under the ID `scmCredentials`
+         - SCMM and SonarQube share admin credentials (SCMM in the build configuration, SonarQube in the Jenkinsfile)
+      - Pay attention to the credential type for SonarQube!
+         - `Username/Password` for Basic Authentication
+   2. create build job
+      Create 1st element -> Select `Multibranch Pipeline` -> Configure job
+      - Select Branch Sources/Add source: "SCM-Manager (git, hg)"
+      - Repo: https://192.198.56.2/scm/ <!-- markdown-link-check-disable-line -->
+      - Credentials for SCM Manager: select the credential `scmCredentials` configured above
+      2. save job
+         - the Jenkinsfile will be found automatically
+      3. if necessary, cancel surplus/non-functioning jobs
+      4. adapt and build master branch with regard to changed credentials or unwanted job stages
+         - an old version (ces-build-lib@1.35.1) of the `ces-build-lib` is important, newer versions will lead to authentication errors
+         - a build-lib replace is not relevant in the context of smoke tests of SonarQube
