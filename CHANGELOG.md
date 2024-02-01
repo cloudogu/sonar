@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.3-1] - 2024-02-01
+### Changed
+- [#98] upgrade SonarQube to LTS 9.9.3
+- upgrade base image to Java 17.0.9-1
+
 ## [v9.9.1-7] - 2023-10-23
 ### Fixed
 - [#96] Fixed CVE-2023-35945 CVE-2023-38039 CVE-2023-38545 CVE-2023-39417 CVE-2023-44487

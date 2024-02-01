@@ -128,20 +128,26 @@ Es muss sichergestellt werden, dass die Variablen in der Produktions- (z. B. `Do
 
 Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Entwicklungs-CES-Instanz bietet es sich an, den SonarScanner per Jenkins in der gleichen Instanz zu betreiben. Folgendes Vorgehen hat sich bewährt:
 
-1. SCM-Manager und Jenkins installieren
+1. SCM-Manager und Jenkins im CES installieren
    - `cesapp install official/scm; cesapp install official/scm; cesapp start scm; cesapp start jenkins`
-1. SCMM: Spring Petclinic im SCM-Manager durch SCMM-Repo-Import in ein neues Repository einspielen
-1. SonarQube: ggf. lokale User oder API-Token erzeugen
-1. Jenkins
-   1. Credentials für SCMM und SonarQube im Jenkins Credential Manager einfügen
-      - für SCMM z. B. unter der ID `scmCredentials`
+2. SCMM:
+   - Spring Petclinic im SCM-Manager durch SCMM-Repo-Import in ein neues Repository einspielen 
+   - Import: https://github.com/cloudogu/spring-petclinic/
+   - Admin-Credentials reichen für diesen Test aus
+3. Jenkins
+   1. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
+      - Admin-Credentials unter der ID `scmCredentials` ablegen
+        - SCMM und SonarQube teilen sich Admin-Credentials (SCMM in der Build-Konfiguration, SonarQube im Jenkinsfile)
       - für SonarQube auf Credentialtyp achten!
          - `Username/Password` für Basic Authentication
-         - `Secret text` für SQ API Token
-   1. Build-Job anlegen
-      1. Element anlegen -> `SCM-Manager Namespace` auswählen -> Job konfigurieren
-         - Repo: https://192.198.56.2/scm <!-- markdown-link-check-disable-line -->
-         - Credentials: wie oben konfiguriert
-      1. Job speichern
-      1. ggf. überzählige/nicht funktionierende Jobs abbrechen
-      1. master/main-Branch anpassen und bauen
+   2. Build-Job anlegen
+      1. Element anlegen -> `Multibranch Pipeline` auswählen -> Job konfigurieren
+         - Branch Sources/Add source: "SCM-Manager (git, hg)" auswählen 
+         - Repo: https://192.198.56.2/scm/ <!-- markdown-link-check-disable-line -->
+         - Credentials für SCM-Manager: oben konfiguriertes Credential `scmCredentials` auswählen
+      2. Job speichern
+         - das Jenkinsfile wird automatisch gefunden
+      3. ggf. überzählige/nicht funktionierende Jobs abbrechen
+      4. master-Branch hinsichtlich geänderter Credentials oder unerwünschter Jobstages anpassen und bauen
+         - wichtig ist eine alte Version (ces-build-lib@1.35.1) der `ces-build-lib`, neuere Versionen führen zu Authentifizierungsfehlern
+         - ein Austausch gegen eine neuere Build-lib ist im Rahmen von Smoketests von SonarQube nicht maßgeblich
