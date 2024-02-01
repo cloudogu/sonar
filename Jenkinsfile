@@ -1,5 +1,5 @@
 #!groovy
-@Library(['github.com/cloudogu/ces-build-lib@1.65.0', 'github.com/cloudogu/dogu-build-lib@v2.1.0'])
+@Library(['github.com/cloudogu/ces-build-lib@2.1.0', 'github.com/cloudogu/dogu-build-lib@v2.3.0'])
 import com.cloudogu.ces.cesbuildlib.*
 import com.cloudogu.ces.dogubuildlib.*
 
@@ -12,7 +12,7 @@ node('vagrant') {
     GitFlow gitflow = new GitFlow(this, git)
     GitHub github = new GitHub(this, git)
     Changelog changelog = new Changelog(this)
-    Markdown markdown = new Markdown(this, "3.11.0")
+    Markdown markdown = new Markdown(this, "3.11.2")
 
     timestamps{
         properties([
@@ -38,7 +38,8 @@ node('vagrant') {
         }
 
         stage('Lint') {
-            lintDockerfile()
+            Dockerfile dockerfile = new Dockerfile(this)
+            dockerfile.lint()
             // TODO: Change this to shellCheck("./resources") as soon as https://github.com/cloudogu/dogu-build-lib/issues/8 is solved
             shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
