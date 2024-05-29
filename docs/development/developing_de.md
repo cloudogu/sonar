@@ -134,8 +134,27 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
    - Spring Petclinic im SCM-Manager durch SCMM-Repo-Import in ein neues Repository einspielen 
    - Import: https://github.com/cloudogu/spring-petclinic/
    - Admin-Credentials reichen für diesen Test aus
-3. Jenkins
-   1. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
+3. SonarQube-Token anlegen
+   1. Als Admin auf die [Security-Seite navigieren](https://192.168.56.2/sonar/account/security) <!-- markdown-link-check-disable-line -->
+   2. Token generieren
+      - Name: `admin_token`
+      - Type: `Global Analysis Token`
+      - Expires in: `30 Days`
+   3. generierten Token kopieren
+4. Jenkins
+   1. ggf. Sonar-Scanner anlegen
+      - zu [Dashboard/Jenkins verwalten/Tools](https://192.168.56.2/jenkins/manage/configureTools/) navigieren <!-- markdown-link-check-disable-line -->
+      - Im Abschnitt "SonarQube Scanner Installationen" einen Eintrag über Maven Central anlegen
+      - name: `sonar-scanner` 
+      - Version: `4.8.1` (maximal [Java 11](https://docs.sonarsource.com/sonarqube/9.9/analyzing-source-code/scanners/sonarscanner/))
+   2. ggf. SonarServer konfigurieren
+      - zu [Dashboard/Jenkins verwalten/System](https://192.168.56.2/jenkins/manage/configure) navigieren <!-- markdown-link-check-disable-line -->
+      - Im Abschnitt "SonarQube servers" folgendes konfigurieren
+        - Environment variables: ja/check
+        - Name: `sonar`
+        - Server URL: `https://192.168.56.2/sonar`
+        - Server authentication token: `- leer -`
+   2. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
       - Admin-Credentials unter der ID `scmCredentials` ablegen
         - SCMM und SonarQube teilen sich Admin-Credentials (SCMM in der Build-Konfiguration, SonarQube im Jenkinsfile)
       - für SonarQube auf Credentialtyp achten!
@@ -151,3 +170,12 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
       4. master-Branch hinsichtlich geänderter Credentials oder unerwünschter Jobstages anpassen und bauen
          - wichtig ist eine alte Version (ces-build-lib@1.35.1) der `ces-build-lib`, neuere Versionen führen zu Authentifizierungsfehlern
          - ein Austausch gegen eine neuere Build-lib ist im Rahmen von Smoketests von SonarQube nicht maßgeblich
+
+### Testen des SonarQube Community Plugin
+
+1. Erstellen Sie den spring-petclinic/ `master`-Zweig
+   - dies wird wahrscheinlich fehlschlagen
+   - Wiederholen Sie es, aber ändern Sie die ces-build-lib Version in der Jenkinsfile auf eine aktuelle ces-build-lib Version (z. B. 2.2.1)
+   - dies sollte ohne Fehlschläge bauen
+2. Als CES-Shell-Administrator: das [SonarQube version appropriat community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach `/var/lib/ces/sonar/volumes/extensions/plugins/`  verschieben
+3. SonarQube neustarten
