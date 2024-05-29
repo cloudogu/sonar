@@ -3,13 +3,13 @@ FROM registry.cloudogu.com/official/java:17.0.9-1 as base
 ENV SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    SONAR_VERSION=9.9.4.87374 \
+    SONAR_VERSION=9.9.5.90363 \
     CAS_PLUGIN_VERSION=5.0.2 \
     STARTUP_DIR="/"
 
 FROM base as builder
 
-ENV SONARQUBE_ZIP_SHA256=d1c0b5cde64280a6e0f015dde53687b6d63c8a7e2d6780a879cb0dc23b3a75b7 \
+ENV SONARQUBE_ZIP_SHA256=17b6cfab23fcd2e74b9c44aae6455a24eff3ba990a35a14ca186ded1411eefd3 \
     CAS_PLUGIN_JAR_SHA256=82f9fd7f65c9ce255f4f1dd6649a65a1f7eaf2acbc6a54f2c8103cbc2a42010f \
     BUILDER_HOME="/builder/sonar"
 
