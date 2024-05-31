@@ -152,8 +152,9 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
       - Im Abschnitt "SonarQube servers" folgendes konfigurieren
         - Environment variables: ja/check
         - Name: `sonar`
-        - Server URL: `https://192.168.56.2/sonar`
-        - Server authentication token: `- leer -`
+        - Server URL: `http://sonar:9000/sonar`
+        - Server authentication token: `add` drücken
+          - Credential fom Typ "Secret Text" mit dem im SonarQube generierten Token anlegen
    2. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
       - Admin-Credentials unter der ID `scmCredentials` ablegen
         - SCMM und SonarQube teilen sich Admin-Credentials (SCMM in der Build-Konfiguration, SonarQube im Jenkinsfile)
@@ -175,7 +176,94 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
 
 1. Erstellen Sie den spring-petclinic/ `master`-Zweig
    - dies wird wahrscheinlich fehlschlagen
-   - Wiederholen Sie es, aber ändern Sie die ces-build-lib Version in der Jenkinsfile auf eine aktuelle ces-build-lib Version (z. B. 2.2.1)
+   - Wiederholen Sie es, aber ändern Sie die ces-build-lib Version in der Jenkinsfile auf eine aktuelle ces-build-lib Version (z. B. `2.2.1`)
    - dies sollte ohne Fehlschläge bauen
-2. Als CES-Shell-Administrator: das [SonarQube version appropriat community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach `/var/lib/ces/sonar/volumes/extensions/plugins/`  verschieben
-3. SonarQube neustarten
+2. In SonarQube den Main-Branch umgeklarieren
+   1. zu [Projekte](https://192.168.56.2/sonar/admin/projects_management)  navigieren <!-- markdown-link-check-disable-line -->
+   2. Als `main` markiertes Projekt in den gewünschten Branch umbenennen, z. B. `master`
+   3. die übrigen Projekte löschen
+3. Als CES-Shell-Administrator: das [SonarQube version appropriat community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach `/var/lib/ces/sonar/volumes/extensions/plugins/`  verschieben
+4. SonarQube neustarten
+5. eine `sonar-project.properties` im angemessenen Repo-Branch anlegen (sofern noch nicht vorhanden)
+   - Beispiel siehe unten
+6. Das Jenkinsfile mit einer SonarQube-Stage anreichern
+   - Beispiel siehe unten
+
+**sonar-project.properties**
+
+```properties
+sonar.projectKey=spring-petclinic
+
+sonar.sources=./src/main/java
+sonar.tests=./src/test/java
+sonar.java.binaries=./target/classes
+
+sonar.junit.reportPaths=./target/surefire-reports
+sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
+```
+
+**Jenkinsfile**
+
+```groovy
+#!groovy
+@Library('github.com/cloudogu/ces-build-lib@2.2.1')
+import com.cloudogu.ces.cesbuildlib.*
+
+node {
+
+    Git git = new Git(this, "admin")
+    git.committerName = 'admin'
+    git.committerEmail = 'admin@admin.de'
+    projectName="spring-petclinic"
+    branch = "${env.BRANCH_NAME}"
+    Maven mvn = new MavenWrapper(this)
+
+    String credentialsId = 'scmCredentials'
+
+    catchError {
+        // usual stages go here: Checkout, Build, Test, Integration Test
+        stage("...") {}
+        
+        stage('SonarQube') {
+            def scannerHome = tool name: 'sonar-scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+            env.JAVA_HOME="${tool 'OpenJDK-11'}"
+            withSonarQubeEnv {
+                gitWithCredentials("fetch --all", credentialsId)
+
+                if (branch == "master") {
+                    echo "This branch has been detected as the master branch."
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName}"
+                } else if (branch == "develop") {
+                    echo "This branch has been detected as the develop branch."
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.branch.name=${env.BRANCH_NAME} -Dsonar.branch.target=master  "
+                } else if (env.CHANGE_TARGET) {
+                    echo "This branch has been detected as a pull request."
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=develop    "
+                } else if (branch.startsWith("feature/")) {
+                    echo "This branch has been detected as a feature branch."
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.branch.name=${env.BRANCH_NAME} -Dsonar.branch.target=develop"
+                } // add more to your liking
+            }
+
+            sleep(10) // needed because the scan will be ready too swiftly and will lead to a timeout (╯°□°)╯︵ ┻━┻
+            timeout(time: 2, unit: 'MINUTES') { // Needed when there is no webhook for example
+                def qGate = waitForQualityGate()
+                if (qGate.status != 'OK') {
+                    unstable("Pipeline unstable due to SonarQube quality gate failure")
+                }
+            }
+        }
+    }
+
+    junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml,**/target/surefire-reports/TEST-*.xml'
+}
+
+void gitWithCredentials(String command, String credentialsId) {
+    withCredentials([usernamePassword(credentialsId: credentialsId, usernameVariable: 'GIT_AUTH_USR', passwordVariable: 'GIT_AUTH_PSW')]) {
+        sh(
+                script: "git -c credential.helper=\"!f() { echo username='\$GIT_AUTH_USR'; echo password='\$GIT_AUTH_PSW'; }; f\" " + command,
+                returnStdout: true
+        )
+    }
+}
+```
