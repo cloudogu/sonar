@@ -136,13 +136,20 @@ Due to communication problems caused by self-signed SSL certificates in a develo
    - Import Spring Petclinic into a new repository in the SCM Manager via SCMM repo import
    - Import: https://github.com/cloudogu/spring-petclinic/
    - Admin credentials are sufficient for this test
-3. Create a SonarQube token
-   1. navigate as admin to the [Security page](https://192.168.56.2/sonar/account/security) <!-- markdown-link-check-disable-line -->
-   2. generate token
-      - Name: `admin_token`
-      - Type: `Global Analysis Token`
-      - Expires in: `30 Days`
-   3. copy generated token
+3. SonarQube
+   1. Create a SonarQube token
+      1. Navigate as admin to the [Security page](https://192.168.56.2/sonar/account/security) <!-- markdown-link-check-disable-line -->
+      2. Generate token
+         - Name: `admin_token`
+         - Type: `Global Analysis Token`
+         - Expires in: `30 Days`
+      3. Copy generated token
+   2. Create a webhook
+      1. navigate as admin to the [global Webhooks page](https://192.168.56.2/sonar/admin/webhooks) <!-- markdown-link-check-disable-line -->
+      2. Create a new webhook with the `[ Create ]` button
+         - Name: `ces`
+         - URL: `https://192.168.56.2/jenkins/sonarqube-webhook` <!-- markdown-link-check-disable-line -->
+         - Secret: leave empty
 4. Jenkins
    1. Create sonar scanner if necessary
       - Navigate to [Dashboard/Manage Jenkins/Tools](https://192.168.56.2/jenkins/manage/configureTools/) <!-- markdown-link-check-disable-line -->
@@ -157,6 +164,7 @@ Due to communication problems caused by self-signed SSL certificates in a develo
          - Server URL: `http://sonar:9000/sonar`
       - Server authentication token: Press `add`
          - Create credential of type "Secret Text" with the token generated in SonarQube
+         - **do not** configure a **Secret for the webhook**
    2. insert credentials for SCMM and SonarQube in the [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) <!-- markdown-link-check-disable-line -->
       - Store admin credentials under the ID `scmCredentials`
          - SCMM and SonarQube share admin credentials (SCMM in the build configuration, SonarQube in the Jenkinsfile)
@@ -247,8 +255,7 @@ node {
                 } // add more to your liking
             }
 
-            sleep(10) // needed because the scan will be ready too swiftly and will lead to a timeout (╯°□°)╯︵ ┻━┻
-            timeout(time: 2, unit: 'MINUTES') { // Needed when there is no webhook for example
+            timeout(time: 60, unit: 'SECONDS') { // Works best with Webhooks, otherwise it needs a sleep which may not work for the async SQ scan
                 def qGate = waitForQualityGate()
                 if (qGate.status != 'OK') {
                     unstable("Pipeline unstable due to SonarQube quality gate failure")
