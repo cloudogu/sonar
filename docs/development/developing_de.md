@@ -129,7 +129,7 @@ Es muss sichergestellt werden, dass die Variablen in der Produktions- (z. B. `Do
 Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Entwicklungs-CES-Instanz bietet es sich an, den SonarScanner per Jenkins in der gleichen Instanz zu betreiben. Folgendes Vorgehen hat sich bewährt:
 
 1. SCM-Manager und Jenkins im CES installieren
-   - `cesapp install official/scm; cesapp install official/scm; cesapp start scm; cesapp start jenkins`
+   - `cesapp install official/jenkins; cesapp install official/scm; cesapp start scm; cesapp start jenkins`
 2. SCMM:
    - Spring Petclinic im SCM-Manager durch SCMM-Repo-Import in ein neues Repository einspielen 
    - Import: https://github.com/cloudogu/spring-petclinic/
@@ -171,7 +171,7 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
    2. Build-Job anlegen
       1. Element anlegen -> `Multibranch Pipeline` auswählen -> Job konfigurieren
          - Branch Sources/Add source: "SCM-Manager (git, hg)" auswählen 
-         - Repo: https://192.198.56.2/scm/ <!-- markdown-link-check-disable-line -->
+         - Server URL: https://192.168.56.2/scm/ <!-- markdown-link-check-disable-line -->
          - Credentials für SCM-Manager: oben konfiguriertes Credential `scmCredentials` auswählen
       2. Job speichern
          - das Jenkinsfile wird automatisch gefunden
@@ -181,7 +181,7 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
          - ein Austausch gegen eine neuere Build-lib ist im Rahmen von Smoketests von SonarQube nicht maßgeblich
 
 ### Testen des SonarQube Community Plugin
-
+1. Im SCMM das editor und Review Plugin installieren.
 1. Erstellen Sie den spring-petclinic/ `master`-Zweig
    - dies wird wahrscheinlich fehlschlagen
    - Wiederholen Sie es, aber ändern Sie die ces-build-lib Version in der Jenkinsfile auf eine aktuelle ces-build-lib Version (z. B. `2.2.1`)
@@ -190,7 +190,7 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
    1. zu [Projekte](https://192.168.56.2/sonar/admin/projects_management)  navigieren <!-- markdown-link-check-disable-line -->
    2. Als `main` markiertes Projekt in den gewünschten Branch umbenennen, z. B. `master`
    3. die übrigen Projekte löschen
-3. Als CES-Shell-Administrator: das [SonarQube version appropriat community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach `/var/lib/ces/sonar/volumes/extensions/plugins/`  verschieben
+3. Als CES-Shell-Administrator: das [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach `/var/lib/ces/sonar/volumes/extensions/plugins/`  verschieben
 4. SonarQube neustarten
 5. eine `sonar-project.properties` im angemessenen Repo-Branch anlegen (sofern noch nicht vorhanden)
    - Beispiel siehe unten
