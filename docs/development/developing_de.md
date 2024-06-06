@@ -176,26 +176,34 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
       2. Job speichern
          - das Jenkinsfile wird automatisch gefunden
       3. ggf. überzählige/nicht funktionierende Jobs abbrechen
-      4. master-Branch hinsichtlich geänderter Credentials oder unerwünschter Jobstages anpassen und bauen
+      4. master-Branch hinsichtlich geänderter Credentials oder unerwünschter Job-Stages anpassen und bauen
          - wichtig ist eine alte Version (ces-build-lib@1.35.1) der `ces-build-lib`, neuere Versionen führen zu Authentifizierungsfehlern
          - ein Austausch gegen eine neuere Build-lib ist im Rahmen von Smoketests von SonarQube nicht maßgeblich
 
 ### Testen des SonarQube Community Plugin
-1. Im SCMM das editor und Review Plugin installieren.
-1. Erstellen Sie den spring-petclinic/ `master`-Zweig
-   - dies wird wahrscheinlich fehlschlagen
-   - Wiederholen Sie es, aber ändern Sie die ces-build-lib Version in der Jenkinsfile auf eine aktuelle ces-build-lib Version (z. B. `2.2.1`)
-   - dies sollte ohne Fehlschläge bauen
-2. In SonarQube den Main-Branch umgeklarieren
+
+1. In SonarQube: das Community Branch Plugin einrichten
+   1. Als CES-Shell-Administrator: das [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach   `/var/lib/ces/sonar/volumes/extensions/plugins/` verschieben
+   2. SonarQube neustarten
+2. Im SCM-Manager: die Editor - und Review-Plugins installieren
+   - damit ist die Bearbeitung von Quelldateien auch ohne `git clone ... ; git commit ...` möglich  
+3. spring-petclinic/ `master`-Branch bearbeiten
+   - im SCM-Manager eine `sonar-project.properties` anlegen (sofern noch nicht vorhanden)
+      - Beispiel siehe unten
+      - dies sorgt dafür, dass SonarQube die gebauten `.class`-Files findet
+   - im SCM-Manager das `Jenkinsfile` anreichern, dass `stage("build")` und `stage("integration test")` zusätzlich vorhanden sind
+     - Beispiel siehe unten
+     - dies sort dafür, dass SonarQube auch PR-Branches scannt und Jenkins über den Status informiert
+4. In SonarQube den Main-Branch umdeklarieren (nur wenn nötig)
    1. zu [Projekte](https://192.168.56.2/sonar/admin/projects_management)  navigieren <!-- markdown-link-check-disable-line -->
-   2. Als `main` markiertes Projekt in den gewünschten Branch umbenennen, z. B. `master`
-   3. die übrigen Projekte löschen
-3. Als CES-Shell-Administrator: das [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen und es nach `/var/lib/ces/sonar/volumes/extensions/plugins/`  verschieben
-4. SonarQube neustarten
-5. eine `sonar-project.properties` im angemessenen Repo-Branch anlegen (sofern noch nicht vorhanden)
-   - Beispiel siehe unten
-6. Das Jenkinsfile mit einer SonarQube-Stage anreichern
-   - Beispiel siehe unten
+   2. nur bei einem erfolgten Scan eines falschen Branches nötig
+   3. Als `main` markiertes Projekt in den gewünschten Branch umbenennen, z. B. `master`
+   4. die übrigen Projekte löschen
+5. PR-Branch-Erkennung testen
+   1. im SCM-Manager einen neuen Branch auf `master`-Basis anlegen
+   2. eine beliebige Datei minimal ändern und commiten (um PR zu ermöglichen)
+   3. PR von neuem Branch auf `master` anlegen
+6. Nach PR-Anlage SonarQube und Jenkins-Job auf Scan-Ergebnis prüfen
 
 **sonar-project.properties**
 
@@ -211,6 +219,9 @@ sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
 ```
 
 **Jenkinsfile**
+
+> Dies ist nur eine Vorlage!
+> Siehe Kommentare, um nötige Anpassungen vorzunehmen
 
 ```groovy
 #!groovy
@@ -247,7 +258,7 @@ node {
                 } else if (env.CHANGE_TARGET) {
                     echo "This branch has been detected as a pull request."
                     sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=develop    "
-                } else if (branch.startsWith("feature/")) {
+                } else {
                     echo "This branch has been detected as a feature branch."
                     sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.branch.name=${env.BRANCH_NAME} -Dsonar.branch.target=develop"
                 } // add more to your liking

@@ -165,12 +165,12 @@ Due to communication problems caused by self-signed SSL certificates in a develo
       - Server authentication token: Press `add`
          - Create credential of type "Secret Text" with the token generated in SonarQube
          - **do not** configure a **Secret for the webhook**
-   2. insert credentials for SCMM and SonarQube in the [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) <!-- markdown-link-check-disable-line -->
+   3. insert credentials for SCMM and SonarQube in the [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) <!-- markdown-link-check-disable-line -->
       - Store admin credentials under the ID `scmCredentials`
          - SCMM and SonarQube share admin credentials (SCMM in the build configuration, SonarQube in the Jenkinsfile)
       - Pay attention to the credential type for SonarQube!
          - `Username/Password` for Basic Authentication
-   2. create build job
+   4. create build job
       1. Create 1st element -> Select `Multibranch Pipeline` -> Configure job
          - Select Branch Sources/Add source: "SCM-Manager (git, hg)"
          - Server URL: https://192.168.56.2/scm/ <!-- markdown-link-check-disable-line -->
@@ -184,20 +184,28 @@ Due to communication problems caused by self-signed SSL certificates in a develo
 
 ### Testing the SonarQube Community Plugin
 
-1. create the spring-petclinic/ `master` branch
-   - this will probably fail
-   - Repeat, but change the ces-build-lib version in the Jenkinsfile to a current ces-build-lib version (e.g. `2.2.1`)
-   - this should build without failures
-2. change the main branch in SonarQube
+1. in SonarQube: set up the community branch plugin 
+   1. as CES shell administrator: download the [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) as JAR and move it to `/var/lib/ces/sonar/volumes/extensions/plugins/`
+   2. restart SonarQube
+2. in the SCM Manager: install the editor and review plugins 
+   - This makes it possible to edit source files without `git clone ... ; git commit ...`
+3. edit spring-petclinic/ `master` branch
+   - create a `sonar-project.properties` in the SCM Manager (if not already available)
+      - see below for an example file
+      - this ensures that SonarQube finds the built `.class` files
+   - enrich the `Jenkinsfile` in the SCM Manager so that `stage("build")` and `stage("integration test")` are also available
+      - see below for an example file
+      - This ensures that SonarQube also scans PR branches and informs Jenkins about the status
+4. in SonarQube: redeclare the main branch (only if necessary)
    1. navigate to [Projects](https://192.168.56.2/sonar/admin/projects_management) <!-- markdown-link-check-disable-line -->
-   2. rename the project marked as `main` to the desired branch, e.g. `master`
-   3. delete the remaining projects
-3. as CES shell administrator: download the [SonarQube version appropriat community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) as JAR and move it to `/var/lib/ces/sonar/volumes/extensions/plugins/`
-4. restart SonarQube
-5. create a `sonar-project.properties` in the appropriate repo branch (if not already present)
-   - Example see below
-6. enrich the Jenkinsfile with a SonarQube stage
-   - Example see below
+   2. only necessary if a wrong branch has been scanned
+   3. rename the project marked as `main` to the desired branch, e.g. `master`
+   4. delete the remaining projects
+5. test PR branch recognition
+   1. create a new branch in the SCM Manager on a `master` basis
+   2. minimally modify and commit any file (so a PR can be created)
+   3. create PR from new branch on `master`
+6. after PR creation, check SonarQube and Jenkins job for the scan result
 
 **sonar-project.properties**
 
@@ -213,6 +221,9 @@ sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
 ```
 
 **Jenkinsfile**
+
+> This is just a template!
+> Please see the comments to make necessary changes
 
 ```groovy
 #!groovy
@@ -231,7 +242,7 @@ node {
     String credentialsId = 'scmCredentials'
 
     catchError {
-        // usual stages go here: Checkout, Build, Test, Integration Test
+        // Add the usual Checkout, Build, Test, Integration Test stages here
         stage("...") {}
         
         stage('SonarQube') {
@@ -249,7 +260,7 @@ node {
                 } else if (env.CHANGE_TARGET) {
                     echo "This branch has been detected as a pull request."
                     sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=develop    "
-                } else if (branch.startsWith("feature/")) {
+                } else {
                     echo "This branch has been detected as a feature branch."
                     sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.branch.name=${env.BRANCH_NAME} -Dsonar.branch.target=develop"
                 } // add more to your liking
