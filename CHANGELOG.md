@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v9.9.5-1] - 2024-06-06
 ### Changed
 - [#104] upgrade SonarQube to LTS 9.9.5
 
