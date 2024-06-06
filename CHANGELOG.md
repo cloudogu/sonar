@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.5-1] - 2024-06-06
+### Changed
+- [#104] upgrade SonarQube to LTS 9.9.5
+
 ## [v9.9.4-1] - 2024-02-19
 ### Changed
 - [#100] upgrade SonarQube to LTS 9.9.4
