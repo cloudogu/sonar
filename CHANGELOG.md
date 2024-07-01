@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.5-2] - 2024-07-01
+### Changed
+- Update base image to java:17.0.11-3 to use doguctl v0.12.0 (#106)
+
 ## [v9.9.5-1] - 2024-06-06
 ### Changed
 - [#104] upgrade SonarQube to LTS 9.9.5
