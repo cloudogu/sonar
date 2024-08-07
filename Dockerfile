@@ -1,4 +1,4 @@
-FROM registry.cloudogu.com/official/java:17.0.11-3 as base
+FROM registry.cloudogu.com/official/java:17.0.12-1 as base
 
 ENV SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
@@ -27,7 +27,7 @@ RUN echo "${CAS_PLUGIN_JAR_SHA256} *${BUILDER_HOME}/sonar-cas-plugin-${CAS_PLUGI
 FROM base
 
 LABEL NAME="official/sonar" \
-    VERSION="9.9.5-2" \
+    VERSION="9.9.5-3" \
     maintainer="hello@cloudogu.com"
 
 RUN set -eux \

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.5-3] - 2024-08-07
+### Changed
+- Update base image to OpenJDK 17.0.12-1
+- Update Alpine to 3.20.2-1
+
+### Security
+- [#108] close CVE-2024-41110
+
 ## [v9.9.5-2] - 2024-07-01
 ### Changed
 - Update base image to java:17.0.11-3 to use doguctl v0.12.0 (#106)
