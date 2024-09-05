@@ -345,7 +345,9 @@ function add_temporary_admin_group() {
 
 function assign_group() {
   local user=${1} group=${2}
-  execute_sql_statement_on_database "INSERT INTO groups_users (group_uuid, user_uuid) VALUES ((SELECT uuid FROM groups where name='${group}'),(SELECT uuid FROM users where login='${user}'));"
+  # Without installing extensions in postgresql we cannot create a uuid.
+  # https://stackoverflow.com/questions/12505158/generating-a-uuid-in-postgres-for-insert-statement#answer-21327318
+  execute_sql_statement_on_database "INSERT INTO groups_users (group_uuid, user_uuid, uuid) VALUES ((SELECT uuid FROM groups where name='${group}'),(SELECT uuid FROM users where login='${user}'), (SELECT uuid_in(overlay(overlay(md5(random()::text || ':' || random()::text) placing '4' from 13) placing to_hex(floor(random()*(11-8+1) + 8)::int)::text from 17)::cstring)));"
 }
 
 function remove_user() {
