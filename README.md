@@ -1,6 +1,3 @@
-<img src="https://cloudogu.com/images/dogus/sonarqube.png" alt="sonar logo" height="100px">
-
-
 [![GitHub license](https://img.shields.io/github/license/cloudogu/sonar.svg)](https://github.com/cloudogu/sonar/blob/develop/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/cloudogu/sonar.svg)](https://github.com/cloudogu/sonar/releases)
 
