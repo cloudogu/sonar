@@ -20,7 +20,8 @@
     },
     {
       "type": "dogu",
-      "name": "cas"
+      "name": "cas",
+      "Version": ">=7.0.5.1-6"
     },
     {
       "type": "dogu",
@@ -52,11 +53,22 @@
       "Owner": "1000",
       "Group": "1000",
       "NeedsBackup": true
+    },
+    {
+      "Name": "localConfig",
+      "Path": "/var/ces/config",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
     }
   ],
   "ServiceAccounts": [
     {
       "Type": "postgresql"
+    },
+    {
+      "Type": "cas",
+      "Params": ["cas"]
     }
   ],
   "Configuration": [
