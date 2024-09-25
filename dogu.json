@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "9.9.5-4",
+  "Version": "9.9.5-5",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -20,7 +20,8 @@
     },
     {
       "type": "dogu",
-      "name": "cas"
+      "name": "cas",
+      "Version": ">=7.0.5.1-6"
     },
     {
       "type": "dogu",
@@ -52,11 +53,24 @@
       "Owner": "1000",
       "Group": "1000",
       "NeedsBackup": true
+    },
+    {
+      "Name": "localConfig",
+      "Path": "/var/ces/config",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
     }
   ],
   "ServiceAccounts": [
     {
       "Type": "postgresql"
+    },
+    {
+      "Type": "cas",
+      "Params": [
+        "cas"
+      ]
     }
   ],
   "Configuration": [

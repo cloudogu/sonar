@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v9.9.5-5] - 2024-09-25
+### Changed
+- Switch to new CAS service account structure in dogu.json
+
 ## [v9.9.5-4] - 2024-09-18
 ### Changed
 - Relicense to AGPL-3.0-only
