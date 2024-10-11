@@ -4,6 +4,9 @@ Below you will find the release notes for the SonarQube Dogu.
 
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
+## 9.9.7-1
+We have only made technical changes. You can find more details in the changelogs.
+
 ## 9.9.5-5
 We have only made technical changes. You can find more details in the changelogs.
 
