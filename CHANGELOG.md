@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v9.9.7-1] - 2024-11-04
 ### Changed
 - [#114] upgrade SonarQube to 9.9.7
 - [#114] upgrade dogu-build-lib to 2.5.0
