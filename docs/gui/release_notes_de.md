@@ -4,6 +4,10 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
+## 9.9.7-1
+* Das Dogu bietet nun die SonarQube-Version 9.9.7 an. Die Release Notes von SonarQube finden Sie [hier](https://docs.sonarsource.com/sonarqube/latest/setup-and-upgrade/release-upgrade-notes/#release-9.9-upgrade-notes).
+Eine Liste der im aktuellen Patch-release enthaltenen Verbesserungen findet sich [hier](https://sonarsource.atlassian.net/issues/?jql=project%20%3D%2010139%20AND%20fixVersion%20%3D%2015864%20AND%20issuetype%20%21%3D%20Task)
+
 ## 9.9.5-5
 Wir haben nur technische Änderungen vorgenommen. Näheres finden Sie in den Changelogs.
 
