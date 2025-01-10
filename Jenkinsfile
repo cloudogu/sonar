@@ -73,12 +73,6 @@ node('vagrant') {
             }
 
             stage('Trivy scan') {
-                // Installation von jq sicherstellen
-                sh '''
-                if ! command -v jq &> /dev/null; then
-                  apt-get update && apt-get install -y jq
-                fi
-                '''
                 ecoSystem.copyDoguImageToJenkinsWorker("/dogu")
                 Trivy trivy = new Trivy(this)
                 trivy.scanDogu(".", params.TrivySeverityLevels, params.TrivyStrategy)
