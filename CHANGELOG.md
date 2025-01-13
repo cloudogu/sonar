@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v9.9.8-1] - 2025-01-13
 - [#118] Update SonarQube to 9.9.8.100196
 - [#118] Update dogu-build-lib to 3.0.0, ces-build-lib to 4.0.1 
 - [#118] Added directory creation for trivy output in Dockerfile
