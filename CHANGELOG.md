@@ -6,12 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- [#118] Update SonarQube to 9.9.8.100196
+- [#118] Update dogu-build-lib to 3.0.0, ces-build-lib to 4.0.1 
 - [#118] Added directory creation for trivy output in Dockerfile
 - [#118] Update cas plugin version in goss to sonar-cas-plugin-5.1.0.jar
 - [#118] Update cas plugin to 5.1.0
-- [#118] Update SonarQube to 9.9.8.100196
 - [#118] Update Java Base Image to 17.0.13-1
-- [#118] Update SonarQube to 9.9.8.100196
 - [#116] Update Makefiles to 9.5.0
 
 ## [v9.9.7-1] - 2024-11-04
