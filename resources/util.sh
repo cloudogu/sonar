@@ -272,8 +272,8 @@ function deactivate_default_admin_user() {
   LOG_LEVEL=$3
   # sonar requires a special character in the admin password
   RANDOM_PASSWORD=$(doguctl random --withSpecialChars)
-  curl "${LOG_LEVEL}" -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
-  curl "${LOG_LEVEL}" -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
+  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
 }
 
 # get_last_admin_group_or_global_admin_group echoes admin_group__last value from the registry if it was set, otherwise
