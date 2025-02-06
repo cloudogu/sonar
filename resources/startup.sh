@@ -528,6 +528,8 @@ if areQualityProfilesPresentToImport; then
   remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
 fi
 
+cp casLogoutUrl.js /opt/sonar/web/js/
+
 doguctl state "ready"
 
 exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762

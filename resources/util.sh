@@ -105,6 +105,7 @@ function create_group_via_rest_api() {
   AUTH_USER=$2
   AUTH_PASSWORD=$3
   LOG_LEVEL=$4
+  # TODO Web service is deprecated since 10.4 and will be removed in a future version.
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/user_groups/create?description=tempadmingroup&name=${GROUP_NAME}"
 }
 
@@ -270,8 +271,9 @@ function deactivate_default_admin_user() {
   AUTH_PASSWORD=$2
   LOG_LEVEL=$3
   RANDOM_PASSWORD=$(doguctl random)
-  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
-  curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
+  # TODO Password must contain at least one special character
+  curl "${LOG_LEVEL}" -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
+  curl "${LOG_LEVEL}" -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
 }
 
 # get_last_admin_group_or_global_admin_group echoes admin_group__last value from the registry if it was set, otherwise
@@ -345,7 +347,7 @@ function add_temporary_admin_group() {
 
 function assign_group() {
   local user=${1} group=${2}
-  execute_sql_statement_on_database "INSERT INTO groups_users (group_uuid, user_uuid) VALUES ((SELECT uuid FROM groups where name='${group}'),(SELECT uuid FROM users where login='${user}'));"
+  execute_sql_statement_on_database "INSERT INTO groups_users (group_uuid, user_uuid, uuid) VALUES ((SELECT uuid FROM groups where name='${group}'),(SELECT uuid FROM users where login='${user}'),'$(uuidgen)');"
 }
 
 function remove_user() {
