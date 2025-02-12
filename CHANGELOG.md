@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#122] Exit on invalid logging key configuration
 
 ## [v9.9.8-1] - 2025-01-13
 - [#118] Update SonarQube to 9.9.8.100196
