@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [#122] Exit on invalid logging key configuration
 
+### Removed
+- Remove duplicated config keys in dogu.json
+
 ## [v9.9.8-1] - 2025-01-13
 - [#118] Update SonarQube to 9.9.8.100196
 - [#118] Update dogu-build-lib to 3.0.0, ces-build-lib to 4.0.1 
