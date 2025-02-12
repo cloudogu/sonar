@@ -6,6 +6,9 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v9.9.8-2] - 2025-02-12
+* We have only made technical changes. You can find more details in the changelogs.
+
 ## [v9.9.8-1] - 2025-01-13
 * The Dogu now offers SonarQube version 9.9.8. The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube/latest/setup-and-upgrade/release-upgrade-notes/#release-9.9-upgrade-notes).
 A list of the improvements included in the current patch release can be found [here](https://sonarsource.atlassian.net/issues/?jql=project%20%3D%2010139%20AND%20fixVersion%20%3D%2016011%20AND%20issuetype%20%21%3D%20Task)

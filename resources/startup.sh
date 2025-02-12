@@ -389,8 +389,8 @@ function setDoguLogLevel() {
   currentLogLevel=$(doguctl config "logging/root")
 
   if ! doguctl validate logging/root --silent ; then
-    echo "WARNING: Found invalid value in logging/root. Resetting it to INFO"
-    doguctl config logging/root INFO
+    echo "ERROR: Found invalid value in logging/root: ${currentLogLevel}"
+    exit 1
   fi
 
   echo "Mapping configured log level to available log levels..."

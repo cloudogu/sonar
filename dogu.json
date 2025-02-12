@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "9.9.8-1",
+  "Version": "9.9.8-2",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -83,14 +83,6 @@
       "Name": "sonar.plugins.default",
       "Description": "Comma separated list of plugin names to install on start",
       "Optional": true
-    },
-    {
-      "Name": "container_config/memory_limit",
-      "Description": "Limits the container's memory usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
-      "Optional": true,
-      "Validation": {
-        "Type": "BINARY_MEASUREMENT"
-      }
     },
     {
       "Name": "container_config/swap_limit",
@@ -182,14 +174,6 @@
         "Type": "BINARY_MEASUREMENT"
       },
       "Default": "1300m"
-    },
-    {
-      "Name": "container_config/swap_limit",
-      "Description": "Limits the container's swap memory usage. Use zero or a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte). 0 will disable swapping.",
-      "Optional": true,
-      "Validation": {
-        "Type": "BINARY_MEASUREMENT"
-      }
     },
     {
       "Name": "container_config/cpu_core_limit",
