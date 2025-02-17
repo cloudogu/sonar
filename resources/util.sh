@@ -271,7 +271,7 @@ function deactivate_default_admin_user() {
   AUTH_PASSWORD=$2
   LOG_LEVEL=$3
   # sonar requires a special character in the admin password
-  RANDOM_PASSWORD=$(doguctl random --withSpecialChars)
+  RANDOM_PASSWORD=$(doguctl random --withSpecialChars | jq "@uri" -jRr)
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
 }
