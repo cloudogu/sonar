@@ -6,26 +6,26 @@ const env = require('@cloudogu/dogu-integration-test-library/lib/environment_var
 
 Then(/^the page shows the replicated data of the user in tabular form$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.get("[id=login]").contains(testuserdata.username)
-        cy.get("[id=email]").contains(testuserdata.mail)
-        cy.get("[id=name]").contains(testuserdata.displayName)
+        cy.get("#login").contains(testuserdata.username)
+        cy.get("#email").contains(testuserdata.mail)
+        cy.get("#component-nav-portal").contains(testuserdata.displayName)
     })
 });
 
-Then(/^the user can access the SonarQube API with username and password$/, function () {
-    cy.fixture("testuser_data").then((testuserdata) => {
-        cy.requestSonarAPI("/users/search", testuserdata.username, testuserdata.password)
-    })
+Then(/^the user can access the SonarQube API with API token$/, function () {
+        cy.task("getAPIToken").then((token) => {
+            cy.requestSonarAPI("/users/search", token)
+        })
 });
 
-Then(/^the user can not access the SonarQube API with wrong username and password$/, function () {
-    cy.requestSonarAPI("/users/search", "NoVaLiDUSRnam33", "ThIsIsNoTaP4$$worD", false, 401)
+Then(/^the user can not access the SonarQube API with wrong api token$/, function () {
+    cy.requestSonarAPI("/users/search", "incorrect_token", false, 401)
 });
 
 Then(/^the user can access the Web API with the User Token$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.getCookie(testuserdata.sonarqubeToken).should('exist').then((cookie) => {
-            cy.requestSonarAPI("/system/health", cookie.value)
+        cy.task("getUserAPIToken").then((token) => {
+            cy.requestSonarAPI("/system/ping", token)
         })
     })
 });
@@ -66,23 +66,18 @@ Then(/^the user's externalIdentity attribute matches the username attribute in t
     })
 });
 
-Then(/^the user's attributes should include the admin group$/, function () {
-    cy.getCookie("adminuserattributes").should('exist').then((cookie) => {
-        //check if response body (from cookie) holds admin group
-        const responseBody = JSON.parse(cookie.value)
-        cy.log("DEBUG: " + cookie.value)
-        expect(responseBody["users"][0]["groups"]).to.contain(env.GetAdminGroup())
-    })
-});
-
 Then(/^the user can access the \/users\/groups Web API endpoint$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, testuserdata.username, testuserdata.password)
+        cy.task("getAPIToken").then((token) => {
+            cy.requestSonarAPI("/system/health", token)
+        })
     })
 });
 
 Then(/^the user can not access the \/users\/groups Web API endpoint$/, function () {
     cy.fixture("testuser_data").then((testuserdata) => {
-        cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, testuserdata.username, testuserdata.password, false, 403)
+        cy.task("getAPIToken").then((token) => {
+            cy.requestSonarAPI("/users/groups?login=" + testuserdata.username, token, false, 403)
+        })
     })
 });

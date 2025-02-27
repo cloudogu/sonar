@@ -7,25 +7,28 @@ const env = require('@cloudogu/dogu-integration-test-library/lib/environment_var
 When(/^the user creates a User Token via the Web API$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.clearCookies()
-        cy.requestSonarAPI("/user_tokens/generate?name=" + testuserdata.sonarqubeToken, testuserdata.username, testuserdata.password, true, 200, "POST").then(function (response) {
-            cy.setCookie(testuserdata.sonarqubeToken, response.body["token"])
+        cy.task("getAPIToken").then((token) => {
+            cy.requestSonarAPI("/user_tokens/generate?name=" + Math.random().toString(), token, true, 200, "POST").then(function (response) {
+                cy.task("setUserAPIToken", response.body["token"])
+        })
         })
     })
+});
+
+When(/^wait for sonar load$/, function () {
+    cy.get('#create-project', { timeout: 10000 }).should('be.visible');
+    // even though sonar is fully loaded at this time, the test with multiple logins get flaky unless we wait a bit
+    cy.wait(10000);
 });
 
 When(/^the user requests his\/her attributes via the \/users API endpoint$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
-        cy.clearCookies()
-        cy.requestSonarAPI("/users/search?q=" + testuserdata.username, testuserdata.username, testuserdata.password).then(function (response) {
-            cy.setCookie("userattributes", JSON.stringify(response.body))
+        cy.task("getAPIToken").then((token) => {
+            cy.clearCookies()
+            cy.requestSonarAPI("/users/search?q=" + testuserdata.username, token).then(function (response) {
+                cy.setCookie("userattributes", JSON.stringify(response.body))
+            })
         })
-    })
-});
-
-When(/^the admin user requests his\/her attributes via the \/users API endpoint$/, function () {
-    cy.clearCookies()
-    cy.requestSonarAPI("/users/search?q=" + env.GetAdminUsername(), env.GetAdminUsername(), env.GetAdminPassword()).then(function (response) {
-        cy.setCookie("adminuserattributes", JSON.stringify(response.body))
     })
 });
 

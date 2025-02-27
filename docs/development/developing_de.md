@@ -153,7 +153,7 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
       - zu [Dashboard/Jenkins verwalten/Tools](https://192.168.56.2/jenkins/manage/configureTools/) navigieren <!-- markdown-link-check-disable-line -->
       - Im Abschnitt "SonarQube Scanner Installationen" einen Eintrag über Maven Central anlegen
       - name: `sonar-scanner` 
-      - Version: `4.8.1` (maximal [Java 11](https://docs.sonarsource.com/sonarqube/9.9/analyzing-source-code/scanners/sonarscanner/))
+      - als Version kann die aktuellste Version genutzt werden
    2. ggf. SonarServer konfigurieren
       - zu [Dashboard/Jenkins verwalten/System](https://192.168.56.2/jenkins/manage/configure) navigieren <!-- markdown-link-check-disable-line -->
       - Im Abschnitt "SonarQube servers" folgendes konfigurieren
@@ -162,7 +162,7 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
         - Server URL: `http://sonar:9000/sonar`
         - Server authentication token: `add` drücken
           - Credential fom Typ "Secret Text" mit dem im SonarQube generierten Token anlegen
-        - Hier ** darf kein Secret** für den **Webhook** hinterlegt werden
+        - darauf achten, dass diese Settings auch übernommen werden (F5), vor allem Credential Type "Secret Text"
    2. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
       - Admin-Credentials unter der ID `scmCredentials` ablegen
         - SCMM und SonarQube teilen sich Admin-Credentials (SCMM in der Build-Konfiguration, SonarQube im Jenkinsfile)
@@ -177,8 +177,6 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
          - das Jenkinsfile wird automatisch gefunden
       3. ggf. überzählige/nicht funktionierende Jobs abbrechen
       4. master-Branch hinsichtlich geänderter Credentials oder unerwünschter Job-Stages anpassen und bauen
-         - wichtig ist eine alte Version (ces-build-lib@1.35.1) der `ces-build-lib`, neuere Versionen führen zu Authentifizierungsfehlern
-         - ein Austausch gegen eine neuere Build-lib ist im Rahmen von Smoketests von SonarQube nicht maßgeblich
 
 ### Testen des SonarQube Community Plugin
 
@@ -225,7 +223,7 @@ sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
 
 ```groovy
 #!groovy
-@Library('github.com/cloudogu/ces-build-lib@2.2.1')
+@Library('github.com/cloudogu/ces-build-lib@4.0.1')
 import com.cloudogu.ces.cesbuildlib.*
 
 node {
@@ -245,7 +243,7 @@ node {
         
         stage('SonarQube') {
             def scannerHome = tool name: 'sonar-scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-            env.JAVA_HOME="${tool 'OpenJDK-11'}"
+            env.JAVA_HOME="${tool 'OpenJDK-17'}"
             withSonarQubeEnv {
                 gitWithCredentials("fetch --all", credentialsId)
 
