@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v2025.1-1] - 2025-03-04
+## [v25.1.0-1] - 2025-03-04
 - [#121] Update Sonarqube to 2025.1 (LTS version)
 - [#121] Update Sonar cas plugin to 6.0.0
 
