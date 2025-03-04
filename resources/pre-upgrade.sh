@@ -32,26 +32,12 @@ function run_pre_upgrade() {
   fi
 
   if [[ ${FROM_VERSION} == "8"* ]] && [[ ${TO_VERSION} == "9.9"* ]]; then
-      TEMPORARY_ADMIN_GROUP=$(doguctl random)
-      TEMPORARY_ADMIN_USER=$(doguctl random)
-      TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+    collectInstalledPlugins
+  fi
 
-      # remove user in case it already exists
-      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-      remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-
-      echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
-      add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-      create_temporary_admin_user_with_temporary_admin_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${TEMPORARY_ADMIN_GROUP}" "--silent"
-
-      collectInstalledPlugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-
-      echo "Remove temporary admin user"
-      remove_temporary_admin_user "${TEMPORARY_ADMIN_USER}"
-      remove_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-
-      mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
-    fi
+  if [[ ${FROM_VERSION} == "9.9"* ]] && [[ ${TO_VERSION} == "25."* ]]; then
+    collectInstalledPlugins
+  fi
 
   # set this so the startup.sh waits for the post_upgrade to finish
   doguctl config post_upgrade_running true
@@ -63,10 +49,21 @@ function sql() {
 }
 
 function collectInstalledPlugins() {
-  TEMPORARY_ADMIN_USER=${1}
-  PW=${2}
+  TEMPORARY_ADMIN_GROUP=$(doguctl random)
+  TEMPORARY_ADMIN_USER=$(doguctl random)
+  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+
+  # remove user in case it already exists
+  remove_user "${TEMPORARY_ADMIN_USER}"
+  remove_group "${TEMPORARY_ADMIN_GROUP}"
+
+  echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
+  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+  add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+
   echo "Getting all installed plugins..."
-  INSTALLED_PLUGINS=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":"${PW}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
+  INSTALLED_PLUGINS=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
   echo "The following plugins are installed. They will be re-installed after dogu upgrade:"
   echo "${INSTALLED_PLUGINS}"
   SAVED_PLUGIN_NAMES=""
@@ -76,6 +73,11 @@ function collectInstalledPlugins() {
 
   echo "Saving plugin names to registry..."
   doguctl config install_plugins "${SAVED_PLUGIN_NAMES}"
+  echo "Remove temporary admin user"
+  remove_user "${TEMPORARY_ADMIN_USER}"
+  remove_group "${TEMPORARY_ADMIN_GROUP}"
+
+  mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
 }
 
 # make the script only run when executed, not when sourced from bats tests)

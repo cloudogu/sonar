@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2025.1-1] - 2025-03-04
+- [#121] Update Sonarqube to 2025.1 (LTS version)
+- [#121] Update Sonar cas plugin to 6.0.0
+
 ## [v9.9.8-2] - 2025-02-12
 ### Fixed
 - [#122] Exit on invalid logging key configuration

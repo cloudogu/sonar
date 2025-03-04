@@ -527,6 +527,8 @@ if areQualityProfilesPresentToImport; then
   remove_user "${TEMPORARY_PROFILE_ADMIN_USER}"
   remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
 fi
+# copy the cas logout script into Sonar container
+cp casLogoutUrl.js /opt/sonar/web/js/
 
 doguctl state "ready"
 

@@ -3,14 +3,14 @@ FROM registry.cloudogu.com/official/java:17.0.13-1 as base
 ENV SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
-    SONAR_VERSION=9.9.8.100196 \
-    CAS_PLUGIN_VERSION=5.1.0 \
+    SONAR_VERSION=25.1.0.102122 \
+    CAS_PLUGIN_VERSION=6.0.0 \
     STARTUP_DIR="/"
 
 FROM base as builder
 
-ENV SONARQUBE_ZIP_SHA256=07d9100c95e5c19f1785c0e9ffc7c8973ce3069a568d2500146a5111b6e966cd \
-    CAS_PLUGIN_JAR_SHA256=67a127a4f8fd247b2f2c84869d62d960c97fb546083a79fbac637163123490a2 \
+ENV SONARQUBE_ZIP_SHA256=1b37a6d6f882e32208620597706ee336e9a3495acff826421475618dc747feba \
+    CAS_PLUGIN_JAR_SHA256=2c0676dbefa2be4750df42f7ca4236b1c8846a44962d6d436301c7c496996480 \
     BUILDER_HOME="/builder/sonar"
 
 WORKDIR /builder
@@ -27,13 +27,13 @@ RUN echo "${CAS_PLUGIN_JAR_SHA256} *${BUILDER_HOME}/sonar-cas-plugin-${CAS_PLUGI
 FROM base
 
 LABEL NAME="official/sonar" \
-    VERSION="9.9.8-2" \
+    VERSION="2025.1-1" \
     maintainer="hello@cloudogu.com"
 
 RUN set -eux \
     && apk update \
     && apk upgrade \
-    && apk add --no-cache procps postgresql14-client curl \
+    && apk add --no-cache procps postgresql14-client curl uuidgen \
     && mkdir -p /opt \
     && rm -rf /var/cache/apk/* \
     && mkdir -p /opt/sonar/lib/common \

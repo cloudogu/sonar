@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v2025.1-1] - 2025-03-04
+* The Dogu now offers SonarQube version 2025.1 (LTS). The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube-server/2025.1/server-upgrade-and-maintenance/release-notes-and-notices/release-notes/).
+  A list of the improvements included in the current major release can be found [here](https://sonarsource.atlassian.net/issues/?jql=project%20%3D%2010139%20AND%20fixVersion%20%3D%2015952%20AND%20issuetype%20%21%3D%20Task)
+
 ## [v9.9.8-2] - 2025-02-12
 * We have only made technical changes. You can find more details in the changelogs.
 
