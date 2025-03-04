@@ -12,8 +12,25 @@ async function setupNodeEvents(on, config) {
         "file:preprocessor",
         createBundler({
             plugins: [createEsbuildPlugin.default(config)],
-        })
+        }),
     );
+
+    on("task", {
+        setAPIToken(token) {
+            global.token = token;
+            return null;
+        },
+        getAPIToken() {
+            return global.token ? global.token : null;
+        },
+        setUserAPIToken(token) {
+            global.usertoken = token;
+            return null;
+        },
+        getUserAPIToken() {
+            return global.usertoken ? global.usertoken : null;
+        },
+    });
 
     config = doguTestLibrary.configure(config);
 
