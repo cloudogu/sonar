@@ -10,3 +10,4 @@ out/
 .target/
 .env
 .bin/
+target/
