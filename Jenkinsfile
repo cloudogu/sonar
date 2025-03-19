@@ -44,6 +44,11 @@ node('vagrant') {
             shellCheck("./resources/post-upgrade.sh ./resources/pre-upgrade.sh ./resources/startup.sh ./resources/upgrade-notification.sh ./resources/util.sh")
         }
 
+        stage('Bats Tests') {
+            Bats bats = new Bats(this, docker)
+            bats.checkAndExecuteTests()
+        }
+
         stage('Check Markdown Links') {
             markdown.check()
         }

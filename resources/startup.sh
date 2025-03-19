@@ -3,17 +3,20 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-echo "                                     ./////,                    "
-echo "                                 ./////==//////*                "
-echo "                                ////.  ___   ////.              "
-echo "                         ,**,. ////  ,////A,  */// ,**,.        "
-echo "                    ,/////////////*  */////*  *////////////A    "
-echo "                   ////'        \VA.   '|'   .///'       '///*  "
-echo "                  *///  .*///*,         |         .*//*,   ///* "
-echo "                  (///  (//////)**--_./////_----*//////)   ///) "
-echo "                   V///   '°°°°      (/////)      °°°°'   ////  "
-echo "                    V/////(////////\. '°°°' ./////////(///(/'   "
-echo "                       'V/(/////////////////////////////V'      "
+printCloudoguLogo() {
+  echo "                                     ./////,                    "
+  echo "                                 ./////==//////*                "
+  echo "                                ////.  ___   ////.              "
+  echo "                         ,**,. ////  ,////A,  */// ,**,.        "
+  echo "                    ,/////////////*  */////*  *////////////A    "
+  echo "                   ////'        \VA.   '|'   .///'       '///*  "
+  echo "                  *///  .*///*,         |         .*//*,   ///* "
+  echo "                  (///  (//////)**--_./////_----*//////)   ///) "
+  echo "                   V///   '°°°°      (/////)      °°°°'   ////  "
+  echo "                    V/////(////////\. '°°°' ./////////(///(/'   "
+  echo "                       'V/(/////////////////////////////V'      "
+}
+
 
 # import util functions:
 # execute_sql_statement_on_database()
@@ -24,18 +27,18 @@ echo "                       'V/(/////////////////////////////V'      "
 # add_user
 # add_user_to_group_via_rest_api()
 # set_successful_first_start_flag()
-# shellcheck disable=SC1091
-source util.sh
+
+sourcingExitCode=0
+# shellcheck disable=SC1090,SC1091
+source "${STARTUP_DIR}"/util.sh || sourcingExitCode=$?
+if [[ ${sourcingExitCode} -ne 0 ]]; then
+  echo "ERROR: An error occurred while sourcing ${STARTUP_DIR}/util.sh."
+fi
 
 # export so cas-plugin can use this env variable
 export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 
-# get variables
-CES_ADMIN_GROUP=$(doguctl config --global admin_group)
-CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
-FQDN=$(doguctl config --global fqdn)
-DOMAIN=$(doguctl config --global domain)
-MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
+# variables
 CURL_LOG_LEVEL="--silent"
 API_ENDPOINT="http://localhost:9000/sonar/api"
 HEALTH_TIMEOUT=600
@@ -43,13 +46,31 @@ ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 PROJECT_PERMISSIONS="admin codeviewer issueadmin securityhotspotadmin scan user"
 DEFAULT_PERMISSION_TEMPLATE_NAME="Default template"
 KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
-TEMPORARY_ADMIN_GROUP=$(doguctl random)
-TEMPORARY_ADMIN_USER=$(doguctl random)
-TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS="amend_projects_with_ces_admin_permissions_last_status"
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
-TEMPORARY_PROFILE_ADMIN_GROUP=$(doguctl random)
-TEMPORARY_PROFILE_ADMIN_USER=$(doguctl random)
-TEMPORARY_PROFILE_ADMIN_PASSWORD=$(doguctl random)
+# shellcheck disable=SC2034
+DATABASE_IP=postgresql
+
+function getVariables() {
+  # shellcheck disable=SC2034
+  DATABASE_USER=$(doguctl config -e sa-postgresql/username)
+  # shellcheck disable=SC2034
+  DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
+  # shellcheck disable=SC2034
+  DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+
+  CES_ADMIN_GROUP=$(doguctl config --global admin_group)
+  CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
+  FQDN=$(doguctl config --global fqdn)
+  DOMAIN=$(doguctl config --global domain)
+  MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
+  TEMPORARY_ADMIN_GROUP=$(doguctl random)
+  TEMPORARY_ADMIN_USER=$(doguctl random)
+  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+  TEMPORARY_PROFILE_ADMIN_GROUP=$(doguctl random)
+  TEMPORARY_PROFILE_ADMIN_USER=$(doguctl random)
+  TEMPORARY_PROFILE_ADMIN_PASSWORD=$(doguctl random)
+}
 
 function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
@@ -130,9 +151,33 @@ function shouldCesAdminGroupToAllProjects() {
     return 1
   fi
 
-  if [[ "${result}" == "all" ]] ;  then
-    echo "All projects should be amended with CES-Admin group permissions..."
-    return 0
+  if [[ "${result}" != "none" ]] ;  then
+    local timestamp
+    timestamp=$(date -d "${result}" +%s) || exitCode=$?
+    if [[ "${exitCode}" != "0" ]]; then
+      echo "ERROR: Parsing timestamp from registry '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}'"
+      return 1
+    fi
+
+    local previous
+    local exitCode=0
+    previous=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}" --default "1970-01-01") || exitCode=$?
+    if [[ "${exitCode}" != "0" ]]; then
+      echo "ERROR: Reading the registry '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}' failed with exitCode ${exitCode}."
+      return 1
+    fi
+
+    local previousTimestamp
+    previousTimestamp=$(date -d "${previous}" +%s) || exitCode=$?
+    if [[ "${exitCode}" != "0" ]]; then
+      previousTimestamp=0
+    fi
+
+    if [[ "${timestamp}" -gt "${previousTimestamp}" ]]; then
+      echo "All projects should be amended with CES-Admin group permissions..."
+      return 0
+    fi
+
   fi
 
   echo "Skip amending projects with CES-Admin group permissions..."
@@ -176,12 +221,13 @@ function addCesAdminGroupToProjectWithPermissions() {
 }
 
 function resetAddCesAdminGroupToProjectKey() {
+  local currentDate
+  currentDate=$(date "+%Y-%m-%d %H:%M:%S")
   local exitCode=0
-  KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
-  result=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}" "none") || exitCode=$?
+  result=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}" "${currentDate}") || exitCode=$?
 
   if [[ "${exitCode}" != "0" ]]; then
-    echo "ERROR: Writing the registry key '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}' failed with exitCode ${exitCode}."
+    echo "ERROR: Writing the registry key '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}' failed with exitCode ${exitCode}."
     return 1
   fi
 }
@@ -409,141 +455,151 @@ function setDoguLogLevel() {
 }
 
 ### End of function declarations, work is done now
+runMain() {
+  printCloudoguLogo
 
-if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
-  echo "Moving cas plugin to plugins folder..."
-  mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
-  if ls "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar 1> /dev/null 2>&1; then
-    rm "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
+  getVariables
+
+  if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
+    echo "Moving cas plugin to plugins folder..."
+    mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
+    if ls "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar 1> /dev/null 2>&1; then
+      rm "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
+    fi
+    mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
   fi
-  mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
-fi
 
-doguctl state "waitingForPostgreSQL"
+  doguctl state "waitingForPostgreSQL"
 
-echo "Waiting until postgresql passes all health checks..."
-if ! doguctl healthy --wait --timeout ${HEALTH_TIMEOUT} postgresql; then
-  echo "Timeout reached by waiting of postgresql to get healthy"
-  exit 1
-else
-  echo "Postgresql is healthy"
-fi
+  echo "Waiting until postgresql passes all health checks..."
+  if ! doguctl healthy --wait --timeout ${HEALTH_TIMEOUT} postgresql; then
+    echo "Timeout reached by waiting of postgresql to get healthy"
+    exit 1
+  else
+    echo "Postgresql is healthy"
+  fi
 
-echo "Creating truststore..."
-# Using non-default truststore, because sonar user has no write permissions to /etc/ssl
-# The path is configured in sonar.properties
-create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks > /dev/null
+  echo "Creating truststore..."
+  # Using non-default truststore, because sonar user has no write permissions to /etc/ssl
+  # The path is configured in sonar.properties
+  create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks > /dev/null
 
-doguctl state "configuring..."
+  doguctl state "configuring..."
 
-echo "Ensure correct branch plugin state"
-ensure_correct_branch_plugin_state
+  echo "Ensure correct branch plugin state"
+  ensure_correct_branch_plugin_state
 
-echo "Configuring log level..."
-setDoguLogLevel
+  echo "Configuring log level..."
+  setDoguLogLevel
 
-echo "Rendering sonar properties template..."
-render_properties_template
+  echo "Rendering sonar properties template..."
+  render_properties_template
 
-startSonarQubeInBackground "configuration api"
+  startSonarQubeInBackground "configuration api"
 
-# check whether post-upgrade script is still running
-while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
-  echo "Post-upgrade script is running. Waiting..."
-  sleep 3
-done
+  # check whether post-upgrade script is still running
+  while [[ "$(doguctl config post_upgrade_running)" == "true" ]]; do
+    echo "Post-upgrade script is running. Waiting..."
+    sleep 3
+  done
 
-# add temporary admin to configuration
-remove_last_temp_admin
-update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+  # add temporary admin to configuration
+  remove_last_temp_admin
+  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 
-echo "Creating Temporary admin user..."
-create_temporary_admin
+  echo "Creating Temporary admin user..."
+  create_temporary_admin
 
-# check whether firstSonarStart has already been performed
-if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
-  IS_FIRST_START="true"
-  first_sonar_start
-else
-  IS_FIRST_START="false"
-  subsequent_sonar_start
-fi
+  # check whether firstSonarStart has already been performed
+  if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
+    IS_FIRST_START="true"
+    first_sonar_start
+  else
+    IS_FIRST_START="false"
+    subsequent_sonar_start
+  fi
 
-if has_admin_group_changed
-then
-  remove_permissions_from_last_admin_group
-else
-  echo "Did not detect a change of the admin group. Continue as usual..."
-fi
+  if has_admin_group_changed
+  then
+    remove_permissions_from_last_admin_group
+  else
+    echo "Did not detect a change of the admin group. Continue as usual..."
+  fi
 
-update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
+  update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 
-if existsPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
-  addCesAdminGroupToPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-fi
+  if existsPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
+    addCesAdminGroupToPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  fi
 
-if shouldCesAdminGroupToAllProjects ; then
-  addCesAdminGroupToProject "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  # adding a group is a time-expensive action (~2 sec per project). Resetting the key avoids unnecessary downtime.
-  resetAddCesAdminGroupToProjectKey
-fi
+  if shouldCesAdminGroupToAllProjects ; then
+    addCesAdminGroupToProject "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+    # adding a group is a time-expensive action (~2 sec per project). Resetting the key avoids unnecessary downtime.
+    resetAddCesAdminGroupToProjectKey
+  fi
 
-echo "Setting sonar.core.serverBaseURL..."
-set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  echo "Setting sonar.core.serverBaseURL..."
+  set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-echo "Setting email.from configuration..."
-set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  echo "Setting email.from configuration..."
+  set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-echo "Configuration done, stopping SonarQube..."
-stopSonarQube ${SONAR_PROCESS_ID}
+  echo "Configuration done, stopping SonarQube..."
+  stopSonarQube ${SONAR_PROCESS_ID}
 
-if [[ "${IS_FIRST_START}" == "true" ]]; then
-  # remove the es6 cache since it contains leftovers of the default admin
-  echo "Removing es6 cache..."
-#  rm -r /opt/sonar/data/es6
-fi
+  if [[ "${IS_FIRST_START}" == "true" ]]; then
+    # remove the es6 cache since it contains leftovers of the default admin
+    echo "Removing es6 cache..."
+  #  rm -r /opt/sonar/data/es6
+  fi
 
-echo "Removing temporary admin..."
-remove_user "${TEMPORARY_ADMIN_USER}"
-remove_group "${TEMPORARY_ADMIN_GROUP}"
+  echo "Removing temporary admin..."
+  remove_user "${TEMPORARY_ADMIN_USER}"
+  remove_group "${TEMPORARY_ADMIN_GROUP}"
 
-# in order to import quality profiles the plugin installation must be finished along with a sonar restart
-if areQualityProfilesPresentToImport; then
-  # the temporary admin has different permissions during first start and subsequent start
-  # only the subsequent temporary admin has sufficient privileges to import quality profiles
-  startSonarQubeInBackground "importing quality profiles"
+  # in order to import quality profiles the plugin installation must be finished along with a sonar restart
+  if areQualityProfilesPresentToImport; then
+    # the temporary admin has different permissions during first start and subsequent start
+    # only the subsequent temporary admin has sufficient privileges to import quality profiles
+    startSonarQubeInBackground "importing quality profiles"
 
-  echo "Creating Temporary admin user for profile import..."
-  # Create temporary admin only in database
-  add_temporary_admin_group "${TEMPORARY_PROFILE_ADMIN_GROUP}" "profileadmin"
-  add_user "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
-  assign_group "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_GROUP}"
+    echo "Creating Temporary admin user for profile import..."
+    # Create temporary admin only in database
+    add_temporary_admin_group "${TEMPORARY_PROFILE_ADMIN_GROUP}" "profileadmin"
+    add_user "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
+    assign_group "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_GROUP}"
 
-  importQualityProfiles "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
+    importQualityProfiles "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
 
-  stopSonarQube "${SONAR_PROCESS_ID}"
-  remove_user "${TEMPORARY_PROFILE_ADMIN_USER}"
-  remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
-fi
-# copy the cas logout script into Sonar container
-cp casLogoutUrl.js /opt/sonar/web/js/
+    stopSonarQube "${SONAR_PROCESS_ID}"
+    remove_user "${TEMPORARY_PROFILE_ADMIN_USER}"
+    remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
+  fi
+  # copy the cas logout script into Sonar container
+  cp casLogoutUrl.js /opt/sonar/web/js/
 
-doguctl state "ready"
+  doguctl state "ready"
 
-exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
+  exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
 
-if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]];  then
-  echo "Starting SonarQube without memory limits..."
-  exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
-else
-  # Retrieve configurable java limits from etcd, valid default values exist
-  MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
-  MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
+  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]];  then
+    echo "Starting SonarQube without memory limits..."
+    exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+  else
+    # Retrieve configurable java limits from etcd, valid default values exist
+    MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
+    MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
 
-  echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
-  exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
-            -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
-            -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+    echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
+    exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
+              -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
+              -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+  fi
+}
+
+# make the script only run when executed, not when sourced from bats tests)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  runMain
 fi
