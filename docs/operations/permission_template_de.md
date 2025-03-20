@@ -21,10 +21,14 @@ Neue Projekte, die mit der Standardvorlage angelegt wurden, mit der die Admin-Gr
 nachträglich korrigiert werden.
 
 Dazu sind folgende Schritte durchzuführen:
-- Konfigurationsschlüssel `/config/sonar/amend_projects_with_ces_admin_permissions` auf den Wert `all` setzen
-- Dogu neu starten z.B. mittels `cesapp restart sonar`
-- Dies sorgt dafür, dass die Admin-Gruppe allen Projekten mit den nötigen Berechtigungen hinzugefügt wird.
-- Nach erfolgreicher Korrektur der Berechtigungen wird der Konfigurationsschlüssel auf den Wert `none` gesetzt.
+1. Konfigurationsschlüssel `/config/sonar/amend_projects_with_ces_admin_permissions` setzen:
+   Hier muss ein Timestamp in dem Format `YYYY-MM-DD hh:mm:ss` (z.B. `2025-03-20 09:30:00`) eingetragen werden.
+   Das Dogu speichert sich intern den Timestamp der letzten Ausführung und  vergleicht diesen Timestamp mit dem Timestamp aus der Konfiguration.
+   Wenn der in der Konfiguration eingetragen Timestamp "neuer" ist, wird Korrektur der Projekte beim Neustart der Dogus ausgeführt.
+   > **Hinweis:** Wenn ein Timestamp mit einem in der zukunft liegenden Datum eingetragen ist, wird bei jedem Start des Dogus die Korrektur der Projekte durchgeführt, bis der eingetragenen Zeitpunkt erreicht ist. 
+   
+2. Dogu neu starten z.B. mittels `cesapp restart sonar`
+   Dies sorgt dafür, dass die Admin-Gruppe allen Projekten mit den nötigen Berechtigungen hinzugefügt wird.
 
 *siehe Beschreibung `configuration` in der Datei `dogu.json` für weitere Informationen*
 

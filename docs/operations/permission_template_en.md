@@ -7,9 +7,20 @@ permissions will be set (admin codeviewer issueadmin securityhotspotadmin scan u
 
 ![default template overview](figures/default_template_ces_admin_permissions.png)
 
-# Fix wrong project permissions
+# Correction of incorrectly configured projects
 
-The permissions for projects created without correct CES_ADMIN group permissions can be changed later using a specific config-key.
-(set `amend_projects_with_ces_admin_permissions` to `all` -> restart sonar -> CES_ADMIN group will be added to all projects).
-The implementation uses the SonarQube API endpoint `permissions/add_group`. After the changes to the projects are applied the config-key
-will automatically reset to `none` (see config-key description in dogu.json). 
+New projects that were created with the default template to which the admin group was not linked can be corrected retrospectively.
+
+To do this, the following steps must be carried out:
+1. Set configuration key `/config/sonar/amend_projects_with_ces_admin_permissions`:
+   A timestamp in the format `YYYY-MM-DD hh:mm:ss` (e.g. `2025-03-20 09:30:00`) must be entered here.
+   The Dogu saves the timestamp of the last execution internally and compares this timestamp with the timestamp from the configuration.
+   If the timestamp entered in the configuration is “newer”, the projects are corrected when the dogu is restarted.
+   > Note:** If a timestamp with a date in the future is entered, the projects are corrected each time the Dogus is started until the entered time is reached.
+
+2. restart Dogu e.g. with `cesapp restart sonar`
+   This ensures that the admin group is added to all projects with the necessary authorizations.
+
+*see description `configuration` in the file `dogu.json` for more information*
+
+The group is added using the API endpoint `permissions/add_group`.
