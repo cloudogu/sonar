@@ -18,7 +18,7 @@ To do this, the following steps must be carried out:
    If the timestamp entered in the configuration is “newer”, the projects are corrected when the dogu is restarted.
    > Note:** If a timestamp with a date in the future is entered, the projects are corrected each time the Dogus is started until the entered time is reached.
 
-2. restart Dogu e.g. with `cesapp restart sonar`
+2. restart the Dogu`
    This ensures that the admin group is added to all projects with the necessary authorizations.
 
 *see description `configuration` in the file `dogu.json` for more information*
