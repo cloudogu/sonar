@@ -30,7 +30,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_success
   assert_line "All projects should be amended with CES-Admin group permissions..."
@@ -46,7 +46,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_success
   assert_line "All projects should be amended with CES-Admin group permissions..."
@@ -62,7 +62,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_failure
   assert_line "Skip amending projects with CES-Admin group permissions..."
@@ -78,7 +78,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_failure
   assert_line "ERROR: Reading the registry 'amend_projects_with_ces_admin_permissions' failed with exitCode 1."
@@ -91,7 +91,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_failure
   assert_line "date: invalid date 'foo_bar'"
@@ -106,7 +106,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_failure
   assert_line "ERROR: Reading the registry 'amend_projects_with_ces_admin_permissions_last_status' failed with exitCode 1."
@@ -120,7 +120,7 @@ teardown() {
 
   source /workspace/resources/startup.sh
 
-  run shouldCesAdminGroupToAllProjects
+  run shouldAddCesAdminGroupToAllProjects
 
   assert_failure
   assert_line "Skip amending projects with CES-Admin group permissions..."

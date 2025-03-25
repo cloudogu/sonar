@@ -48,17 +48,9 @@ DEFAULT_PERMISSION_TEMPLATE_NAME="Default template"
 KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
 KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS="amend_projects_with_ces_admin_permissions_last_status"
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
-# shellcheck disable=SC2034
-DATABASE_IP=postgresql
 
-function getVariables() {
-  # shellcheck disable=SC2034
-  DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-  # shellcheck disable=SC2034
-  DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-  # shellcheck disable=SC2034
-  DATABASE_DB=$(doguctl config -e sa-postgresql/database)
-
+function setVariables() {
+  setDbVars
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
   CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
   FQDN=$(doguctl config --global fqdn)
@@ -141,7 +133,7 @@ function set_property_via_rest_api() {
   curl ${CURL_LOG_LEVEL} --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "${API_ENDPOINT}/settings/set?key=${PROPERTY}&value=${VALUE}"
 }
 
-function shouldCesAdminGroupToAllProjects() {
+function shouldAddCesAdminGroupToAllProjects() {
   local result
   local exitCode=0
   result=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}" --default "none") || exitCode=$?
@@ -153,23 +145,25 @@ function shouldCesAdminGroupToAllProjects() {
 
   if [[ "${result}" != "none" ]] ;  then
     local timestamp
-    timestamp=$(date -d "${result}" +%s) || exitCode=$?
-    if [[ "${exitCode}" != "0" ]]; then
+    local parseExitCode=0
+    timestamp=$(date -d "${result}" +%s) || parseExitCode=$?
+    if [[ "${parseExitCode}" != "0" ]]; then
       echo "ERROR: Parsing timestamp from registry '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS}'"
       return 1
     fi
 
     local previous
-    local exitCode=0
-    previous=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}" --default "1970-01-01") || exitCode=$?
-    if [[ "${exitCode}" != "0" ]]; then
-      echo "ERROR: Reading the registry '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}' failed with exitCode ${exitCode}."
+    local lastStatusExitCode=0
+    previous=$(doguctl config "${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}" --default "1970-01-01") || lastStatusExitCode=$?
+    if [[ "${lastStatusExitCode}" != "0" ]]; then
+      echo "ERROR: Reading the registry '${KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS}' failed with exitCode ${lastStatusExitCode}."
       return 1
     fi
 
     local previousTimestamp
-    previousTimestamp=$(date -d "${previous}" +%s) || exitCode=$?
-    if [[ "${exitCode}" != "0" ]]; then
+    local parseLastStatusExitCode=0
+    previousTimestamp=$(date -d "${previous}" +%s) || parseLastStatusExitCode=$?
+    if [[ "${parseLastStatusExitCode}" != "0" ]]; then
       previousTimestamp=0
     fi
 
@@ -458,7 +452,7 @@ function setDoguLogLevel() {
 runMain() {
   printCloudoguLogo
 
-  getVariables
+  setVariables
 
   if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
     echo "Moving cas plugin to plugins folder..."
@@ -532,7 +526,7 @@ runMain() {
     addCesAdminGroupToPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   fi
 
-  if shouldCesAdminGroupToAllProjects ; then
+  if shouldAddCesAdminGroupToAllProjects ; then
     addCesAdminGroupToProject "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
     # adding a group is a time-expensive action (~2 sec per project). Resetting the key avoids unnecessary downtime.
     resetAddCesAdminGroupToProjectKey

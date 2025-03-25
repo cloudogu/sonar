@@ -12,7 +12,7 @@ permissions will be set (admin codeviewer issueadmin securityhotspotadmin scan u
 New projects that were created with the default template to which the admin group was not linked can be corrected retrospectively.
 
 To do this, the following steps must be carried out:
-1. Set configuration key `/config/sonar/amend_projects_with_ces_admin_permissions`:
+1. Set configuration key `amend_projects_with_ces_admin_permissions`:
    A timestamp in the format `YYYY-MM-DD hh:mm:ss` (e.g. `2025-03-20 09:30:00`) must be entered here.
    The Dogu saves the timestamp of the last execution internally and compares this timestamp with the timestamp from the configuration.
    If the timestamp entered in the configuration is “newer”, the projects are corrected when the dogu is restarted.

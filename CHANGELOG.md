@@ -6,11 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- [#124] Enable "fix project permission" for CES Multinode
-  - If `amend_projects_with_ces_admin_permissions` is set to a current timestamp, the ces-admin group will be enabled to administer all projects. 
-    The timestamp has to be in the format `YYYY-MM-DD hh:mm:ss` (e.g. `2025-03-20 09:30:00`). 
-    The Dogu saves the timestamp of the last execution internally and compares this timestamp with the timestamp from the configuration. 
-    If the timestamp entered in the configuration is “newer”, the projects are corrected when the dogu is restarted.
+### Fixed
+- [#124] Authorization problems when the Dogu is executed in the CES multinode context. Project authorizations may be activated for the default admin group.
 
 ## [v25.1.0-1] - 2025-03-04
 - [#121] Update Sonarqube to 2025.1 (LTS version)

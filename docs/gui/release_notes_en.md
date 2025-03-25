@@ -5,11 +5,7 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
-* Enable "fix project permission" for CES Multinode
-  * If `amend_projects_with_ces_admin_permissions` is set to a current timestamp, the ces-admin group will be enabled to administer all projects.
-    The timestamp has to be in the format `YYYY-MM-DD hh:mm:ss` (e.g. `2025-03-20 09:30:00`).
-    The Dogu saves the timestamp of the last execution internally and compares this timestamp with the timestamp from the configuration.
-    If the timestamp entered in the configuration is “newer”, the projects are corrected when the dogu is restarted.
+* This release fixes authorization problems when the Dogu is executed in the CES multinode context. Project authorizations may be activated for the default admin group.
 
 ## [v25.1.0-1] - 2025-03-04
 * The Dogu now offers SonarQube version 2025.1 (LTS). The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube-server/2025.1/server-upgrade-and-maintenance/release-notes-and-notices/release-notes/).
