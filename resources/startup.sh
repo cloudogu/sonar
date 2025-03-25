@@ -50,7 +50,9 @@ KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS="amend_projects_with_ce
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 
 function setVariables() {
+  # initialize database variables form util.sh
   setDbVars
+
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
   CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
   FQDN=$(doguctl config --global fqdn)

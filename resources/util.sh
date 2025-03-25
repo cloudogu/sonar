@@ -15,6 +15,8 @@ setDbVars() {
   DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 }
 
+# Executes the given statement on the sonar database.
+# Needs 'setDbVars' to be called beforehand to have all database variables initialized
 function execute_sql_statement_on_database(){
   PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
   return $?
