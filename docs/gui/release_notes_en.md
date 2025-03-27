@@ -5,6 +5,7 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+* This release fixes authorization problems when the Dogu is executed in the CES multinode context. Project authorizations may be activated for the default admin group.
 
 ## [v25.1.0-1] - 2025-03-04
 * The Dogu now offers SonarQube version 2025.1 (LTS). The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube-server/2025.1/server-upgrade-and-maintenance/release-notes-and-notices/release-notes/).

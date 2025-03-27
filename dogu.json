@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "25.1.0-1",
+  "Version": "25.1.0-2",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -139,7 +139,7 @@
     },
     {
       "Name": "amend_projects_with_ces_admin_permissions",
-      "Description": "If set to 'all', the ces-admin group will be enabled to administer all projects. This key will automatically reset to 'none' afterwards.",
+      "Description": "If set to a current timestamp, the ces-admin group will be enabled to administer all projects. The timestamp has to be in the format `YYYY-MM-DD hh:mm:ss` (e.g. `2025-03-20 09:30:00`). The Dogu saves the timestamp of the last execution internally and compares this timestamp with the timestamp from the configuration. If the timestamp entered in the configuration is “newer”, the projects are corrected when the dogu is restarted.",
       "Optional": true
     },
     {
