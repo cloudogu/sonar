@@ -5,9 +5,9 @@ set -o pipefail
 
 
 DATABASE_IP=postgresql
-DATABASE_USER
-DATABASE_USER_PASSWORD
-DATABASE_DB
+DATABASE_USER=""
+DATABASE_USER_PASSWORD=""
+DATABASE_DB=""
 
 setDbVars() {
   DATABASE_USER=$(doguctl config -e sa-postgresql/username)
