@@ -13,6 +13,8 @@ set -o pipefail
 # add_temporary_admin_group()
 # shellcheck disable=SC1091
 source "${STARTUP_DIR}/util.sh"
+# init variables from util.sh
+setDbVars
 
 function reinstall_plugins() {
   if doguctl config install_plugins >/dev/null; then
