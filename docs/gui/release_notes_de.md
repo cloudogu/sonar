@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v25.1.0-2] - 2025-03-27
 * Dieses Release behebt Berechtigungsprobleme, wenn das Dogu im CES Multinode-Kontext ausgeführt wird. Hier werden u. U. Projektberechtigungen für die voreingestellte Admingruppe aktiviert.
 
 ## [v25.1.0-1] - 2025-03-04
