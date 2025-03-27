@@ -13,8 +13,6 @@ set -o pipefail
 # add_temporary_admin_group()
 # shellcheck disable=SC1091
 source "${STARTUP_DIR}/util.sh"
-# init variables from util.sh
-setDbVars
 
 function reinstall_plugins() {
   if doguctl config install_plugins >/dev/null; then
@@ -66,6 +64,9 @@ function reinstall_plugins() {
 }
 
 function run_post_upgrade() {
+  # init variables from util.sh
+  setDbVars
+
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
   WAIT_TIMEOUT=600

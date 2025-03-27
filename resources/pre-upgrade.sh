@@ -10,8 +10,6 @@ set -o pipefail
 # create_temporary_admin_user_with_temporary_admin_group()
 # shellcheck disable=SC1091
 source "${STARTUP_DIR}/util.sh"
-# init variables from util.sh
-setDbVars
 
 function run_pre_upgrade() {
   FROM_VERSION="${1}"
