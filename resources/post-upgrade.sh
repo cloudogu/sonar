@@ -64,6 +64,9 @@ function reinstall_plugins() {
 }
 
 function run_post_upgrade() {
+  # init variables from util.sh
+  setDbVars
+
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
   WAIT_TIMEOUT=600

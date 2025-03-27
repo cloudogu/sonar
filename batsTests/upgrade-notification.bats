@@ -28,7 +28,10 @@ teardown() {
 }
 
 @test "run_upgrade_notification should maxMapCount-fail for upgrade from 6.7.7-1 to 9.9.1-3" {
-  run /workspace/resources/upgrade-notification.sh "6.7.7-1" "9.9.1-3"
+  source /workspace/resources/upgrade-notification.sh
+  local CURRENT_MAX_MAP_COUNT=12345
+
+  run run_upgrade_notification "6.7.6-1" "9.9.1-3"
 
   assert_failure
   assert_line --partial 'Your max virtual memory areas vm.max_map_count is too low'
