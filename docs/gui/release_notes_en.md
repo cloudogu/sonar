@@ -5,6 +5,7 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+* This release adds the option to load sonar quality profiles from a remote url.
 
 ## [v9.9.8-2] - 2025-02-12
 * We have only made technical changes. You can find more details in the changelogs.

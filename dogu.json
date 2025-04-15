@@ -201,6 +201,40 @@
       "Validation": {
         "Type": "BINARY_MEASUREMENT"
       }
+    },
+    {
+      "Name": "profiles/url",
+      "Description": "The url to download a zip file containing quality profiles to be imported.",
+      "Optional": true
+    },
+    {
+      "Name": "profiles/user",
+      "Description": "The user to download the quality profiles to be imported.",
+      "Optional": true
+    },
+    {
+      "Name": "profiles/password",
+      "Description": "The password to download quality profiles to be imported.",
+      "Optional": true,
+      "Encrypted": true
+    },
+    {
+      "Name": "profiles/retry_limit",
+      "Description": "The number of attempts to try to download the quality profiles.",
+      "Optional": true,
+      "Default": "5"
+    },
+    {
+      "Name": "profiles/allow_insecure",
+      "Description": "A flag to skip HTTPS certificate checks. Useful for development with self signed certificates.",
+      "Optional": true,
+      "Default": "false"
+    },
+    {
+      "Name": "profiles/force_upload",
+      "Description": "A flag to indicate that the profile archive should always be uploaded. Use this only if profiles got deleted manually in the dogu. Don't forget to turn this option to false after using it.",
+      "Optional": true,
+      "Default": "false"
     }
   ],
   "HealthChecks": [

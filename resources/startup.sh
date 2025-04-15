@@ -47,12 +47,17 @@ TEMPORARY_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_ADMIN_USER=$(doguctl random)
 TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
+QUALITY_PROFILE_ZIP_FILE="${QUALITY_PROFILE_DIR}/profiles.zip"
+QUALITY_PROFILE_ZIP_SHA_SUM=""
+QUALITY_PROFILE_CURL_ARGS=()
 TEMPORARY_PROFILE_ADMIN_GROUP=$(doguctl random)
 TEMPORARY_PROFILE_ADMIN_USER=$(doguctl random)
 TEMPORARY_PROFILE_ADMIN_PASSWORD=$(doguctl random)
 
 function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
+
+  downloadQualityProfiles
 
   local resultCode
   if [[ "$(ls -A ${QUALITY_PROFILE_DIR})" ]]; then
@@ -66,9 +71,93 @@ function areQualityProfilesPresentToImport() {
   return ${resultCode}
 }
 
+function downloadQualityProfiles() {
+  local profileUrl retry_limit httpCode
+  profileUrl=$(doguctl config --default "empty" "profiles/url")
+
+  if [[ "$profileUrl" != "empty" ]]; then
+    prepareQualityProfileCurlArgs
+
+    echo "Download URL: ${profileUrl}"
+    retry_limit=$(doguctl config "profiles/retry_limit")
+    echo "Retry limit: ${retry_limit}"
+
+    httpCode=$(curl "${QUALITY_PROFILE_CURL_ARGS[@]}" -w "%{http_code}" --silent --retry "$retry_limit" -o "${QUALITY_PROFILE_ZIP_FILE}" "$profileUrl")
+    if [[ "${httpCode}" -gt 299 ]]; then
+      echo "Returned http code $httpCode on getting profiles archive. Return"
+      deleteQualityProfileArchive
+      return
+    fi
+
+    echo "Determine quality profiles hash"
+    export QUALITY_PROFILE_ZIP_SHA_SUM
+    QUALITY_PROFILE_ZIP_SHA_SUM=$(sha256sum "${QUALITY_PROFILE_ZIP_FILE}" | awk '{print ""$1""}')
+
+    local oldQualityProfileSum
+    oldQualityProfileSum=$(doguctl config --default "empty" profiles/archive_sum)
+
+    local forceUpload
+    forceUpload=$(doguctl config profiles/force_upload)
+
+    if [[ "${QUALITY_PROFILE_ZIP_SHA_SUM}" == "${oldQualityProfileSum}" && "${forceUpload}" == "false" ]]; then
+      echo "Quality profiles archive did not change."
+      deleteQualityProfileArchive
+      return
+    fi
+
+    if [[ "${forceUpload}" == "true" ]]; then
+      echo "Flag force_upload is true. Keep in mind to turn this configuration to false after using it."
+    fi
+
+    echo "Extract quality profiles archive"
+    unzip "${QUALITY_PROFILE_ZIP_FILE}" -d "${QUALITY_PROFILE_DIR}"
+    deleteQualityProfileArchive
+  else
+    echo "No profile URLs to import."
+  fi
+}
+
+function prepareQualityProfileCurlArgs() {
+  local profileUser profilePassword allow_insecure proxyEnabled no_proxy_hosts proxyUrl proxyPort proxyUser proxyPassword
+  profileUser=$(doguctl config --default "empty" "profiles/user")
+  profilePassword=$(doguctl config -e --default "empty" "profiles/password")
+
+  if [[ "$profileUser" != "empty" && "$profilePassword" != "empty" ]]; then
+    QUALITY_PROFILE_CURL_ARGS+=(-u "$profileUser:$profilePassword")
+  fi
+
+  allow_insecure=$(doguctl config "profiles/allow_insecure")
+  [[ "${allow_insecure,,}" == "true" ]] && QUALITY_PROFILE_CURL_ARGS+=( -k )
+
+  proxyEnabled=$(doguctl config --global "proxy/enabled")
+  if [[ "${proxyEnabled,,}" == "true" ]]; then
+    no_proxy_hosts=$(doguctl config --global "proxy/no_proxy_hosts")
+    export no_proxy=$no_proxy_hosts # export for curl
+
+    proxyUrl=$(doguctl config --default "empty" --global "proxy/server")
+    proxyPort=$(doguctl config --default "empty" --global "proxy/port")
+
+    if [[ "$proxyUrl" != "empty" && "$proxyPort" != "empty" ]]; then
+      QUALITY_PROFILE_CURL_ARGS+=(-x "$proxyUrl:$proxyPort")
+    fi
+
+    proxyUser=$(doguctl config --global --default "empty" "proxy/user")
+    proxyPassword=$(doguctl config --global --default "empty" "proxy/password")
+
+    if [[ "$proxyUser" != "empty" && "$proxyPassword" != "empty" ]]; then
+      QUALITY_PROFILE_CURL_ARGS+=(--proxy-user "$proxyUser:$proxyPassword")
+    fi
+  fi
+}
+
+function deleteQualityProfileArchive() {
+  rm "${QUALITY_PROFILE_ZIP_FILE}"
+}
+
 function importQualityProfiles() {
   local AUTH_USER=$1
   local AUTH_PASSWORD=$2
+  local hadAtLeastOneImportFailure="false"
 
   # import all quality profiles that are in the suitable directory
   for file in "${QUALITY_PROFILE_DIR}"/*; do
@@ -92,6 +181,7 @@ function importQualityProfiles() {
 
       if [[ "${importFailures}" != "0" ]]; then
         echo "ERROR: There were quality profiles import failures from file ${file}. Import returned: '${importResponse}'"
+        hadAtLeastOneImportFailure="true"
         # do not remove file so the user has the chance to examine the file content
         continue
       fi
@@ -103,6 +193,11 @@ function importQualityProfiles() {
       echo "Import of quality profile ${file} has not been successful. Import returned: '${importResponse}'"
     fi
   done
+
+  if [[ "${hadAtLeastOneImportFailure}" == "false" ]]; then
+      echo "Save quality profile sum"
+      doguctl config profiles/archive_sum "${QUALITY_PROFILE_ZIP_SHA_SUM}"
+  fi
 
   echo "Quality profile import finished..."
 }
