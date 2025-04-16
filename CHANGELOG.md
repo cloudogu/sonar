@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.1.0-3] - 2025-04-16
+### Added
+- [#127] Option to load quality profiles from a remote url, besides the old and still usable way to copy profiles in the `qualityprofiles` volume.
+Configure url with `profiles/url` configuration. See `dogu.json` for more configuration keys like for credentials.
+
 ## [v25.1.0-2] - 2025-03-27
 ### Fixed
 - [#124] Authorization problems when the Dogu is executed in the CES multinode context. Project authorizations may be activated for the default admin group.

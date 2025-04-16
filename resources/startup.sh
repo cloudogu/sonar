@@ -48,6 +48,9 @@ DEFAULT_PERMISSION_TEMPLATE_NAME="Default template"
 KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS="amend_projects_with_ces_admin_permissions"
 KEY_AMEND_PROJECTS_WITH_CESADMIN_PERMISSIONS_LAST_STATUS="amend_projects_with_ces_admin_permissions_last_status"
 QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
+QUALITY_PROFILE_ZIP_FILE="${QUALITY_PROFILE_DIR}/profiles.zip"
+QUALITY_PROFILE_ZIP_SHA_SUM=""
+QUALITY_PROFILE_CURL_ARGS=()
 
 function setVariables() {
   # initialize database variables form util.sh
@@ -69,6 +72,8 @@ function setVariables() {
 function areQualityProfilesPresentToImport() {
   echo "Check for quality profiles to import..."
 
+  downloadQualityProfiles
+
   local resultCode
   if [[ "$(ls -A ${QUALITY_PROFILE_DIR})" ]]; then
     echo "Quality profiles are present for import..."
@@ -81,9 +86,93 @@ function areQualityProfilesPresentToImport() {
   return ${resultCode}
 }
 
+function downloadQualityProfiles() {
+  local profileUrl retry_limit httpCode
+  profileUrl=$(doguctl config --default "empty" "profiles/url")
+
+  if [[ "$profileUrl" != "empty" ]]; then
+    prepareQualityProfileCurlArgs
+
+    echo "Download URL: ${profileUrl}"
+    retry_limit=$(doguctl config "profiles/retry_limit")
+    echo "Retry limit: ${retry_limit}"
+
+    httpCode=$(curl "${QUALITY_PROFILE_CURL_ARGS[@]}" -w "%{http_code}" --silent --retry "$retry_limit" -o "${QUALITY_PROFILE_ZIP_FILE}" "$profileUrl")
+    if [[ "${httpCode}" -gt 299 ]]; then
+      echo "Returned http code $httpCode on getting profiles archive. Return"
+      deleteQualityProfileArchive
+      return
+    fi
+
+    echo "Determine quality profiles hash"
+    export QUALITY_PROFILE_ZIP_SHA_SUM
+    QUALITY_PROFILE_ZIP_SHA_SUM=$(sha256sum "${QUALITY_PROFILE_ZIP_FILE}" | awk '{print ""$1""}')
+
+    local oldQualityProfileSum
+    oldQualityProfileSum=$(doguctl config --default "empty" profiles/archive_sum)
+
+    local forceUpload
+    forceUpload=$(doguctl config profiles/force_upload)
+
+    if [[ "${QUALITY_PROFILE_ZIP_SHA_SUM}" == "${oldQualityProfileSum}" && "${forceUpload,,}" == "false" ]]; then
+      echo "Quality profiles archive did not change."
+      deleteQualityProfileArchive
+      return
+    fi
+
+    if [[ "${forceUpload,,}" == "true" ]]; then
+      echo "Flag force_upload is true. Keep in mind to turn this configuration to false after using it."
+    fi
+
+    echo "Extract quality profiles archive"
+    unzip "${QUALITY_PROFILE_ZIP_FILE}" -d "${QUALITY_PROFILE_DIR}"
+    deleteQualityProfileArchive
+  else
+    echo "No profile URLs to import."
+  fi
+}
+
+function prepareQualityProfileCurlArgs() {
+  local profileUser profilePassword allow_insecure proxyEnabled no_proxy_hosts proxyUrl proxyPort proxyUser proxyPassword
+  profileUser=$(doguctl config --default "empty" "profiles/user")
+  profilePassword=$(doguctl config -e --default "empty" "profiles/password")
+
+  if [[ "$profileUser" != "empty" && "$profilePassword" != "empty" ]]; then
+    QUALITY_PROFILE_CURL_ARGS+=(-u "$profileUser:$profilePassword")
+  fi
+
+  allow_insecure=$(doguctl config "profiles/allow_insecure")
+  [[ "${allow_insecure,,}" == "true" ]] && QUALITY_PROFILE_CURL_ARGS+=( -k )
+
+  proxyEnabled=$(doguctl config --global "proxy/enabled")
+  if [[ "${proxyEnabled,,}" == "true" ]]; then
+    no_proxy_hosts=$(doguctl config --global "proxy/no_proxy_hosts")
+    export no_proxy=$no_proxy_hosts # export for curl
+
+    proxyUrl=$(doguctl config --default "empty" --global "proxy/server")
+    proxyPort=$(doguctl config --default "empty" --global "proxy/port")
+
+    if [[ "$proxyUrl" != "empty" && "$proxyPort" != "empty" ]]; then
+      QUALITY_PROFILE_CURL_ARGS+=(-x "$proxyUrl:$proxyPort")
+    fi
+
+    proxyUser=$(doguctl config --global --default "empty" "proxy/user")
+    proxyPassword=$(doguctl config --global --default "empty" "proxy/password")
+
+    if [[ "$proxyUser" != "empty" && "$proxyPassword" != "empty" ]]; then
+      QUALITY_PROFILE_CURL_ARGS+=(--proxy-user "$proxyUser:$proxyPassword")
+    fi
+  fi
+}
+
+function deleteQualityProfileArchive() {
+  rm "${QUALITY_PROFILE_ZIP_FILE}"
+}
+
 function importQualityProfiles() {
   local AUTH_USER=$1
   local AUTH_PASSWORD=$2
+  local hadAtLeastOneImportFailure="false"
 
   # import all quality profiles that are in the suitable directory
   for file in "${QUALITY_PROFILE_DIR}"/*; do
@@ -107,6 +196,7 @@ function importQualityProfiles() {
 
       if [[ "${importFailures}" != "0" ]]; then
         echo "ERROR: There were quality profiles import failures from file ${file}. Import returned: '${importResponse}'"
+        hadAtLeastOneImportFailure="true"
         # do not remove file so the user has the chance to examine the file content
         continue
       fi
@@ -118,6 +208,11 @@ function importQualityProfiles() {
       echo "Import of quality profile ${file} has not been successful. Import returned: '${importResponse}'"
     fi
   done
+
+  if [[ "${hadAtLeastOneImportFailure}" == "false" ]]; then
+      echo "Save quality profile sum"
+      doguctl config profiles/archive_sum "${QUALITY_PROFILE_ZIP_SHA_SUM}"
+  fi
 
   echo "Quality profile import finished..."
 }
@@ -145,7 +240,7 @@ function shouldAddCesAdminGroupToAllProjects() {
     return 1
   fi
 
-  if [[ "${result}" != "none" ]] ;  then
+  if [[ "${result}" != "none" ]]; then
     local timestamp
     local parseExitCode=0
     timestamp=$(date -d "${result}" +%s) || parseExitCode=$?
@@ -188,7 +283,7 @@ function addCesAdminGroupToProject() {
   local getProjectsRequest="${API_ENDPOINT}/projects/search?ps=500"
 
   local exitCode=0
-  projects=$(curl ${CURL_LOG_LEVEL} -f -u  "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq -r '.components[] | .key') || exitCode=$?
+  projects=$(curl ${CURL_LOG_LEVEL} -f -u "${authUser}":"${authPassword}" "${getProjectsRequest}" | jq -r '.components[] | .key') || exitCode=$?
   if [[ "${exitCode}" != "0" ]]; then
     echo "ERROR: Fetching projects failed with code ${exitCode}. Abort granting project permissions to group ${groupToAdd}..."
     return
@@ -237,7 +332,7 @@ function get_out_of_date_plugins_via_rest_api() {
 function set_updatecenter_url_if_configured_in_registry() {
   AUTH_USER=$1
   AUTH_PASSWORD=$2
-  if doguctl config sonar.updatecenter.url > /dev/null; then
+  if doguctl config sonar.updatecenter.url >/dev/null; then
     UPDATECENTER_URL=$(doguctl config sonar.updatecenter.url)
     echo "Setting sonar.updatecenter.url to ${UPDATECENTER_URL}"
     set_property_via_rest_api "sonar.updatecenter.url" "${UPDATECENTER_URL}" "${AUTH_USER}" "${AUTH_PASSWORD}"
@@ -262,7 +357,7 @@ function run_first_start_tasks() {
       echo "Updating plugin ${PLUGIN}..."
       curl ${CURL_LOG_LEVEL} --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X POST "localhost:9000/sonar/api/plugins/update?key=${PLUGIN}"
       echo "Plugin ${PLUGIN} updated"
-    done <<< "${OUT_OF_DATE_PLUGINS}"
+    done <<<"${OUT_OF_DATE_PLUGINS}"
   else
     echo "There are no out-of-date plugins"
   fi
@@ -271,7 +366,7 @@ function run_first_start_tasks() {
 function startSonarQubeInBackground() {
   local reason="${1}"
 
-  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]];  then
+  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits for ${reason}... "
     java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
        & SONAR_PROCESS_ID=$!
@@ -359,8 +454,7 @@ function remove_permissions_from_last_admin_group() {
   local admin_group=${CES_ADMIN_GROUP_LAST}
   printf "Remove admin privileges from previous CES admin group '%s'...\\n" "${admin_group}"
 
-  for permission in ${ADMIN_PERMISSIONS}
-  do
+  for permission in ${ADMIN_PERMISSIONS}; do
     printf "remove permission '%s' from group '%s'...\\n" "${permission}" "${admin_group}"
     remove_group "${admin_group}"
   done
@@ -368,8 +462,7 @@ function remove_permissions_from_last_admin_group() {
 
 # It returns 0 if the admin group names differs from each other. Otherwise, it returns the value 1.
 function has_admin_group_changed() {
-  if [[ "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST" ]];
-  then
+  if [[ "$CES_ADMIN_GROUP" = "$CES_ADMIN_GROUP_LAST" ]]; then
     return 1
   else
     return 0
@@ -412,9 +505,8 @@ function ensure_correct_branch_plugin_state() {
   BRANCH_PLUGIN_WEB_OPTS=""
   BRANCH_PLUGIN_CE_OPTS=""
   # the branch plugin could be in the plugins dir or in the downloads dir if it is new
-  for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar
-  do
-    if [[  -e "$f" ]]; then
+  for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar; do
+    if [[ -e "$f" ]]; then
       echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
       cp "$f" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
       BRANCH_PLUGIN_FILENAME="-javaagent:./extensions/plugins/$(basename "${f}")"
@@ -430,21 +522,21 @@ function setDoguLogLevel() {
   local currentLogLevel SONAR_LOGLEVEL
   currentLogLevel=$(doguctl config "logging/root")
 
-  if ! doguctl validate logging/root --silent ; then
+  if ! doguctl validate logging/root --silent; then
     echo "ERROR: Found invalid value in logging/root: ${currentLogLevel}"
     exit 1
   fi
 
   echo "Mapping configured log level to available log levels..."
   case "${currentLogLevel}" in
-    "TRACE")
-      export SONAR_LOGLEVEL="TRACE"
+  "TRACE")
+    export SONAR_LOGLEVEL="TRACE"
     ;;
-    "DEBUG")
-      export SONAR_LOGLEVEL="DEBUG"
+  "DEBUG")
+    export SONAR_LOGLEVEL="DEBUG"
     ;;
-    *)
-      export SONAR_LOGLEVEL="INFO"
+  *)
+    export SONAR_LOGLEVEL="INFO"
     ;;
   esac
   echo "Log level is now: ${SONAR_LOGLEVEL}"
@@ -459,7 +551,7 @@ runMain() {
   if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
     echo "Moving cas plugin to plugins folder..."
     mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
-    if ls "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar 1> /dev/null 2>&1; then
+    if ls "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar 1>/dev/null 2>&1; then
       rm "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
     fi
     mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
@@ -478,7 +570,7 @@ runMain() {
   echo "Creating truststore..."
   # Using non-default truststore, because sonar user has no write permissions to /etc/ssl
   # The path is configured in sonar.properties
-  create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks > /dev/null
+  create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks >/dev/null
 
   doguctl state "configuring..."
 
@@ -515,8 +607,7 @@ runMain() {
     subsequent_sonar_start
   fi
 
-  if has_admin_group_changed
-  then
+  if has_admin_group_changed; then
     remove_permissions_from_last_admin_group
   else
     echo "Did not detect a change of the admin group. Continue as usual..."
@@ -524,11 +615,11 @@ runMain() {
 
   update_last_admin_group_in_registry "${CES_ADMIN_GROUP}"
 
-  if existsPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ; then
+  if existsPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"; then
     addCesAdminGroupToPermissionTemplate "${DEFAULT_PERMISSION_TEMPLATE_NAME}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   fi
 
-  if shouldAddCesAdminGroupToAllProjects ; then
+  if shouldAddCesAdminGroupToAllProjects; then
     addCesAdminGroupToProject "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
     # adding a group is a time-expensive action (~2 sec per project). Resetting the key avoids unnecessary downtime.
     resetAddCesAdminGroupToProjectKey
@@ -580,7 +671,7 @@ runMain() {
 
   exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
 
-  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]];  then
+  if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits..."
     exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
   else
@@ -590,8 +681,8 @@ runMain() {
 
     echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
     exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
-              -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
-              -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+      -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
+      -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
   fi
 }
 
