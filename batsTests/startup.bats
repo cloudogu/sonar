@@ -199,31 +199,19 @@ teardown() {
 }
 
 @test "should fetch configured profile url and extract it" {
-  mock_set_status "${doguctl}" 0 1
+  mock_set_status "${doguctl}" 0
   mock_set_output "${doguctl}" "cloudogu.com/nexus/profiles.zip" 1
-
   # Skip credentials
-  mock_set_status "${doguctl}" 0 2
   mock_set_output "${doguctl}" "empty" 2
-  mock_set_status "${doguctl}" 0 3
   mock_set_output "${doguctl}" "empty" 3
-  mock_set_status "${doguctl}" 0 4
   mock_set_output "${doguctl}" "empty" 4
-
   # Skip proxy
-  mock_set_status "${doguctl}" 0 5
   mock_set_output "${doguctl}" "empty" 5
-
   # Retry limit
-  mock_set_status "${doguctl}" 0 6
   mock_set_output "${doguctl}" "5" 6
-
   # Old hash
-  mock_set_status "${doguctl}" 0 7
   mock_set_output "${doguctl}" "empty" 7
-
   # Flag Force upload
-  mock_set_status "${doguctl}" 0 8
   mock_set_output "${doguctl}" "false" 8
 
   mock_set_status "${curl}" 0 1
@@ -266,31 +254,19 @@ teardown() {
 }
 
 @test "should do nothing if checksums are equal" {
-  mock_set_status "${doguctl}" 0 1
+  mock_set_status "${doguctl}" 0
   mock_set_output "${doguctl}" "cloudogu.com/nexus/profiles.zip" 1
-
   # Skip credentials
-  mock_set_status "${doguctl}" 0 2
   mock_set_output "${doguctl}" "empty" 2
-  mock_set_status "${doguctl}" 0 3
   mock_set_output "${doguctl}" "empty" 3
-  mock_set_status "${doguctl}" 0 4
   mock_set_output "${doguctl}" "empty" 4
-
   # Skip proxy
-  mock_set_status "${doguctl}" 0 5
   mock_set_output "${doguctl}" "empty" 5
-
   # Retry limit
-  mock_set_status "${doguctl}" 0 6
   mock_set_output "${doguctl}" "5" 6
-
   # Old hash
-  mock_set_status "${doguctl}" 0 7
   mock_set_output "${doguctl}" "205b16da72842143a6fa1849126b7bd74b5d12a609387d3d037fb104440ea349" 7
-
   # Flag Force upload
-  mock_set_status "${doguctl}" 0 8
   mock_set_output "${doguctl}" "false" 8
 
   mock_set_status "${curl}" 0 1
@@ -332,29 +308,17 @@ teardown() {
 @test "should upload if checksums are equal and force upload flag is true" {
   mock_set_status "${doguctl}" 0 1
   mock_set_output "${doguctl}" "cloudogu.com/nexus/profiles.zip" 1
-
   # Skip credentials
-  mock_set_status "${doguctl}" 0 2
   mock_set_output "${doguctl}" "empty" 2
-  mock_set_status "${doguctl}" 0 3
   mock_set_output "${doguctl}" "empty" 3
-  mock_set_status "${doguctl}" 0 4
   mock_set_output "${doguctl}" "empty" 4
-
   # Skip proxy
-  mock_set_status "${doguctl}" 0 5
   mock_set_output "${doguctl}" "empty" 5
-
   # Retry limit
-  mock_set_status "${doguctl}" 0 6
   mock_set_output "${doguctl}" "5" 6
-
   # Old hash
-  mock_set_status "${doguctl}" 0 7
   mock_set_output "${doguctl}" "205b16da72842143a6fa1849126b7bd74b5d12a609387d3d037fb104440ea349" 7
-
   # Flag Force upload
-  mock_set_status "${doguctl}" 0 8
   mock_set_output "${doguctl}" "true" 8
 
   mock_set_status "${curl}" 0 1
@@ -398,23 +362,15 @@ teardown() {
 }
 
 @test "should do nothing on error http code" {
-  mock_set_status "${doguctl}" 0 1
+  mock_set_status "${doguctl}" 0
   mock_set_output "${doguctl}" "cloudogu.com/nexus/profiles.zip" 1
-
   # Skip credentials
-  mock_set_status "${doguctl}" 0 2
   mock_set_output "${doguctl}" "empty" 2
-  mock_set_status "${doguctl}" 0 3
   mock_set_output "${doguctl}" "empty" 3
-  mock_set_status "${doguctl}" 0 4
   mock_set_output "${doguctl}" "empty" 4
-
   # Skip proxy
-  mock_set_status "${doguctl}" 0 5
   mock_set_output "${doguctl}" "empty" 5
-
   # Retry limit
-  mock_set_status "${doguctl}" 0 6
   mock_set_output "${doguctl}" "5" 6
 
   mock_set_status "${curl}" 0 1
@@ -443,33 +399,20 @@ teardown() {
 }
 
 @test "should use configured credentials and proxy settings" {
-  mock_set_status "${doguctl}" 0 1
+  mock_set_status "${doguctl}" 0
   mock_set_output "${doguctl}" "cloudogu.com/nexus/profiles.zip" 1
-
   # Credentials
-  mock_set_status "${doguctl}" 0 2
   mock_set_output "${doguctl}" "user" 2
-  mock_set_status "${doguctl}" 0 3
   mock_set_output "${doguctl}" "password" 3
-  mock_set_status "${doguctl}" 0 4
   mock_set_output "${doguctl}" "true" 4
-
   # proxy
-  mock_set_status "${doguctl}" 0 5
   mock_set_output "${doguctl}" "true" 5
-  mock_set_status "${doguctl}" 0 6
   mock_set_output "${doguctl}" "domain.com,cloudogu.com" 6
-  mock_set_status "${doguctl}" 0 7
   mock_set_output "${doguctl}" "proxyHost" 7
-  mock_set_status "${doguctl}" 0 8
   mock_set_output "${doguctl}" "3128" 8
-  mock_set_status "${doguctl}" 0 9
   mock_set_output "${doguctl}" "proxyUser" 9
-  mock_set_status "${doguctl}" 0 10
   mock_set_output "${doguctl}" "proxyPw" 10
-
   # Retry limit
-  mock_set_status "${doguctl}" 0 11
   mock_set_output "${doguctl}" "5" 11
 
   mock_set_status "${curl}" 0 1
