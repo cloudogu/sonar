@@ -114,13 +114,13 @@ function downloadQualityProfiles() {
     local forceUpload
     forceUpload=$(doguctl config profiles/force_upload)
 
-    if [[ "${QUALITY_PROFILE_ZIP_SHA_SUM}" == "${oldQualityProfileSum}" && "${forceUpload}" == "false" ]]; then
+    if [[ "${QUALITY_PROFILE_ZIP_SHA_SUM}" == "${oldQualityProfileSum}" && "${forceUpload,,}" == "false" ]]; then
       echo "Quality profiles archive did not change."
       deleteQualityProfileArchive
       return
     fi
 
-    if [[ "${forceUpload}" == "true" ]]; then
+    if [[ "${forceUpload,,}" == "true" ]]; then
       echo "Flag force_upload is true. Keep in mind to turn this configuration to false after using it."
     fi
 
