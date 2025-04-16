@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v25.1.0-3] - 2025-04-16
 ### Added
 - [#127] Option to load quality profiles from a remote url, besides the old and still usable way to copy profiles in the `qualityprofiles` volume.
 Configure url with `profiles/url` configuration. See `dogu.json` for more configuration keys like for credentials.
