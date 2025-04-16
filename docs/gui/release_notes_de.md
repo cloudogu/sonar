@@ -5,6 +5,7 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+## [v9.9.8-3] - 2025-04-16
 * Dieses Release fügt die Möglichkeit hinzu Quality Profiles über eine externe URL zu beziehen.
 
 ## [v9.9.8-2] - 2025-02-12
