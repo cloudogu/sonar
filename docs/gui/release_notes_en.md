@@ -6,6 +6,9 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+### Changed
+- Usage of memory and CPU was optimized for the Kubernetes Multinode environment.
+
 ## [v25.1.0-3] - 2025-04-16
 * This release adds the option to load sonar quality profiles from a remote url.
 
