@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.1.0-4] - 2025-04-29
+### Changed
+- [#129] Set sensible resource requests and limits
+
 ## [v25.1.0-3] - 2025-04-16
 ### Added
 - [#127] Option to load quality profiles from a remote url, besides the old and still usable way to copy profiles in the `qualityprofiles` volume.
