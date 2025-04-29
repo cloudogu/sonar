@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- [#131] Fix an unreliable Single Log-Out defect in which user sessions stayed active SonarQube while the logout to other dogus worked fine.
 
 ## [v25.1.0-4] - 2025-04-29
 ### Changed
