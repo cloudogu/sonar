@@ -9,29 +9,25 @@ const env = require("@cloudogu/dogu-integration-test-library/lib/environment_var
 Given(/^check if API token is set$/, function () {
     cy.task("getAPIToken").then((token) => {
         if (token === "") {
-            cy.visit("/" + env.GetDoguName() + "/account/security")
-            cy.get('#token-name').type(Math.random().toString(),{force: true})
-            cy.get("div").contains("Select Token Type").click({force: true}) //select("User Token")
-            cy.get("#react-select-2-listbox").contains("User Token").click({force: true})
-            cy.get("button").contains("Generate").click()
-            cy.get("code").then((val) => {
-                cy.task("setAPIToken", val.text())
-            })
+            generateToken()
         }
     })
 });
 
 /**
- * Make sure that the API Token is set
+ * always set new API-Token
  */
 Given(/^reset API token$/, function () {
+    generateToken()
+});
+
+function generateToken() {
     cy.visit("/" + env.GetDoguName() + "/account/security")
     cy.get('#token-name').type(Math.random().toString(),{force: true})
     cy.get("div").contains("Select Token Type").click({force: true}) //select("User Token")
     cy.get("#react-select-2-listbox").contains("User Token").click({force: true})
-    cy.get("button").contains("Generate").click()
+    cy.get("button").contains("Generate").click({force: true})
     cy.get("code").then((val) => {
         cy.task("setAPIToken", val.text())
     })
-
-});
+}
