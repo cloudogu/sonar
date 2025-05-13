@@ -6,6 +6,9 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.0.1-5] - 2025-05-13
+* We have only made technical changes. You can find more details in the changelogs.
+
 ## [v25.1.0-4] - 2025-04-29
 
 ### Changed

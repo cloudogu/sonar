@@ -16,11 +16,15 @@ Feature: API-based CAS login and logout functionality
   # @requires_api_token_to_be_removed_afterwards
   Scenario: API authentication with User Token
     Given the user is member of the admin user group
+    Given the user is logged into the CES
+    Given reset API token
     When the user creates a User Token via the Web API
     Then the user can access the Web API with the User Token
 
   @requires_testuser
   Scenario: /users API responds with correct user attributes
+    Given the user is logged into the CES
+    Given reset API token
     When the user requests his/her attributes via the /users API endpoint
     Then the user's login attribute matches the username attribute in the user backend
     And the user's name attribute matches the displayName attribute in the user backend
@@ -29,6 +33,8 @@ Feature: API-based CAS login and logout functionality
 
   @requires_testuser
   Scenario: test user has no admin privileges
+    Given the user is logged into the CES
+    Given reset API token
     Then the user can not access the /users/groups Web API endpoint
 
   @requires_testuser
