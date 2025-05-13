@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v25.0.1-5] - 2025-05-13
+## [v25.1.0-5] - 2025-05-13
 ### Fixed
-- [#132] Update sonar-Cas-Plugin to 
+- [#132] Update sonar-Cas-Plugin to 6.1.0
 
 ## [v25.1.0-4] - 2025-04-29
 ### Changed
