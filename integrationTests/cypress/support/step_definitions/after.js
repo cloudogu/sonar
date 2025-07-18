@@ -13,7 +13,6 @@ After({tags: "@requires_api_token_to_be_removed_afterwards"}, () => {
             }
         }).then((response) => {
             expect(response.status).to.eq(204)
-            cy.wait(30000)
         })
     })
 });
