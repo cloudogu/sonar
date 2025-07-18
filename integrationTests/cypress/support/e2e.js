@@ -20,8 +20,6 @@ doguTestLibrary.registerCommands()
 
 commands_sonarqube_api.register()
 
-Cypress.config('defaultCommandTimeout', 600000);
-
 Cypress.on('uncaught:exception', (err, runnable) => {
     // returning false here prevents Cypress from
     // failing the test
