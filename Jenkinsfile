@@ -122,7 +122,7 @@ node('vagrant') {
                 stage('Integration Tests - After Upgrade') {
                     // Run integration tests again to verify that the upgrade was successful
                     ecoSystem.runCypressIntegrationTests([
-                        cypressImage:"cypress/included:13.14.2",
+                        cypressImage:"cypress/included:13.16.1",
                         enableVideo: params.EnableVideoRecording,
                         enableScreenshots: params.EnableScreenshotRecording
                 ])
