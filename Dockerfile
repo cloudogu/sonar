@@ -33,7 +33,7 @@ LABEL NAME="official/sonar" \
 RUN set -eux \
     && apk update \
     && apk upgrade \
-    && apk add --no-cache procps postgresql14-client curl uuidgen \
+    && apk add --no-cache procps postgresql14-client curl uuidgen libstdc++ \
     && mkdir -p /opt \
     && rm -rf /var/cache/apk/* \
     && mkdir -p /opt/sonar/lib/common \
