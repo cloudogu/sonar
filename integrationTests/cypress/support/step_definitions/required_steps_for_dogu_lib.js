@@ -5,10 +5,6 @@ const doguTestLibrary = require('@cloudogu/dogu-integration-test-library')
 const env = require('@cloudogu/dogu-integration-test-library/lib/environment_variables')
 doguTestLibrary.registerSteps()
 
-doguTestLibrary.logout = () =>{
-    cy.visit("/cas/logout")
-    cy.wait(30000) // 30 seconds instead of 1 second
-}
 
 When(/^the user clicks the dogu logout button$/, function () {
     cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })

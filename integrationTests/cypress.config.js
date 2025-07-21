@@ -52,5 +52,7 @@ module.exports = defineConfig({
         videoCompression: false,
         specPattern: ["cypress/e2e/**/*.feature"],
         setupNodeEvents,
+        responseTimeout: 60000, // e.g., 60 seconds (60000ms)
+        requestTimeout: 10000, // e.g., 10 seconds (10000ms) - if the request isn't even leaving the browser
     },
 });
