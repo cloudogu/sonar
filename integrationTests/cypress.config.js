@@ -38,7 +38,6 @@ async function setupNodeEvents(on, config) {
 }
 
 module.exports = defineConfig({
-    defaultCommandTimeout: 60*1000*10,
     e2e: {
         baseUrl: 'https://192.168.56.2',
         env: {
