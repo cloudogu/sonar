@@ -19,6 +19,11 @@ const doguTestLibrary = require('@cloudogu/dogu-integration-test-library')
 doguTestLibrary.registerCommands()
 
 
+doguTestLibrary.logout = () =>{
+    cy.visit("/cas/logout")
+    cy.wait(30000) // 30 seconds instead of 1 second
+}
+
 
 commands_sonarqube_api.register()
 
