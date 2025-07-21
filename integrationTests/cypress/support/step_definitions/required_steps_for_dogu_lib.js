@@ -9,7 +9,7 @@ When(/^the user clicks the dogu logout button$/, function () {
     cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
     // wait until the logoutMenuHandler is injected
     // see https://github.com/cloudogu/sonar-cas-plugin/blob/develop/src/main/java/org/sonar/plugins/cas/logout/CasSonarSignOutInjectorFilter.java#L132
-    cy.wait(1000)
+    cy.wait(30000)
     // Click user menu button
     cy.get('#userAccountMenuDropdown-trigger').scrollIntoView().click();
     // Click logout button
