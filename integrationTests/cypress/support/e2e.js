@@ -18,6 +18,8 @@ const commands_sonarqube_api = require('./commands/sonarqube_api')
 const doguTestLibrary = require('@cloudogu/dogu-integration-test-library')
 doguTestLibrary.registerCommands()
 
+
+
 commands_sonarqube_api.register()
 
 Cypress.on('uncaught:exception', (err, runnable) => {
