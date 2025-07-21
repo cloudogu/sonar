@@ -2,7 +2,7 @@
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^16.0.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
-    "@cloudogu/dogu-integration-test-library": "6.1.1",
+    "@cloudogu/dogu-integration-test-library": "https://github.com/cloudogu/dogu-integration-test-library.git#timeout",
     "cypress": "13.14.2",
     "@bahmutov/cy-api": "^2.2.4"
   },
