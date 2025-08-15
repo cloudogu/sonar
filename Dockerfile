@@ -44,7 +44,7 @@ RUN set -eux \
 COPY --from=builder --chown=1000:1000 /builder/sonar ${SONARQUBE_HOME}
 COPY --chown=1000:1000 ./resources /
 
-EXPOSE 9000
+EXPOSE 8080
 
 USER sonar
 
