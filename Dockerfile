@@ -4,13 +4,11 @@ ENV SONARQUBE_HOME=/opt/sonar \
     # mark as webapp for nginx
     SERVICE_TAGS=webapp \
     SONAR_VERSION=25.1.0.102122 \
-    CAS_PLUGIN_VERSION=6.1.0 \
     STARTUP_DIR="/"
 
 FROM base as builder
 
 ENV SONARQUBE_ZIP_SHA256=1b37a6d6f882e32208620597706ee336e9a3495acff826421475618dc747feba \
-    CAS_PLUGIN_JAR_SHA256=015423aae8ab3869c3bb92d35c0f2a17d9fe005f29712f9568d75e12255b3e39 \
     BUILDER_HOME="/builder/sonar"
 
 WORKDIR /builder
@@ -21,8 +19,6 @@ RUN echo "${SONARQUBE_ZIP_SHA256} *sonarqube-${SONAR_VERSION}.zip" | sha256sum -
 RUN unzip sonarqube-${SONAR_VERSION}.zip
 RUN mv sonarqube-${SONAR_VERSION} ${BUILDER_HOME}
 RUN rm sonarqube-${SONAR_VERSION}.zip
-RUN curl --fail --location "https://github.com/cloudogu/sonar-cas-plugin/releases/download/v${CAS_PLUGIN_VERSION}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" --output "${BUILDER_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
-RUN echo "${CAS_PLUGIN_JAR_SHA256} *${BUILDER_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" | sha256sum -c -
 
 FROM base
 
