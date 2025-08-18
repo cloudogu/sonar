@@ -7,7 +7,7 @@
 
 **Name:** official/sonar
 
-**Description:** [SonarQube](https://en.wikipedia.org/wiki/SonarQube)  is an open source platform developed by SonarSource for continuous inspection of code quality to perform automatic reviews with static analysis of code to detect bugs, code smells, and security vulnerabilities on 20+ programming languages.
+**Description:** [SonarQube](https://en.wikipedia.org/wiki/SonarQube) is an open source platform developed by SonarSource for continuous inspection of code quality to perform automatic reviews with static analysis of code to detect bugs, code smells, and security vulnerabilities on 20+ programming languages.
 
 **Website:** https://www.sonarqube.org/
 
@@ -33,6 +33,9 @@ cesapp start sonar
 ## Documentation
 The documentation can be found inside the [docs](https://github.com/cloudogu/sonar/tree/develop/docs) directory
 
+If you want to debug the SonarQube CAS Authentication Reverse Proxy (sonarcarp), please refer to the [sonarcarp setup
+documentation](docs/development/carp_develop_stage_en.md).
+
 ---
 
 ## What is the Cloudogu EcoSystem?
@@ -52,4 +55,3 @@ See [LICENSE](LICENSE) for details.
 
 ---
 MADE WITH :heart:&nbsp;FOR DEV ADDICTS. [Legal notice / Imprint](https://cloudogu.com/en/imprint/?mtm_campaign=ecosystem&mtm_kwd=imprint&mtm_source=github&mtm_medium=link)
-
