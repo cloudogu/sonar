@@ -30,7 +30,7 @@ printCloudoguLogo() {
 
 sourcingExitCode=0
 # shellcheck disable=SC1090,SC1091
-source "${STARTUP_DIR}"/util.sh || sourcingExitCode=$?
+source "${STARTUP_DIR}"util.sh || sourcingExitCode=$?
 if [[ ${sourcingExitCode} -ne 0 ]]; then
   echo "ERROR: An error occurred while sourcing ${STARTUP_DIR}/util.sh."
 fi
@@ -398,13 +398,10 @@ function stopSonarQube() {
 }
 
 function create_temporary_admin() {
-  echo "Creating Temporary admin user..."
   # Create temporary admin only in database
-  echo "Adding temporary admin group..."
+  echo "Creating a temporary admin user..."
   add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-  echo "Adding temporary admin user..."
   add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  echo "Adding temporary admin user to temporary admin group..."
   assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 }
 
@@ -547,7 +544,7 @@ runMain() {
   printCloudoguLogo
 
   setVariables
-
+  mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
   doguctl state "waitingForPostgreSQL"
 
   echo "Waiting until postgresql passes all health checks..."
@@ -586,7 +583,6 @@ runMain() {
   remove_last_temp_admin
   update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 
-  echo "Creating Temporary admin user..."
   create_temporary_admin
 
   # check whether firstSonarStart has already been performed
@@ -662,19 +658,45 @@ runMain() {
 
   exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
 
+  # sonarcarp will start the sonarqube process avoiding concurrent main processes inside the container
+  local carpExitCode=0
+  echo "sonarcarp exited with ${carpExitCode}"
   if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits..."
-    exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+#    exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+    export carpExecCommand="java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar"
   else
     # Retrieve configurable java limits from etcd, valid default values exist
     MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
     MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
 
     echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
-    exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
-      -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
-      -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+#    exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
+#      -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
+#      -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+    export carpExecCommand="java -XX:MaxRAMPercentage=${MEMORY_LIMIT_MAX_PERCENTAGE} -XX:MinRAMPercentage=${MEMORY_LIMIT_MIN_PERCENTAGE} -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar"
   fi
+
+  echo "Rendering CAS Authentication Reverse Proxy configuration..."
+  doguctl template carp.yml.tpl "${STARTUP_DIR}"carp/carp.yml
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "=====================================1"
+  echo "=====================================0"
+  echo "Starting carp and sonar..."
+  cd "${STARTUP_DIR}"carp/
+  ./sonarcarp || carpExitCode=$?
 }
 
 # make the script only run when executed, not when sourced from bats tests)

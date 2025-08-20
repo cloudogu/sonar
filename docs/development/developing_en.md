@@ -8,19 +8,6 @@ cesapp build .
 cesapp start sonar
 ```
 
-## Integrating and Test the Sonar CAS Plugin within the Dogu
-
-There are two alternatives for testing development versions of the [Sonar CAS Plugin](https://github.com/cloudogu/sonar-cas-plugin/) (you can find the compiling instructions there):
-
-1. Replace the plugin version in an already running SonarQube
-    - `rm /var/lib/ces/sonar/volumes/extensions/plugins/sonar-cas-plugin-2.0.1.jar`
-    - `cp your-sonar-cas-plugin.jar /var/lib/ces/sonar/volumes/extensions/plugins/`
-    - `sudo docker restart sonar`
-1. Modify the Dockerfile and build another image with your local plugin version
-    - comment-out lines that focus on sonar-cas-plugin
-    - add a new line for `COPY`ing your plugin, like so:
-        - `COPY --chown=1000:1000 sonar-cas-plugin-3.0.0-SNAPSHOT.jar ${SONARQUBE_HOME}/sonar-cas-plugin-3.0.0-SNAPSHOT.jar`
-
 ## Shell testing with BATS
 
 You can create and amend bash tests in the `unitTests` directory. The make target `unit-test-shell` will support you with a generalized bash test environment.
@@ -45,7 +32,7 @@ source "${STARTUP_DIR}"/util.sh
 
 Please note in the above example the shellcheck disablement comment. Because `STARTUP_DIR` is wired into the `Dockerfile` it is considered as global environment variable that will never be found unset (which would soon be followed by errors).
 
-Currently sourcing scripts in a static manner (that is: without dynamic variable in the path) makes shell testing impossible (unless you find a better way to construct the test container)
+Currently, sourcing scripts in a static manner (that is: without dynamic variable in the path) makes shell testing impossible (unless you find a better way to construct the test container)
 
 ### General structure of scripts-under-test
 
@@ -54,8 +41,8 @@ It is rather uncommon to run a _scripts-under-test_ like `startup.sh` all on its
 The good news is that testing single functions is possible with these little parts:
 
 1. Use sourcing execution guards
-1. Run binaries and logic code only inside functions
-1. Source with (dynamic yet fixed-up) environment variables
+2. Run binaries and logic code only inside functions
+3. Source with (dynamic yet fixed-up) environment variables
 
 #### Use sourcing execution guards
 

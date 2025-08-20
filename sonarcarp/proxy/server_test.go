@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"github.com/cloudogu/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

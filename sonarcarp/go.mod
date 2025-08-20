@@ -1,6 +1,6 @@
-module github.com/cloudogu/sonarcarp
+module github.com/cloudogu/sonar/sonarcarp
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/cloudogu/go-cas v1.2.1-0.20250815123246-e790eccb37f5

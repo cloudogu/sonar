@@ -8,19 +8,6 @@ cesapp build .
 cesapp start sonar
 ```
 
-## Einbinden und Testen des Sonar-CAS-Plugins innerhalb des Dogus
-
-Es gibt zwei Alternativen zum Testen von Entwicklungsversionen des [Sonar CAS Plugin](https://github.com/cloudogu/sonar-cas-plugin/) (die Anleitung zum Kompilieren finden Sie dort):
-
-1. Die Plugin-Version in einem bereits laufenden SonarQube ersetzen
-   - `rm /var/lib/ces/sonar/volumes/extensions/plugins/sonar-cas-plugin-2.0.1.jar`
-   - `cp your-sonar-cas-plugin.jar /var/lib/ces/sonar/volumes/extensions/plugins/`
-   - `sudo docker restart sonar`
-1. Das Dockerfile ändern und ein neues Image mit der lokalen Plugin-Version erstellen
-   - die Zeilen auskommentieren, die sich auf das Sonar-CAS-Plugin beziehen
-   - eine neue Zeile für `COPY` für das Plugin hinzufügen, etwa so:
-      - `COPY --chown=1000:1000 sonar-cas-plugin-3.0.0-SNAPSHOT.jar ${SONARQUBE_HOME}/sonar-cas-plugin-3.0.0-SNAPSHOT.jar`
-
 ## Shell-Tests mit BATS
 
 Bash-Tests können im Verzeichnis `unitTests` erstellt und geändert werden. Das make-Target `unit-test-shell` unterstützt hierbei mit einer verallgemeinerten Bash-Testumgebung.
@@ -52,8 +39,8 @@ Es ist eher unüblich, ein _Scripts-under-test_ wie `startup.sh` ganz alleine la
 Die gute Nachricht ist, dass das Testen einzelner Funktionen mit diesen kleinen Teilen möglich ist:
 
 1. Sourcing execution guards verwenden
-1. Binaries und Logikcode nur innerhalb von Funktionen ausführen
-1. Sourcen mit (dynamischen, aber festgelegten) Umgebungsvariablen
+2. Binaries und Logikcode nur innerhalb von Funktionen ausführen
+3. Sourcen mit (dynamischen, aber festgelegten) Umgebungsvariablen
 
 #### Sourcing execution guards verwenden
 

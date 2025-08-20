@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/cloudogu/sonarcarp/config"
-	"github.com/cloudogu/sonarcarp/proxy"
+	"github.com/cloudogu/sonar/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/proxy"
 	"github.com/op/go-logging"
 )
 
@@ -37,7 +37,7 @@ func startPayloadInBackground(configuration config.Configuration) {
 	}
 
 	if err := cmd.Start(); err != nil {
-		log.Fatalf("failed to start grafana: %s", err.Error())
+		log.Fatalf("failed to start sonarqube: %s", err.Error())
 		os.Exit(1)
 	}
 

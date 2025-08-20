@@ -280,9 +280,13 @@ function deactivate_default_admin_user() {
   AUTH_PASSWORD=$2
   LOG_LEVEL=$3
   # sonar requires a special character in the admin password
+  echo "====================0"
   RANDOM_PASSWORD=$(doguctl random --withSpecialChars | jq "@uri" -jRr)
+  echo "====================1"
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/change_password?login=admin&password=${RANDOM_PASSWORD}&previousPassword=admin"
+  echo "====================2"
   curl "${LOG_LEVEL}" --fail -u "${AUTH_USER}":"${AUTH_PASSWORD}" -X POST "http://localhost:9000/sonar/api/users/deactivate?login=admin"
+  echo "====================3"
 }
 
 # get_last_admin_group_or_global_admin_group echoes admin_group__last value from the registry if it was set, otherwise
@@ -331,6 +335,7 @@ function remove_last_temp_admin() {
 }
 
 function add_user() {
+  echo "Adding temporary admin user..."
   local username=${1} password=${2} password_hashed salt salt_base64
 
   salt="$(doguctl random)"
@@ -342,6 +347,7 @@ function add_user() {
 }
 
 function add_temporary_admin_group() {
+  echo "Adding temporary admin group..."
   GROUP_NAME=${1}
   GROUP_ROLE=${2:-admin}
   # Add group to "groups" table
@@ -355,6 +361,7 @@ function add_temporary_admin_group() {
 }
 
 function assign_group() {
+  echo "Adding temporary admin user to temporary admin group..."
   local user=${1} group=${2}
   execute_sql_statement_on_database "INSERT INTO groups_users (group_uuid, user_uuid, uuid) VALUES ((SELECT uuid FROM groups where name='${group}'),(SELECT uuid FROM users where login='${user}'),'$(uuidgen)');"
 }

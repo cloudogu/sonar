@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/cloudogu/go-cas"
-	"github.com/cloudogu/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/op/go-logging"
 )
 
