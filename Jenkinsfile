@@ -1,8 +1,8 @@
 #!groovy
 @Library([
-  'pipe-build-lib',
-  'ces-build-lib',
-  'dogu-build-lib'
+        'pipe-build-lib',
+        'ces-build-lib',
+        'dogu-build-lib'
 ]) _
 
 def goVersion = "1.24.5-bullseye"
