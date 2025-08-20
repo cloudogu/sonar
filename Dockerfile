@@ -1,6 +1,6 @@
 FROM golang:1.24.5 AS compiler
 WORKDIR /app
-ADD sonarcarp /app
+COPY sonarcarp /app
 COPY build /app/build
 COPY Makefile .
 
