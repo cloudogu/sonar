@@ -30,14 +30,15 @@ A Golang debugging configuration must exist and run in your IDE.
 
 ## Test CAS login
 
-1. Open this URL in your browser: http://localhost:8080/sonar
+1. Open this URL in your browser: http://localhost:8080/sonar <!-- markdown-link-check-disable-line -->
     - If the call is successful, you will be redirected to the CAS configured under this `carp.yaml` property: `cas-url`
 2. Log in to CAS.
-    - If the login is successful, you will be redirected to SonarQube, which was configured under this `carp.yaml` property: `https://localhost:9000/sonar/`
+    - If the login is successful, you will be redirected to SonarQube, which was configured under this `carp.yaml` property: `https://localhost:9000/sonar/` <!-- markdown-link-check-disable-line -->
 
 
 ## Test CAS logout
 
+<!-- markdown-link-check-disable-next-line -->
 If unsuccessful, manually entering the URL http://localhost:8080/sonar/sessions/logout may help. This URL is
 configured in this `carp.yaml` property: `logout-path`
 
