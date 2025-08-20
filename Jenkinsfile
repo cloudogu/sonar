@@ -29,7 +29,7 @@ pipe.addDefaultStages()
 pipe.insertStageAfter("Checkout", "Build sonarcarp", {
     script.withGolangContainer("cd sonarcarp && make vendor compile")
 })
-pipe.insertStageAfter("Checkout", "unit-test sonarcarp", {
+pipe.insertStageAfter("Checkout", "Test sonarcarp", {
     script.withGolangContainer("cd sonarcarp && make unit-test")
 })
 pipe.overrideStage('Setup') {
