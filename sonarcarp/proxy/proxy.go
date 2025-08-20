@@ -2,11 +2,13 @@ package proxy
 
 import (
 	"fmt"
-	"github.com/cloudogu/go-cas"
-	"github.com/vulcand/oxy/v2/forward"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/sonar/sonarcarp/internal"
+	"github.com/vulcand/oxy/v2/forward"
 )
 
 type authorizationChecker interface {
@@ -74,9 +76,8 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Debugf("proxy middleware called with request to %s and headers %+v", r.URL.String(), r.Header)
+	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
-	log.Debug("Found authorized request: IP %s, XForwardedFor %s, URL %s", r.RemoteAddr, r.Header[forward.XForwardedFor], r.URL.String())
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
@@ -85,6 +86,7 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.forwarder.ServeHTTP(w, r)
 }
 
+// setHeaders enriches a given request with SonarQube HTTP authorization headers.
 func setHeaders(r *http.Request, headers authorizationHeaders) {
 	r.Header.Add(headers.Principal, cas.Username(r))
 

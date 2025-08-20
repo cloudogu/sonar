@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+
+	"github.com/cloudogu/sonar/sonarcarp/internal"
 )
 
+// statusResponseWriter acts like a regular HTTP middleware but also issues logs on certain log levels or status codes.
+// Besides that, statusResponseWriter does not alter the request/response behavior in any way.
 type statusResponseWriter struct {
 	http.ResponseWriter
 	httpStatusCode int
@@ -38,7 +42,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 		log.Infof("%d %s %s", srw.httpStatusCode, request.Method, request.URL.Path)
 		if srw.httpStatusCode >= 300 {
-			log.Infof("request headers: %#v", srw.Header())
+			log.Infof("request headers: %#v", internal.RedactRequestHeaders(srw.Header()))
 		}
 	})
 }
