@@ -1,5 +1,3 @@
-# This yml-file is only for local test purposes
-
 # Change the port of this url if you run the carp locally under another port
 base-url: http://localhost:8080/sonar/
 cas-url: https://{{.GlobalConfig.Get "fqdn"}}/cas

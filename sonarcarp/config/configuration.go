@@ -46,6 +46,7 @@ func InitializeAndReadConfiguration() (Configuration, error) {
 func readConfiguration() (Configuration, error) {
 	confPath := defaultFileName
 
+	// overwrite file with the first non-switch argument (probably avoiding go test args)
 	if len(os.Args) > 1 {
 		for _, arg := range os.Args[1:] {
 			if strings.HasPrefix(arg, "-") {
