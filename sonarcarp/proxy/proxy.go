@@ -11,10 +11,6 @@ import (
 	"github.com/vulcand/oxy/v2/forward"
 )
 
-type authorizationChecker interface {
-	IsAuthorized(r *http.Request) bool
-}
-
 type unauthorizedServer interface {
 	ServeUnauthorized(writer http.ResponseWriter, req *http.Request)
 }
@@ -30,11 +26,11 @@ type proxyHandler struct {
 	targetURL             *url.URL
 	forwarder             http.Handler
 	unauthorizedServer    unauthorizedServer
-	authorizationChecker  authorizationChecker
 	casClient             *cas.Client
 	headers               authorizationHeaders
 	logoutPath            string
 	logoutRedirectionPath string
+	casAuthenticated      func(r *http.Request) bool
 }
 
 func createProxyHandler(sTargetURL string, headers authorizationHeaders, casClient *cas.Client, logoutPath string, logoutRedirectionPath string) (http.Handler, error) {
@@ -50,7 +46,7 @@ func createProxyHandler(sTargetURL string, headers authorizationHeaders, casClie
 	pHandler := proxyHandler{
 		targetURL:             targetURL,
 		forwarder:             fwd,
-		casClient:             casClient,
+		casAuthenticated:      cas.IsAuthenticated,
 		headers:               headers,
 		logoutPath:            logoutPath,
 		logoutRedirectionPath: logoutRedirectionPath,
@@ -71,7 +67,7 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !cas.IsAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
+	if !p.casAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
 		cas.RedirectToLogin(w, r)
 		return
 	}
