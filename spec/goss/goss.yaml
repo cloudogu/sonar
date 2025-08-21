@@ -5,24 +5,19 @@ file:
     owner: sonar
     group: sonar
     filetype: file
-    contains: []
   /startup.sh:
     exists: true
     owner: sonar
     group: sonar
     filetype: file
-    contains: []
   /opt/sonar/extensions/plugins/sonar-cas-plugin-6.1.0.jar:
     exists: false
-    filetype: file
-    contains: []
   /carp/sonarcarp:
-    exists: false
+    exists: true
     mode: "0744"
     owner: sonar
     group: sonar
     filetype: file
-    contains: [ ]
 package:
   postgresql14-client:
     installed: true
