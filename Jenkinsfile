@@ -31,6 +31,7 @@ pipe.insertStageAfter("Checkout", "Build sonarcarp", {
 })
 pipe.insertStageAfter("Checkout", "Test sonarcarp", {
     script.withGolangContainer("cd sonarcarp && make unit-test")
+    script.junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
 })
 pipe.insertStageAfter("Test sonarcarp", "Static analysis", {
     script.runSonarQube(script.sh)
