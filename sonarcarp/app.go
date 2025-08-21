@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"strings"
