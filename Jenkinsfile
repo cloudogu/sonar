@@ -27,7 +27,7 @@ com.cloudogu.ces.dogubuildlib.EcoSystem ecoSystem = pipe.ecoSystem
 pipe.setBuildProperties()
 pipe.addDefaultStages()
 pipe.insertStageAfter("Checkout", "Build sonarcarp", {
-    script.withGolangContainer("cp -r build Makefile sonarcarp/ && cd sonarcarp && make vendor compile")
+    script.withGolangContainer("cp -r build sonarcarp/ && cd sonarcarp && make vendor compile")
 })
 pipe.insertStageAfter("Checkout", "Test sonarcarp", {
     script.withGolangContainer("cd sonarcarp && make unit-test")

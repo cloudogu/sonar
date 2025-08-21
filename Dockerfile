@@ -2,7 +2,7 @@ FROM golang:1.24.5 AS compiler
 WORKDIR /app
 COPY sonarcarp /app
 COPY build /app/build
-COPY Makefile .
+# there is a go-specific Makefile in sonarcarp. we only need the other makefile includes.
 
 RUN make vendor compile-generic
 RUN chmod 0744 /app/target/sonarcarp
