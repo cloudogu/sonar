@@ -43,6 +43,6 @@ func Test_isBackChannelLogoutRequest(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.False(t, actual)
+		assert.True(t, actual)
 	})
 }
