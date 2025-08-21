@@ -1,13 +1,14 @@
 package proxy
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/cloudogu/sonar/sonarcarp/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestStatusResponseWriter_WriteHeader(t *testing.T) {

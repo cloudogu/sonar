@@ -80,11 +80,15 @@ func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error
 	}
 
 	return cas.NewClient(&cas.Options{
-		URL:       serviceUrl,
-		Client:    httpClient,
-		URLScheme: urlScheme,
-		IsLogoutRequest: func(r *http.Request) bool {
-			return r.Method == "POST" && (r.URL.Path == "/sonar/" || r.URL.Path == "/sonar")
-		},
+		URL:             serviceUrl,
+		Client:          httpClient,
+		URLScheme:       urlScheme,
+		IsLogoutRequest: isBackChannelLogoutRequest(),
 	}), nil
+}
+
+func isBackChannelLogoutRequest() func(r *http.Request) bool {
+	return func(r *http.Request) bool {
+		return r.Method == "POST" && (r.URL.Path == "/sonar/" || r.URL.Path == "/sonar")
+	}
 }
