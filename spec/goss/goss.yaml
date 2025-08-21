@@ -13,9 +13,16 @@ file:
     filetype: file
     contains: []
   /opt/sonar/extensions/plugins/sonar-cas-plugin-6.1.0.jar:
-    exists: true
+    exists: false
     filetype: file
     contains: []
+  /carp/sonarcarp:
+    exists: false
+    mode: "0744"
+    owner: sonar
+    group: sonar
+    filetype: file
+    contains: [ ]
 package:
   postgresql14-client:
     installed: true
@@ -36,4 +43,6 @@ group:
     gid: 1000
 process:
   java:
+    running: true
+  sonarcarp:
     running: true
