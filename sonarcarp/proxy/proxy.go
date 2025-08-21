@@ -11,10 +11,6 @@ import (
 	"github.com/vulcand/oxy/v2/forward"
 )
 
-type unauthorizedServer interface {
-	ServeUnauthorized(writer http.ResponseWriter, req *http.Request)
-}
-
 type authorizationHeaders struct {
 	Principal string
 	Role      string
@@ -25,7 +21,6 @@ type authorizationHeaders struct {
 type proxyHandler struct {
 	targetURL             *url.URL
 	forwarder             http.Handler
-	unauthorizedServer    unauthorizedServer
 	casClient             *cas.Client
 	headers               authorizationHeaders
 	logoutPath            string
