@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 
 var log = logging.MustGetLogger("sonarcarp")
 
-func NewServer(configuration config.Configuration) (*http.Server, error) {
+func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
 	staticResourceHandler, err := createStaticFileHandler()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create static handler: %w", err)
@@ -43,7 +44,9 @@ func NewServer(configuration config.Configuration) (*http.Server, error) {
 		configuration.LogoutRedirectPath,
 	)
 
-	router.Handle("/", pHandler)
+	throttlingHandler := NewThrottlingHandler(ctx, configuration, pHandler)
+
+	router.Handle("/", throttlingHandler)
 
 	if len(configuration.CarpResourcePath) != 0 {
 		router.Handle(configuration.CarpResourcePath, http.StripPrefix(configuration.CarpResourcePath, loggingMiddleware(staticResourceHandler)))

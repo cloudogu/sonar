@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 )
 
 func TestNewServer(t *testing.T) {
-	server, err := NewServer(config.Configuration{
+	server, err := NewServer(context.Background(), config.Configuration{
 		Port:             8080,
 		CarpResourcePath: "/carp-resources",
 	})

@@ -56,7 +56,21 @@ func (p proxyHandler) isLogoutRequest(r *http.Request) bool {
 	return strings.HasSuffix(r.Referer(), p.logoutPath) && r.URL.Path == p.logoutRedirectionPath
 }
 
+func IsBrowserRequest(req *http.Request) bool {
+	return isBrowserUserAgent(req.Header.Get("User-Agent")) || isBackChannelLogoutRequest()(req)
+}
+
+func isBrowserUserAgent(userAgent string) bool {
+	lowerUserAgent := strings.ToLower(userAgent)
+	return strings.Contains(lowerUserAgent, "mozilla") || strings.Contains(lowerUserAgent, "opera")
+}
+
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !IsBrowserRequest(r) {
+		p.forwarder.ServeHTTP(w, r)
+		return
+	}
+
 	if p.isLogoutRequest(r) {
 		cas.RedirectToLogout(w, r)
 		return

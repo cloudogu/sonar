@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"io"
 	"os"
@@ -69,7 +70,9 @@ func main() {
 
 	startPayloadInBackground(configuration)
 
-	server, err := proxy.NewServer(configuration)
+	ctx := context.Background()
+
+	server, err := proxy.NewServer(ctx, configuration)
 	if err != nil {
 		panic(err)
 	}

@@ -25,3 +25,5 @@ sonarcarp/sonar-home/temp/*
 !sonarcarp/sonar-home/logs/.gitkeep
 !sonarcarp/sonar-home/plugins/.gitkeep
 !sonarcarp/sonar-home/temp/.gitkeep
+
+sonarcarp/vendor
