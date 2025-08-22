@@ -16,3 +16,18 @@ include build/make/clean.mk
 include build/make/build.mk
 include build/make/test-unit.mk
 include build/make/mocks.mk
+
+SONARCARP_DIR=sonarcarp
+SONARCARP_MAKEFILES=${SONARCARP_DIR}/build
+
+unit-test: ${SONARCARP_MAKEFILES}
+	@cd ${SONARCARP_DIR} && make unit-test
+
+mocks: ${SONARCARP_MAKEFILES}
+	@cd ${SONARCARP_DIR} && make mocks
+
+compile: ${SONARCARP_MAKEFILES}
+	@cd ${SONARCARP_DIR} && make compile
+
+${SONARCARP_MAKEFILES}:
+	@cp -r build $@

@@ -10,7 +10,8 @@ out/
 .env
 .bin/
 target/
-
+# avoid duplicating the makefile includes. These must be copied f.i. with make compile from the root Makefile
+sonarcarp/build
 # local docker-compose sonarqube will add files here which must ignored, the directory and conf template must stay in
 # order to preserve the user GID/UID != root (from the container)
 sonarcarp/sonar-home/conf/*
