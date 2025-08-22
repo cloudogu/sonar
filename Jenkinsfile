@@ -51,7 +51,7 @@ void withGolangContainer(Closure closure) {
 
 void runSonarQube(def sh) {
     stage('SonarQube') {
-        projectName = 'grafana-carp'
+            projectName = 'sonar'
         def scannerHome = tool name: 'sonar-scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
         withSonarQubeEnv {
             sh "git config 'remote.origin.fetch' '+refs/heads/*:refs/remotes/origin/*'"
