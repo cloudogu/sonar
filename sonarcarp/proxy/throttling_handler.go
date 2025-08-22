@@ -20,7 +20,7 @@ var (
 )
 
 const (
-	LimiterTokenRate     = 50
+	LimiterTokenRate     = 1
 	LimiterBurstSize     = 150
 	LimiterCleanInterval = 300
 )
@@ -67,6 +67,8 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 		handler.ServeHTTP(statusWriter, request)
 
+		log.Debugf("Status is %v", statusWriter.httpStatusCode)
+
 		if statusWriter.httpStatusCode >= 200 && statusWriter.httpStatusCode < 400 {
 			log.Debugf("Status is %v - cleaning requests", statusWriter.httpStatusCode)
 			cleanClient(ipUsernameId)
@@ -81,6 +83,7 @@ func getOrCreateLimiter(ip string, limiterTokenRate, limiterBurstSize int) *rate
 
 	l, ok := clients[ip]
 	if !ok {
+		log.Debugf("Create new limiter")
 		l = rate.NewLimiter(rate.Limit(limiterTokenRate), limiterBurstSize)
 		clients[ip] = l
 	}

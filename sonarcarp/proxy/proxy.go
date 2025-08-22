@@ -66,20 +66,28 @@ func isBrowserUserAgent(userAgent string) bool {
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Debugf("1")
 	if !IsBrowserRequest(r) {
+		log.Debugf("1.1")
 		p.forwarder.ServeHTTP(w, r)
 		return
 	}
 
+	log.Debugf("2")
 	if p.isLogoutRequest(r) {
+		log.Debugf("2.1")
 		cas.RedirectToLogout(w, r)
 		return
 	}
 
+	log.Debugf("3")
 	if !p.casAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
+		log.Debugf("3.1")
 		cas.RedirectToLogin(w, r)
 		return
 	}
+
+	log.Debugf("4")
 
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
