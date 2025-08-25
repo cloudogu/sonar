@@ -14,7 +14,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("sonarcarp")
+var log = logging.MustGetLogger("proxy")
 
 func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
 	staticResourceHandler, err := createStaticFileHandler()
@@ -44,7 +44,9 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		configuration.LogoutRedirectPath,
 	)
 
-	throttlingHandler := NewThrottlingHandler(ctx, configuration, pHandler)
+	loggedPHandler := loggingMiddleware(pHandler)
+
+	throttlingHandler := NewThrottlingHandler(ctx, configuration, loggedPHandler)
 
 	router.Handle("/", throttlingHandler)
 

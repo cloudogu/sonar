@@ -66,33 +66,28 @@ func isBrowserUserAgent(userAgent string) bool {
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Debugf("1")
+	log.Debugf("proxy handler was called for request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
+
+	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
+	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
+
+	// let everything-REST through
 	if !IsBrowserRequest(r) {
-		log.Debugf("1.1")
 		p.forwarder.ServeHTTP(w, r)
 		return
 	}
 
-	log.Debugf("2")
 	if p.isLogoutRequest(r) {
-		log.Debugf("2.1")
 		cas.RedirectToLogout(w, r)
 		return
 	}
 
-	log.Debugf("3")
 	if !p.casAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
-		log.Debugf("3.1")
 		cas.RedirectToLogin(w, r)
 		return
 	}
 
-	log.Debugf("4")
-
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
-
-	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
-	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
 	setHeaders(r, p.headers)
 
