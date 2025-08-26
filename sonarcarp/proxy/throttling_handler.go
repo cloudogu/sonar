@@ -3,13 +3,12 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/sonar/sonarcarp/config"
+	"golang.org/x/time/rate"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/cloudogu/sonar/sonarcarp/config"
-	"golang.org/x/time/rate"
 )
 
 const _HttpHeaderXForwardedFor = "X-Forwarded-For"
