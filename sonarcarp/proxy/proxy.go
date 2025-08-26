@@ -23,7 +23,6 @@ type authorizationHeaders struct {
 type proxyHandler struct {
 	targetURL             *url.URL
 	forwarder             http.Handler
-	casClient             *cas.Client
 	headers               authorizationHeaders
 	logoutPath            string
 	logoutRedirectionPath string
@@ -79,7 +78,7 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 		r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
-		tempRespWriter := newBufferWriter()
+		tempRespWriter := newBufferedResponsedWriter()
 
 		// erzeuge response writer buffer
 		// führe ServeHTTP gegen Proxy(direkt SonarQube) aus
@@ -89,12 +88,37 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// else reichere Request mit Headern an # zwingend: nur wenn CAS dies erlaubt, nicht bei sonstigen requests
 		//      führe ServeHTTP gegen Proxy(direkt SonarQube) aus
 
-		p.forwarder.ServeHTTP(tempRespWriter, request)
+		requestCopy := r.Clone(r.Context())
+		bodyCopy, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Errorf("Failed to save body for %s method %s", origReqUrl, r.Method)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewReader(bodyCopy))
+		requestCopy.Body = io.NopCloser(bytes.NewReader(bodyCopy))
 
-		log.Debugf("Response for %s returned with HTTP %d", origReqUrl, srw.httpStatusCode)
+		p.forwarder.ServeHTTP(tempRespWriter, r)
+
+		log.Debugf("Response for %s returned with HTTP %d", origReqUrl, tempRespWriter.statusCode)
 		if tempRespWriter.statusCode == http.StatusUnauthorized {
 			log.Debug("Sending another request to CAS instead")
-			if !p.casAuthenticated(request) {
+
+			if !IsBrowserRequest(r) {
+				w.WriteHeader(http.StatusUnauthorized)
+				var denyContent []byte
+				_, err := tempRespWriter.Read(denyContent)
+				if err != nil {
+					log.Errorf("Error while reading sonarqube deny response: %s", err.Error())
+				}
+				_, err = w.Write(denyContent)
+				if err != nil {
+					log.Errorf("Error while writing sonarqube deny response into original response writer: %s", err.Error())
+				}
+				return
+			}
+
+			if !p.casAuthenticated(r) {
 				w.WriteHeader(http.StatusUnauthorized)
 				var denyContent []byte
 				_, err := tempRespWriter.Read(denyContent)
@@ -103,21 +127,29 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 				_, err = w.Write(denyContent)
 				if err != nil {
-					log.Errorf("Error reading deny response from CAS proxy: %s", err.Error())
+					log.Errorf("Error while writing sonarqube deny response into original response writer: %s", err.Error())
 				}
 				return
 			}
 
 			log.Infof("CAS replied request %s was authenticated. Forwarding with headers", origReqUrl)
-			//tempRespWriter = newBufferWriter() // TODO
-			setHeaders(request, p.headers)
-			p.forwarder.ServeHTTP(writer, request)
+			tempRespWriter = nil // discard because the
+			// TODO do something with the request
+			setHeaders(requestCopy, p.headers)
+			p.forwarder.ServeHTTP(writer, requestCopy)
+			return
 		}
 
-		// let everything-REST through
-		if !IsBrowserRequest(r) {
-			log.Debugf("========= Request is not a browser request: Happy unauthorized requesting!!!1!")
-			p.forwarder.ServeHTTP(w, r)
+		if tempRespWriter.statusCode < 300 {
+			var denyContent []byte
+			_, err := tempRespWriter.Read(denyContent)
+			if err != nil {
+				log.Errorf("Error reading deny response from CAS proxy: %s", err.Error())
+			}
+			_, err = w.Write(denyContent)
+			if err != nil {
+				log.Errorf("Error while writing sonarqube deny response into original response writer: %s", err.Error())
+			}
 			return
 		}
 
@@ -160,11 +192,11 @@ func setHeaders(r *http.Request, headers authorizationHeaders) {
 	r.Header.Add(headers.Role, attrs.Get("groups"))
 }
 
-// newBufferWriter creates a new http.ResponseWriter which may be conditionally written back to the client.
+// newBufferedResponsedWriter creates a new http.ResponseWriter which may be conditionally written back to the client.
 //
 // This makes sense when analyzing and acting on proxied requests where the original response must not be written
 // immediately but a different response depending on another action (f. i. a CAS response).
-func newBufferWriter() *BufferWriter {
+func newBufferedResponsedWriter() *BufferWriter {
 	buffer := &bytes.Buffer{}
 	return &BufferWriter{
 		buffer:     buffer,
@@ -186,10 +218,11 @@ func (b *BufferWriter) Close() error {
 
 // Header gets response header.
 func (b *BufferWriter) Header() http.Header {
-	panic("not implemented")
+	return http.Header{}
 }
 
 func (b *BufferWriter) Write(buf []byte) (int, error) {
+	log.Debugf("Writing buffer %s", string(buf))
 	return b.buffer.Write(buf)
 }
 
