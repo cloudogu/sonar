@@ -43,7 +43,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 
 		log.Infof("%d %s %s", srw.httpStatusCode, request.Method, request.URL.Path)
 		if srw.httpStatusCode >= 300 {
-			log.Infof("request headers: %#v", internal.RedactRequestHeaders(srw.Header()))
+			log.Infof("Response headers: %#v", internal.RedactRequestHeaders(srw.Header()))
 		}
 	})
 }
