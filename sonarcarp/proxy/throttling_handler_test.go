@@ -60,7 +60,7 @@ func TestThrottlingHandler(t *testing.T) {
 		assert.True(t, found)
 	})
 
-	t.Run("Only throttle service accounts", func(t *testing.T) {
+	t.Run("never throttle basic auth requests that return with HTTP 2xx (exceptions apply)", func(t *testing.T) {
 		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusOK)
 		}
@@ -76,7 +76,7 @@ func TestThrottlingHandler(t *testing.T) {
 		req.Header.Set(_HttpHeaderXForwardedFor, "testIP")
 		req.SetBasicAuth("test", "test")
 
-		for i := 0; i < 5; i++ {
+		for i := 0; i < 3; i++ { // respect the upper limiter configuration...
 			resp, lErr := server.Client().Do(req)
 			assert.NoError(t, lErr)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -149,7 +149,7 @@ func TestThrottlingHandler(t *testing.T) {
 		reqCounter := 0
 
 		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
-			if reqCounter == (limiterConfig.LimiterBurstSize - 1) {
+			if reqCounter >= (limiterConfig.LimiterBurstSize - 1) {
 				writer.WriteHeader(http.StatusOK)
 				reqCounter = 0
 				return
@@ -241,4 +241,20 @@ func TestThrottlingHandler(t *testing.T) {
 			}
 		}
 	})
+}
+
+func Test_inUnauthenticatedEndpointList(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want bool
+	}{
+		{"return true", "/api/server/version", true},
+		{"return false", "/api/alm_settings/get_binding", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, inUnauthenticatedEndpointList(tt.path), "inUnauthenticatedEndpointList(%v)", tt.path)
+		})
+	}
 }

@@ -66,13 +66,13 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 		log.Debugf("Extracted ip from %s for throttling: %s", _HttpHeaderXForwardedFor, username)
 
+		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
+		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
+
 		statusWriter := &statusResponseWriter{
 			ResponseWriter: writer,
 			httpStatusCode: http.StatusOK,
 		}
-
-		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
-		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
 
 		if !limiter.Allow() {
 			log.Infof("Throttle request to %s from user %s with ip %s", request.RequestURI, username, initialForwardedIpAddress)
@@ -85,14 +85,19 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 		handler.ServeHTTP(statusWriter, request)
 
-		log.Debugf("Status is %v", statusWriter.httpStatusCode)
+		log.Debugf("Status for %s returned with %d", request.URL.String(), statusWriter.httpStatusCode)
 
-		if statusWriter.httpStatusCode >= 200 && statusWriter.httpStatusCode < 400 {
-			log.Debugf("Status is %v - cleaning requests", statusWriter.httpStatusCode)
+		didNotNeedAuthentication := inUnauthenticatedEndpointList(request.URL.EscapedPath())
+		if statusWriter.httpStatusCode >= 200 && statusWriter.httpStatusCode < 400 && !didNotNeedAuthentication {
+			log.Debugf("Status sufficiently okay - resetting limiter for %s", ipUsernameId)
 			cleanClient(ipUsernameId)
 		}
 
 	})
+}
+
+func inUnauthenticatedEndpointList(path string) bool {
+	return strings.HasSuffix(path, "api/server/version")
 }
 
 func getOrCreateLimiter(ip string, limiterTokenRate, limiterBurstSize int) *rate.Limiter {
