@@ -3,16 +3,16 @@ package proxy
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/sonar/sonarcarp/config"
-	"golang.org/x/time/rate"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/cloudogu/sonar/sonarcarp/config"
+	"golang.org/x/time/rate"
 )
 
 const _HttpHeaderXForwardedFor = "X-Forwarded-For"
-const _DefaultCleanInterval = 300
 
 var (
 	mu      sync.RWMutex
@@ -26,15 +26,33 @@ const (
 )
 
 func NewThrottlingHandler(ctx context.Context, configuration config.Configuration, handler http.Handler) http.Handler {
-	go startCleanJob(ctx, LimiterCleanInterval)
+	limiterTokenRateInSecs := configuration.LimiterTokenRate
+	if limiterTokenRateInSecs == 0 {
+		limiterTokenRateInSecs = LimiterTokenRate
+	}
+
+	limiterBurstSize := configuration.LimiterBurstSize
+	if limiterBurstSize == 0 {
+		limiterBurstSize = LimiterBurstSize
+	}
+
+	limiterCleanIntervalInSecs := configuration.LimiterCleanInterval
+	if limiterCleanIntervalInSecs == 0 {
+		limiterCleanIntervalInSecs = LimiterCleanInterval
+	}
+
+	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		username := "asdf" // TODO: extract username
+		username, _, ok := request.BasicAuth()
+		if !ok {
+			username = "john.doe.might.be.throttling@ces.invalid"
+		}
 
 		forwardedIpAddrRaw := request.Header.Get(_HttpHeaderXForwardedFor)
 		isCesInternalDoguCall := forwardedIpAddrRaw == ""
 		if isCesInternalDoguCall {
-			log.Debugf("No %s header is set for request. Forwarding internal dogu request", _HttpHeaderXForwardedFor)
+			log.Debugf("No %s header is set for request. Forwarding internal dogu request without throttling", _HttpHeaderXForwardedFor)
 			handler.ServeHTTP(writer, request)
 			return
 		}
@@ -54,7 +72,7 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 		}
 
 		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
-		limiter := getOrCreateLimiter(ipUsernameId, LimiterTokenRate, LimiterBurstSize)
+		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
 
 		if !limiter.Allow() {
 			log.Infof("Throttle request to %s from user %s with ip %s", request.RequestURI, username, initialForwardedIpAddress)
@@ -63,7 +81,7 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 			return
 		}
 
-		log.Debugf("User %s with IP address %s has %.1f tokens left", username, initialForwardedIpAddress, limiter.Tokens())
+		log.Debugf("Client %s has %.1f tokens left", ipUsernameId, limiter.Tokens())
 
 		handler.ServeHTTP(statusWriter, request)
 
@@ -83,7 +101,7 @@ func getOrCreateLimiter(ip string, limiterTokenRate, limiterBurstSize int) *rate
 
 	l, ok := clients[ip]
 	if !ok {
-		log.Debugf("Create new limiter")
+		log.Debugf("Create new limiter for %s", ip)
 		l = rate.NewLimiter(rate.Limit(limiterTokenRate), limiterBurstSize)
 		clients[ip] = l
 	}
@@ -104,16 +122,13 @@ func cleanClients() {
 
 	for client, limiter := range clients {
 		if limiter.Allow() {
+			log.Debugf("Cleaning limiter for %s", client)
 			delete(clients, client)
 		}
 	}
 }
 
 func startCleanJob(ctx context.Context, cleanInterval int) {
-	if cleanInterval == 0 {
-		cleanInterval = _DefaultCleanInterval
-	}
-
 	tick := time.Tick(time.Duration(cleanInterval) * time.Second)
 
 	for {

@@ -27,6 +27,9 @@ type Configuration struct {
 	LogLevel                           string `yaml:"log-level"`
 	ApplicationExecCommand             string `yaml:"application-exec-command"`
 	CarpResourcePath                   string `yaml:"carp-resource-path"`
+	LimiterTokenRate                   int    `yaml:"limiter-token-rate"`
+	LimiterBurstSize                   int    `yaml:"limiter-burst-size"`
+	LimiterCleanInterval               int    `yaml:"limiter-clean-interval"`
 }
 
 func InitializeAndReadConfiguration() (Configuration, error) {
