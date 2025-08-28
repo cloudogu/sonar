@@ -7,9 +7,15 @@ import (
 	"strings"
 
 	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/vulcand/oxy/v2/forward"
 )
+
+type sonarAdminGroupMapping struct {
+	cesAdminGroup   string
+	sonarAdminGroup string
+}
 
 type authorizationHeaders struct {
 	Principal string
@@ -26,14 +32,15 @@ type proxyHandler struct {
 	logoutPath            string
 	logoutRedirectionPath string
 	casAuthenticated      func(r *http.Request) bool
+	adminGroupMapping     sonarAdminGroupMapping
 }
 
-func createProxyHandler(sTargetURL string, headers authorizationHeaders, casClient *cas.Client, logoutPath string, logoutRedirectionPath string) (http.Handler, error) {
+func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
 	log.Debugf("creating proxy middleware")
 
-	targetURL, err := url.Parse(sTargetURL)
+	targetURL, err := url.Parse(cfg.ServiceUrl)
 	if err != nil {
-		return proxyHandler{}, fmt.Errorf("could not parse target url '%s': %w", sTargetURL, err)
+		return proxyHandler{}, fmt.Errorf("could not parse target url '%s': %w", cfg.ServiceUrl, err)
 	}
 
 	fwd := forward.New(true)
@@ -43,8 +50,9 @@ func createProxyHandler(sTargetURL string, headers authorizationHeaders, casClie
 		forwarder:             fwd,
 		casAuthenticated:      cas.IsAuthenticated,
 		headers:               headers,
-		logoutPath:            logoutPath,
-		logoutRedirectionPath: logoutRedirectionPath,
+		logoutPath:            cfg.LogoutPath,
+		logoutRedirectionPath: cfg.LogoutRedirectPath,
+		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
 	}
 
 	return casClient.CreateHandler(pHandler), nil
@@ -89,17 +97,38 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
-	setHeaders(r, p.headers)
+	setHeaders(r, p.headers, p.adminGroupMapping)
 
 	p.forwarder.ServeHTTP(w, r)
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.
-func setHeaders(r *http.Request, headers authorizationHeaders) {
-	r.Header.Add(headers.Principal, cas.Username(r))
+func setHeaders(r *http.Request, headers authorizationHeaders, adminGroupMapping sonarAdminGroupMapping) {
+	username := cas.Username(r)
+	r.Header.Add(headers.Principal, username)
 
 	attrs := cas.Attributes(r)
 	r.Header.Add(headers.Name, attrs.Get("displayName"))
 	r.Header.Add(headers.Mail, attrs.Get("mail"))
-	r.Header.Add(headers.Role, attrs.Get("groups"))
+	// heads-up! do not use attrs.Get because it only returns the first group entry
+	userGroups := strings.Join(attrs["groups"], ",") // delimited by comma according the sonar.properties commentary
+	if isInAdminGroup(attrs["groups"], adminGroupMapping.cesAdminGroup) {
+		userGroups += "," + adminGroupMapping.sonarAdminGroup
+	}
+	r.Header.Add(headers.Role, userGroups)
+
+	if isInAdminGroup(attrs["groups"], adminGroupMapping.cesAdminGroup) {
+		r.Header.Add(adminGroupMapping.sonarAdminGroup, adminGroupMapping.cesAdminGroup)
+	}
+	log.Debugf("Groups found to user %s: %s", username, userGroups)
+}
+
+func isInAdminGroup(currentGroups []string, cesAdminGroup string) bool {
+	for _, currentGroup := range currentGroups {
+		if currentGroup == cesAdminGroup {
+			return true
+		}
+	}
+
+	return false
 }

@@ -37,11 +37,9 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 	router := http.NewServeMux()
 
 	pHandler, err := createProxyHandler(
-		configuration.ServiceUrl,
 		headers,
 		casClient,
-		configuration.LogoutPath,
-		configuration.LogoutRedirectPath,
+		configuration,
 	)
 
 	loggedPHandler := loggingMiddleware(pHandler)

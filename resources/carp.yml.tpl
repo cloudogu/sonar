@@ -21,6 +21,8 @@ mail-header: X-Forwarded-Email
 name-header: X-Forwarded-Name
 log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
 log-level: "{{ .Config.GetOrDefault "logging/root" "WARN" }}"
+ces-admin-group: "{{ .Env.Get "CES_ADMIN_GROUP" }}"
+sonar-admin-group: sonar-administrators
 application-exec-command: "{{ .Env.Get "carpExecCommand" }}"
 carp-resource-path: /sonar/carp-static/
 

@@ -20,6 +20,8 @@ type Configuration struct {
 	RoleHeader                         string `yaml:"role-header"`
 	MailHeader                         string `yaml:"mail-header"`
 	NameHeader                         string `yaml:"name-header"`
+	CesAdminGroup                      string `yaml:"ces-admin-group"`
+	SonarAdminGroup                    string `yaml:"sonar-admin-group"`
 	LogoutRedirectPath                 string `yaml:"logout-redirect-path"`
 	LogoutPath                         string `yaml:"logout-path"`
 	ForwardUnauthenticatedRESTRequests bool   `yaml:"forward-unauthenticated-rest-requests"`

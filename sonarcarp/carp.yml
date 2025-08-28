@@ -19,6 +19,10 @@ role-header: X-Forwarded-Groups
 mail-header: X-Forwarded-Email
 # the principal-header value must correspond with sonar.web.sso.nameHeader in sonar.properties
 name-header: X-Forwarded-Name
+# cesAdminGroup contains the name of the current Cloudogu EcoSystem admin group. If the request's user is a CES admin
+# this will lead to an additional HTTP proxy request headers.
+ces-admin-group: cesAdmins
+sonar-admin-group: sonar-administrators
 log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
 log-level: "DEBUG"
 application-exec-command: "sleep infinity"

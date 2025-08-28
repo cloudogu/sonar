@@ -445,7 +445,8 @@ sonar.log.level.web=DEBUG
 # To see an example of the data shared: login as a global administrator, call the WS api/system/info and check the Statistics field.
 #sonar.telemetry.enable=true
 
-
+// Allow new users to authenticate. When set to 'false', only existing users will be able to authenticate to the server.
+sonar.authenticator.createUsers=true
 #--------------------------------------------------------------------------------------------------
 # DEVELOPMENT - only for developers
 # The following properties MUST NOT be used in production environments.

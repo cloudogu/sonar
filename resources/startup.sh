@@ -56,7 +56,9 @@ function setVariables() {
   # initialize database variables form util.sh
   setDbVars
 
+  # export for carp.yaml usage
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
+  export CES_ADMIN_GROUP
   CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
   FQDN=$(doguctl config --global fqdn)
   DOMAIN=$(doguctl config --global domain)
