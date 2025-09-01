@@ -44,9 +44,18 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		// TODO stuff here
+		/*
+			authenticationUnnecessary := isAuthenticationRequired(p.staticResourceMatchers, r.URL.Path)
+			if authenticationUnnecessary {
+				p.forwarder.ServeHTTP(w, r)
+				return
+			}
+		*/
+
 		username, _, ok := request.BasicAuth()
 		if !ok {
-			username = "john.doe.might.be.throttling@ces.invalid"
+			username = "john.throttle.doe@ces.invalid"
 		}
 
 		forwardedIpAddrRaw := request.Header.Get(_HttpHeaderXForwardedFor)
@@ -87,8 +96,7 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 		log.Debugf("Status for %s returned with %d", request.URL.String(), statusWriter.httpStatusCode)
 
-		didNotNeedAuthentication := inUnauthenticatedEndpointList(request.URL.EscapedPath())
-		if statusWriter.httpStatusCode >= 200 && statusWriter.httpStatusCode < 400 && !didNotNeedAuthentication {
+		if statusWriter.httpStatusCode >= 200 && statusWriter.httpStatusCode < 400 {
 			log.Debugf("Status sufficiently okay - resetting limiter for %s", ipUsernameId)
 			cleanClient(ipUsernameId)
 		}

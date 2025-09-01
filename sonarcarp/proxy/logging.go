@@ -31,9 +31,9 @@ func (s *statusResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return h.Hijack()
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+func loggingMiddleware(next http.Handler, handlerName string) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		log.Debugf("loggingMiddleware was called for %s", request.URL.String())
+		log.Debugf("loggingMiddleware(%s) was called for %s", handlerName, request.URL.String())
 		srw := &statusResponseWriter{
 			ResponseWriter: writer,
 			httpStatusCode: http.StatusOK,

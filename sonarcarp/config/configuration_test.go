@@ -34,7 +34,8 @@ sonar-writer-group: writer
 sonar-reader-group: reader
 log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
 application-exec-command: "exit 0"
-carp-resource-path: /sonar/carp-static
+carp-resource-paths:
+   - /sonar/js/
 `
 
 const invalidType = templateConfig + `
@@ -123,5 +124,5 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}", config.LoggingFormat)
 	assert.Equal(t, "DEBUG", config.LogLevel)
 	assert.Equal(t, "exit 0", config.ApplicationExecCommand)
-	assert.Equal(t, "/sonar/carp-static", config.CarpResourcePath)
+	assert.Equal(t, []string{"/sonar/js/"}, config.CarpResourcePaths)
 }

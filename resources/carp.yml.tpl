@@ -19,11 +19,22 @@ role-header: X-Forwarded-Groups
 mail-header: X-Forwarded-Email
 # the principal-header value must correspond with sonar.web.sso.nameHeader in sonar.properties
 name-header: X-Forwarded-Name
-log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
+log-format: "%{level:.4s} [%{module}:%{shortfile}] %{message}"
 log-level: "{{ .Config.GetOrDefault "logging/root" "WARN" }}"
+# the value will be used to check if a user belongs to the CES administrator group.
 ces-admin-group: "{{ .Env.Get "CES_ADMIN_GROUP" }}"
+# the value will be added to a CES administrators's group list during the CAS authentication
 sonar-admin-group: sonar-administrators
+# This command will starts SonarQube to avoid multiple concurrent processes in a container.
 application-exec-command: "{{ .Env.Get "carpExecCommand" }}"
-carp-resource-path: /sonar/carp-static/
+# The following list of regular expressions of SonarQube routes mark routes that do not need authorization.
+# For security reasons, here usually appear static resources like CSS files etc.
+carp-resource-paths:
+  - sonar/api/.*
+  - sonar/css/.*
+  - sonar/favicon.ico
+  - sonar/fonts/.*
+  - sonar/images/.*
+  - sonar/js/.*
 
 

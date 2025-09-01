@@ -11,27 +11,27 @@ import (
 const defaultFileName = "carp.yml"
 
 type Configuration struct {
-	BaseUrl                            string `yaml:"base-url"`
-	CasUrl                             string `yaml:"cas-url"`
-	ServiceUrl                         string `yaml:"service-url"`
-	SkipSSLVerification                bool   `yaml:"skip-ssl-verification"`
-	Port                               int    `yaml:"port"`
-	PrincipalHeader                    string `yaml:"principal-header"`
-	RoleHeader                         string `yaml:"role-header"`
-	MailHeader                         string `yaml:"mail-header"`
-	NameHeader                         string `yaml:"name-header"`
-	CesAdminGroup                      string `yaml:"ces-admin-group"`
-	SonarAdminGroup                    string `yaml:"sonar-admin-group"`
-	LogoutRedirectPath                 string `yaml:"logout-redirect-path"`
-	LogoutPath                         string `yaml:"logout-path"`
-	ForwardUnauthenticatedRESTRequests bool   `yaml:"forward-unauthenticated-rest-requests"`
-	LoggingFormat                      string `yaml:"log-format"`
-	LogLevel                           string `yaml:"log-level"`
-	ApplicationExecCommand             string `yaml:"application-exec-command"`
-	CarpResourcePath                   string `yaml:"carp-resource-path"`
-	LimiterTokenRate                   int    `yaml:"limiter-token-rate"`
-	LimiterBurstSize                   int    `yaml:"limiter-burst-size"`
-	LimiterCleanInterval               int    `yaml:"limiter-clean-interval"`
+	BaseUrl                            string   `yaml:"base-url"`
+	CasUrl                             string   `yaml:"cas-url"`
+	ServiceUrl                         string   `yaml:"service-url"`
+	SkipSSLVerification                bool     `yaml:"skip-ssl-verification"`
+	Port                               int      `yaml:"port"`
+	PrincipalHeader                    string   `yaml:"principal-header"`
+	RoleHeader                         string   `yaml:"role-header"`
+	MailHeader                         string   `yaml:"mail-header"`
+	NameHeader                         string   `yaml:"name-header"`
+	CesAdminGroup                      string   `yaml:"ces-admin-group"`
+	SonarAdminGroup                    string   `yaml:"sonar-admin-group"`
+	LogoutRedirectPath                 string   `yaml:"logout-redirect-path"`
+	LogoutPath                         string   `yaml:"logout-path"`
+	ForwardUnauthenticatedRESTRequests bool     `yaml:"forward-unauthenticated-rest-requests"`
+	LoggingFormat                      string   `yaml:"log-format"`
+	LogLevel                           string   `yaml:"log-level"`
+	ApplicationExecCommand             string   `yaml:"application-exec-command"`
+	CarpResourcePaths                  []string `yaml:"carp-resource-paths"`
+	LimiterTokenRate                   int      `yaml:"limiter-token-rate"`
+	LimiterBurstSize                   int      `yaml:"limiter-burst-size"`
+	LimiterCleanInterval               int      `yaml:"limiter-clean-interval"`
 }
 
 func InitializeAndReadConfiguration() (Configuration, error) {

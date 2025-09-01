@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/cloudogu/go-cas"
@@ -25,14 +26,15 @@ type authorizationHeaders struct {
 }
 
 type proxyHandler struct {
-	targetURL             *url.URL
-	forwarder             http.Handler
-	casClient             *cas.Client
-	headers               authorizationHeaders
-	logoutPath            string
-	logoutRedirectionPath string
-	casAuthenticated      func(r *http.Request) bool
-	adminGroupMapping     sonarAdminGroupMapping
+	targetURL              *url.URL
+	forwarder              http.Handler
+	casClient              *cas.Client
+	headers                authorizationHeaders
+	logoutPath             string
+	logoutRedirectionPath  string
+	casAuthenticated       func(r *http.Request) bool
+	adminGroupMapping      sonarAdminGroupMapping
+	staticResourceMatchers []*regexp.Regexp
 }
 
 func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
@@ -45,17 +47,34 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 
 	fwd := forward.New(true)
 
+	staticResourceMatchers, err := createStaticResourceMatchers(cfg.CarpResourcePaths)
+
 	pHandler := proxyHandler{
-		targetURL:             targetURL,
-		forwarder:             fwd,
-		casAuthenticated:      cas.IsAuthenticated,
-		headers:               headers,
-		logoutPath:            cfg.LogoutPath,
-		logoutRedirectionPath: cfg.LogoutRedirectPath,
-		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
+		targetURL:              targetURL,
+		forwarder:              fwd,
+		casAuthenticated:       cas.IsAuthenticated,
+		headers:                headers,
+		logoutPath:             cfg.LogoutPath,
+		logoutRedirectionPath:  cfg.LogoutRedirectPath,
+		adminGroupMapping:      sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
+		staticResourceMatchers: staticResourceMatchers,
 	}
 
 	return casClient.CreateHandler(pHandler), nil
+}
+
+func createStaticResourceMatchers(paths []string) ([]*regexp.Regexp, error) {
+	var result []*regexp.Regexp
+
+	for _, path := range paths {
+		regexp, err := regexp.Compile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compile regexp for static resource path '%s' (is it a compatible regexp?): %w", path, err)
+		}
+		result = append(result, regexp)
+	}
+
+	return result, nil
 }
 
 func (p proxyHandler) isLogoutRequest(r *http.Request) bool {
@@ -79,6 +98,12 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
+	authenticationRequired := isAuthenticationRequired(p.staticResourceMatchers, r.URL.Path)
+	if !authenticationRequired {
+		p.forwarder.ServeHTTP(w, r)
+		return
+	}
+
 	// let everything-REST through
 	if !IsBrowserRequest(r) {
 		p.forwarder.ServeHTTP(w, r)
@@ -100,6 +125,21 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	setHeaders(r, p.headers, p.adminGroupMapping)
 
 	p.forwarder.ServeHTTP(w, r)
+}
+
+func isAuthenticationRequired(staticUrlMatchers []*regexp.Regexp, path string) bool {
+	for _, matcher := range staticUrlMatchers {
+
+		cleanedPath, err := url.JoinPath(path, "")
+		if err != nil {
+			log.Errorf("Error cleaning path '%s' (will require authentication though): %s", path, err.Error())
+		}
+		if matcher.MatchString(cleanedPath) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.

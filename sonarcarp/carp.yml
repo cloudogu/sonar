@@ -23,9 +23,15 @@ name-header: X-Forwarded-Name
 # this will lead to an additional HTTP proxy request headers.
 ces-admin-group: cesAdmins
 sonar-admin-group: sonar-administrators
-log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
+log-format: "%{level:.4s} [%{module}:%{shortfile}] %{message}"
 log-level: "DEBUG"
 application-exec-command: "sleep infinity"
-carp-resource-path: /sonar/carp-static/
+carp-resource-paths:
+  - /sonar/api/
+  - /sonar/css/
+  - /sonar/favicon.ico
+  - /sonar/fonts/
+  - /sonar/images/
+  - /sonar/js/
 
 

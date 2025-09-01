@@ -12,8 +12,8 @@ import (
 
 func TestNewServer(t *testing.T) {
 	server, err := NewServer(context.Background(), config.Configuration{
-		Port:             8080,
-		CarpResourcePath: "/carp-resources",
+		Port:              8080,
+		CarpResourcePaths: []string{"/sonar/css"},
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, server)

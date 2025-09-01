@@ -17,10 +17,10 @@ import (
 var log = logging.MustGetLogger("proxy")
 
 func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
-	staticResourceHandler, err := createStaticFileHandler()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create static handler: %w", err)
-	}
+	//staticFileHandler, err := createStaticFileHandler()
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to create static handler: %w", err)
+	//}
 
 	casClient, err := NewCasClientFactory(configuration)
 	if err != nil {
@@ -42,15 +42,16 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		configuration,
 	)
 
-	loggedPHandler := loggingMiddleware(pHandler)
+	loggedPHandler := loggingMiddleware(pHandler, "proxy")
+
+	for _, alwaysAuthorizedRoutePattern := range configuration.CarpResourcePaths {
+		log.Infof("Registering as static resource path: %s", alwaysAuthorizedRoutePattern)
+		router.Handle("GET "+alwaysAuthorizedRoutePattern, http.StripPrefix("/sonar", loggingMiddleware(loggedPHandler, "staticProxyHandler")))
+	}
 
 	throttlingHandler := NewThrottlingHandler(ctx, configuration, loggedPHandler)
 
-	router.Handle("/", throttlingHandler)
-
-	if len(configuration.CarpResourcePath) != 0 {
-		router.Handle(configuration.CarpResourcePath, http.StripPrefix(configuration.CarpResourcePath, loggingMiddleware(staticResourceHandler)))
-	}
+	router.Handle("/sonar/", throttlingHandler)
 
 	log.Debugf("starting server on port %d", configuration.Port)
 
