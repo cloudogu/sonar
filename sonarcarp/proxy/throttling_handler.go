@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cloudogu/sonar/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/logging"
 	"golang.org/x/time/rate"
 )
 
@@ -20,11 +21,20 @@ var (
 )
 
 const (
-	LimiterTokenRate     = 1
-	LimiterBurstSize     = 150
+	// LimiterTokenRate contains the tokens per second that each client will receive to refill the limiter bucket.
+	LimiterTokenRate = 1
+	// LimiterBurstSize contains the maximum number of tokens until requests get throttled.
+	LimiterBurstSize = 150
+	// LimiterCleanInterval contains the default time window in seconds between all clients will be checked if they can
+	// be reset by checking if at least one single token is available.
 	LimiterCleanInterval = 300
 )
 
+// NewThrottlingHandler creates a drop-in HTTP handler that returns HTTP 429 "Too Many Requests" if a client creates too
+// many requests whose response is HTTP 401 "Unauthorized".
+//
+// Using the Leaky-Bucket-algorithm, this handler will take a configuration which configures a time window, burst size,
+// and token refresh rate to set up the throttle agent.
 func NewThrottlingHandler(ctx context.Context, configuration config.Configuration, handler http.Handler) http.Handler {
 	limiterTokenRateInSecs := configuration.LimiterTokenRate
 	if limiterTokenRateInSecs == 0 {
@@ -44,25 +54,18 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		// TODO stuff here
-		/*
-			authenticationUnnecessary := isAuthenticationRequired(p.staticResourceMatchers, r.URL.Path)
-			if authenticationUnnecessary {
-				p.forwarder.ServeHTTP(w, r)
-				return
-			}
-		*/
+		statusWriter := logging.NewStatusResponseWriter(writer)
 
 		username, _, ok := request.BasicAuth()
 		if !ok {
-			username = "john.throttle.doe@ces.invalid"
+			username = "sonarcarp.throttling@ces.invalid"
 		}
 
 		forwardedIpAddrRaw := request.Header.Get(_HttpHeaderXForwardedFor)
 		isCesInternalDoguCall := forwardedIpAddrRaw == ""
 		if isCesInternalDoguCall {
 			log.Debugf("No %s header is set for request. Forwarding internal dogu request without throttling", _HttpHeaderXForwardedFor)
-			handler.ServeHTTP(writer, request)
+			handler.ServeHTTP(statusWriter, request)
 			return
 		}
 
@@ -73,18 +76,14 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 			initialForwardedIpAddress = strings.TrimSpace(forwardedIpAddresses[0])
 		}
 
-		log.Debugf("Extracted ip from %s for throttling: %s", _HttpHeaderXForwardedFor, username)
+		log.Debugf("Extracted IP  %s from %s for throttling: %s", initialForwardedIpAddress, _HttpHeaderXForwardedFor, username)
 
 		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
 		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
 
-		statusWriter := &statusResponseWriter{
-			ResponseWriter: writer,
-			httpStatusCode: http.StatusOK,
-		}
-
+		// Consume one token AND check if request is still allowed
 		if !limiter.Allow() {
-			log.Infof("Throttle request to %s from user %s with ip %s", request.RequestURI, username, initialForwardedIpAddress)
+			log.Infof("Throttle request to %s from user %s with ip %s", request.RequestURI, username, forwardedIpAddresses)
 
 			http.Error(statusWriter, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 			return
@@ -94,10 +93,9 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 		handler.ServeHTTP(statusWriter, request)
 
-		log.Debugf("Status for %s returned with %d", request.URL.String(), statusWriter.httpStatusCode)
+		log.Debugf("Status for %s returned with %d", request.URL.String(), statusWriter.HttpStatusCode())
 
-		if statusWriter.httpStatusCode >= 200 && statusWriter.httpStatusCode < 400 {
-			log.Debugf("Status sufficiently okay - resetting limiter for %s", ipUsernameId)
+		if statusWriter.HttpStatusCode() >= 200 && statusWriter.HttpStatusCode() < 400 {
 			cleanClient(ipUsernameId)
 		}
 
@@ -122,22 +120,29 @@ func getOrCreateLimiter(ip string, limiterTokenRate, limiterBurstSize int) *rate
 	return l
 }
 
-func cleanClient(ip string) {
+func cleanClient(clientHandle string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	delete(clients, ip)
+	log.Debugf("Resetting limiter for %s", clientHandle)
+	delete(clients, clientHandle)
 }
 
 func cleanClients() {
 	mu.Lock()
 	defer mu.Unlock()
 
+	numberCleaned := 0
 	for client, limiter := range clients {
 		if limiter.Allow() {
 			log.Debugf("Cleaning limiter for %s", client)
 			delete(clients, client)
 		}
+		numberCleaned++
+	}
+
+	if numberCleaned > 0 {
+		log.Infof("Removed limiters for %d clients", numberCleaned)
 	}
 }
 
@@ -147,7 +152,7 @@ func startCleanJob(ctx context.Context, cleanInterval int) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Infof("Context done - stop throttling cleanup job")
+			log.Info("Context done. Stop throttling cleanup job")
 			return
 		case <-tick:
 			log.Info("Start cleanup for clients in throttling map")

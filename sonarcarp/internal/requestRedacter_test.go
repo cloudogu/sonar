@@ -18,28 +18,31 @@ func TestRedactRequestHeaders(t *testing.T) {
 		args args
 		want http.Header
 	}{
-		{"removes regular named cookie header", args{map[string][]string{
+		{"redacts regular named cookie header", args{map[string][]string{
 			"Cock-a-doodle": {"kikiriki"},
 			"Cookies":       cookieValue,
 			"X-Cookies":     {"asdf"},
 		}}, http.Header{
 			"Cock-a-doodle": {"kikiriki"},
+			"Cookies":       {"[Redacted]"},
 			"X-Cookies":     {"asdf"}},
 		},
-		{"removes uppercase named cookie header", args{map[string][]string{
+		{"redacts uppercase named cookie header", args{map[string][]string{
 			"Cock-a-doodle": {"kikiriki"},
 			"COOKIES":       cookieValue,
 			"X-Cookies":     {"asdf"},
 		}}, http.Header{
 			"Cock-a-doodle": {"kikiriki"},
+			"COOKIES":       {"[Redacted]"},
 			"X-Cookies":     {"asdf"}},
 		},
-		{"removes Authorization header", args{map[string][]string{
+		{"redacts Authorization header", args{map[string][]string{
 			"Amazing-Header":   {"amazing!"},
 			"Authorization":    AuthValue,
 			"X-Authentication": {"Hello"},
 		}}, http.Header{
 			"Amazing-Header":   {"amazing!"},
+			"Authorization":    {"[Redacted]"},
 			"X-Authentication": {"Hello"}},
 		},
 	}

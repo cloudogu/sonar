@@ -1,18 +1,22 @@
 package proxy
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"regexp"
 	"testing"
 
-	"github.com/cloudogu/go-cas"
-	"github.com/cloudogu/sonar/sonarcarp/config"
-	"github.com/cloudogu/sonar/sonarcarp/mocks"
+	"github.com/cloudogu/sonar/sonarcarp/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cloudogu/go-cas"
+
+	"github.com/cloudogu/sonar/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/mocks"
 )
 
 func TestCreateProxyHandler(t *testing.T) {
@@ -63,7 +67,40 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		fwdMock.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
 		fwdMock.AssertExpectations(t)
 	})
+	t.Run("try double writeheader for backchannel logout cas request", func(t *testing.T) {
+		tUrl, err := url.Parse("http://localhost:9000/sonar/")
+		require.NoError(t, err)
 
+		fwdMock := &mocks.Handler{
+			MserveHTTP: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, tUrl, r.URL)
+				w.WriteHeader(http.StatusFound)
+				_, lerr := w.Write([]byte("Location: https://192.168.56.2/cas/logout"))
+				require.NoError(t, lerr)
+			},
+		}
+
+		fwdMock.On("ServeHTTP", mock.Anything, mock.Anything).Return()
+
+		ph := proxyHandler{
+			targetURL:        tUrl,
+			forwarder:        fwdMock,
+			casAuthenticated: func(r *http.Request) bool { return true },
+		}
+		testctx := context.Background()
+		cfg := config.Configuration{}
+		sut := logging.Middleware(NewThrottlingHandler(testctx, cfg, ph), "testThrottlingHandler")
+
+		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/sonar/", nil)
+		req.Header.Add("Location", "https://192.168.56.2/cas/logout")
+		req.Header.Add("Set-Cookie", "_cas-session=102938471023984710239874")
+		require.NoError(t, err)
+
+		sut.ServeHTTP(httptest.NewRecorder(), req)
+
+		fwdMock.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
+		fwdMock.AssertExpectations(t)
+	})
 	t.Run("front channel logout", func(t *testing.T) {
 		tUrl, err := url.Parse("testURL")
 		require.NoError(t, err)

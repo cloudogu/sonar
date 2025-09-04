@@ -25,9 +25,11 @@ func RedactRequestHeaders(original http.Header) http.Header {
 	for key, values := range original {
 		switch strings.ToLower(key) {
 		case "cookies":
-			redacted[key] = append(redacted[key], "Redacted :D")
+			fallthrough
+		case "set-cookie":
+			fallthrough
 		case "authorization":
-			redacted[key] = append(redacted[key], "Redacted :D")
+			redacted[key] = append(redacted[key], "[Redacted]")
 		default:
 			redacted[key] = append(redacted[key], values...)
 		}

@@ -67,11 +67,11 @@ func createStaticResourceMatchers(paths []string) ([]*regexp.Regexp, error) {
 	var result []*regexp.Regexp
 
 	for _, path := range paths {
-		regexp, err := regexp.Compile(path)
+		regex, err := regexp.Compile(path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile regexp for static resource path '%s' (is it a compatible regexp?): %w", path, err)
+			return nil, fmt.Errorf("failed to compile regex for static resource path '%s' (is it a compatible regex?): %w", path, err)
 		}
-		result = append(result, regexp)
+		result = append(result, regex)
 	}
 
 	return result, nil
@@ -95,27 +95,31 @@ func isBrowserUserAgent(userAgent string) bool {
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy handler was called for request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
+	if p.isLogoutRequest(r) {
+		log.Debug("Proxy: Logout request")
+		cas.RedirectToLogout(w, r)
+		return
+	}
+
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
 	authenticationRequired := isAuthenticationRequired(p.staticResourceMatchers, r.URL.Path)
 	if !authenticationRequired {
+		log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
 		p.forwarder.ServeHTTP(w, r)
 		return
 	}
 
 	// let everything-REST through
 	if !IsBrowserRequest(r) {
+		log.Debugf("Proxy: Found non-browser %s request to %s", r.Method, r.URL.String())
 		p.forwarder.ServeHTTP(w, r)
 		return
 	}
 
-	if p.isLogoutRequest(r) {
-		cas.RedirectToLogout(w, r)
-		return
-	}
-
 	if !p.casAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
+		log.Debugf("Proxy: Found non-authenticated %s request to %s", r.Method, r.URL.String())
 		cas.RedirectToLogin(w, r)
 		return
 	}

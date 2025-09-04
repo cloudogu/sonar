@@ -1,4 +1,4 @@
-package proxy
+package logging
 
 import (
 	"net/http"
@@ -14,8 +14,8 @@ import (
 func TestStatusResponseWriter_WriteHeader(t *testing.T) {
 	rwMock := httptest.NewRecorder()
 
-	sw := statusResponseWriter{
-		ResponseWriter: rwMock,
+	sw := StatusResponseWriter{
+		writer:         rwMock,
 		httpStatusCode: 0,
 	}
 
@@ -39,7 +39,7 @@ func TestLoggingMiddleware(t *testing.T) {
 	lm, reset := mocks.CreateLoggingMock(log)
 	defer reset()
 
-	h := loggingMiddleware(mh)
+	h := Middleware(mh, "testlogging")
 
 	mw := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, "testURL", nil)

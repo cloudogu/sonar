@@ -9,9 +9,11 @@ import (
 	"path"
 	"strconv"
 
+	"github.com/op/go-logging"
+
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
-	"github.com/op/go-logging"
+	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
 )
 
 var log = logging.MustGetLogger("proxy")
@@ -42,11 +44,11 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		configuration,
 	)
 
-	loggedPHandler := loggingMiddleware(pHandler, "proxy")
+	loggedPHandler := carplog.Middleware(pHandler, "proxy")
 
 	for _, alwaysAuthorizedRoutePattern := range configuration.CarpResourcePaths {
 		log.Infof("Registering as static resource path: %s", alwaysAuthorizedRoutePattern)
-		router.Handle("GET "+alwaysAuthorizedRoutePattern, http.StripPrefix("/sonar", loggingMiddleware(loggedPHandler, "staticProxyHandler")))
+		router.Handle("GET "+alwaysAuthorizedRoutePattern, http.StripPrefix("/sonar", carplog.Middleware(loggedPHandler, "staticProxyHandler")))
 	}
 
 	throttlingHandler := NewThrottlingHandler(ctx, configuration, loggedPHandler)

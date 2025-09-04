@@ -82,6 +82,27 @@ func TestThrottlingHandler(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		}
 	})
+	t.Run("try double writeheader for backchannel logout cas request", func(t *testing.T) {
+		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusFound)
+		}
+
+		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+
+		server := httptest.NewServer(throttlingHandler)
+		defer cleanUp(server)
+
+		req, err := http.NewRequest(http.MethodPost, server.URL+"/sonar/", nil)
+		require.NoError(t, err)
+
+		req.Header.Set(_HttpHeaderXForwardedFor, "172.18.0.1") // simulate nginx reverse proxy container address
+
+		for i := 0; i < 3; i++ { // respect the upper limiter configuration...
+			resp, lErr := server.Client().Do(req)
+			assert.NoError(t, lErr)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+		}
+	})
 
 	t.Run("Return error when invalid BasicAuth is provided", func(t *testing.T) {
 		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
