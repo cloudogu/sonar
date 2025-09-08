@@ -53,19 +53,26 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		statusWriter := logging.NewStatusResponseWriter(writer)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		statusWriter := logging.NewStatusResponseWriter(w)
 
-		username, _, ok := request.BasicAuth()
+		authenticationRequired := isAuthenticationRequired(staticResourceMatchers, r.URL.Path)
+		if !authenticationRequired {
+			log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		username, _, ok := r.BasicAuth()
 		if !ok {
 			username = "sonarcarp.throttling@ces.invalid"
 		}
 
-		forwardedIpAddrRaw := request.Header.Get(_HttpHeaderXForwardedFor)
+		forwardedIpAddrRaw := r.Header.Get(_HttpHeaderXForwardedFor)
 		isCesInternalDoguCall := forwardedIpAddrRaw == ""
 		if isCesInternalDoguCall {
 			log.Debugf("No %s header is set for request. Forwarding internal dogu request without throttling", _HttpHeaderXForwardedFor)
-			handler.ServeHTTP(statusWriter, request)
+			handler.ServeHTTP(statusWriter, r)
 			return
 		}
 
@@ -81,9 +88,9 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
 		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
 
-		// Consume one token AND check if request is still allowed
+		// Consume one token AND check if r is still allowed
 		if !limiter.Allow() {
-			log.Infof("Throttle request to %s from user %s with ip %s", request.RequestURI, username, forwardedIpAddresses)
+			log.Infof("Throttle request to %s from user %s with ip %s", r.RequestURI, username, forwardedIpAddresses)
 
 			http.Error(statusWriter, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 			return
@@ -91,9 +98,9 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 		log.Debugf("Client %s has %.1f tokens left", ipUsernameId, limiter.Tokens())
 
-		handler.ServeHTTP(statusWriter, request)
+		handler.ServeHTTP(statusWriter, r)
 
-		log.Debugf("Status for %s returned with %d", request.URL.String(), statusWriter.HttpStatusCode())
+		log.Debugf("Status for %s returned with %d", r.URL.String(), statusWriter.HttpStatusCode())
 
 		if statusWriter.HttpStatusCode() >= 200 && statusWriter.HttpStatusCode() < 400 {
 			cleanClient(ipUsernameId)

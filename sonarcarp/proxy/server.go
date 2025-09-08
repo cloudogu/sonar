@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strconv"
 
 	"github.com/op/go-logging"
@@ -17,13 +18,9 @@ import (
 )
 
 var log = logging.MustGetLogger("proxy")
+var staticResourceMatchers []*regexp.Regexp
 
 func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
-	//staticFileHandler, err := createStaticFileHandler()
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to create static handler: %w", err)
-	//}
-
 	casClient, err := NewCasClientFactory(configuration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CAS client: %w", err)
@@ -36,6 +33,11 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		Name:      configuration.NameHeader,
 	}
 
+	staticResourceMatchers, err = createStaticResourceMatchers(configuration.CarpResourcePaths)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create static resource matchers: %w", err)
+	}
+
 	router := http.NewServeMux()
 
 	pHandler, err := createProxyHandler(
@@ -45,11 +47,6 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 	)
 
 	loggedPHandler := carplog.Middleware(pHandler, "proxy")
-
-	for _, alwaysAuthorizedRoutePattern := range configuration.CarpResourcePaths {
-		log.Infof("Registering as static resource path: %s", alwaysAuthorizedRoutePattern)
-		router.Handle("GET "+alwaysAuthorizedRoutePattern, http.StripPrefix("/sonar", carplog.Middleware(loggedPHandler, "staticProxyHandler")))
-	}
 
 	throttlingHandler := NewThrottlingHandler(ctx, configuration, loggedPHandler)
 

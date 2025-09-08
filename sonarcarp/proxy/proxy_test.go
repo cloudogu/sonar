@@ -123,8 +123,8 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		fwdMock.AssertNotCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
 		fwdMock.AssertExpectations(t)
 	})
-	t.Run("Unauthenticated Call", func(t *testing.T) {
-		tUrl, err := url.Parse("testURL")
+	t.Run("Unauthenticated browser request does not call forwarder", func(t *testing.T) {
+		tUrl, err := url.Parse("/sonar/api/testURL")
 		require.NoError(t, err)
 
 		fwdMock := &mocks.Handler{}
@@ -135,12 +135,48 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 			casAuthenticated: func(r *http.Request) bool { return false },
 		}
 
-		req, err := http.NewRequest(http.MethodGet, "otherURL", nil)
+		req, err := http.NewRequest(http.MethodGet, "/sonar/api/otherURL", nil)
 		require.NoError(t, err)
+		req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0")
 
+		// when
 		ph.ServeHTTP(httptest.NewRecorder(), req)
 
+		// then
 		fwdMock.AssertNotCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
+		fwdMock.AssertExpectations(t)
+	})
+	t.Run("Unauthenticated other request goes through failing forwarder", func(t *testing.T) {
+		// given
+		tUrl, err := url.Parse("/sonar/api/testURL")
+		require.NoError(t, err)
+
+		fwdMock := &mocks.Handler{}
+		fwdMock.On("ServeHTTP", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			// then
+			writerRaw := args.Get(0)
+			writer := writerRaw.(http.ResponseWriter)
+			writer.WriteHeader(http.StatusUnauthorized)
+			_, _ = writer.Write([]byte("you nasty hacker!"))
+		})
+
+		ph := proxyHandler{
+			targetURL:        tUrl,
+			forwarder:        fwdMock,
+			casAuthenticated: func(r *http.Request) bool { return false },
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "/sonar/api/otherURL", nil)
+		require.NoError(t, err)
+		req.Header.Add("User-Agent", "curl/1.2.3")
+
+		recorder := httptest.NewRecorder()
+		// when
+		ph.ServeHTTP(recorder, req)
+
+		// then
+		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+		fwdMock.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
 		fwdMock.AssertExpectations(t)
 	})
 }

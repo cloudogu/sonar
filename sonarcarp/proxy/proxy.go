@@ -26,15 +26,14 @@ type authorizationHeaders struct {
 }
 
 type proxyHandler struct {
-	targetURL              *url.URL
-	forwarder              http.Handler
-	casClient              *cas.Client
-	headers                authorizationHeaders
-	logoutPath             string
-	logoutRedirectionPath  string
-	casAuthenticated       func(r *http.Request) bool
-	adminGroupMapping      sonarAdminGroupMapping
-	staticResourceMatchers []*regexp.Regexp
+	targetURL             *url.URL
+	forwarder             http.Handler
+	casClient             *cas.Client
+	headers               authorizationHeaders
+	logoutPath            string
+	logoutRedirectionPath string
+	casAuthenticated      func(r *http.Request) bool
+	adminGroupMapping     sonarAdminGroupMapping
 }
 
 func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
@@ -47,17 +46,14 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 
 	fwd := forward.New(true)
 
-	staticResourceMatchers, err := createStaticResourceMatchers(cfg.CarpResourcePaths)
-
 	pHandler := proxyHandler{
-		targetURL:              targetURL,
-		forwarder:              fwd,
-		casAuthenticated:       cas.IsAuthenticated,
-		headers:                headers,
-		logoutPath:             cfg.LogoutPath,
-		logoutRedirectionPath:  cfg.LogoutRedirectPath,
-		adminGroupMapping:      sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
-		staticResourceMatchers: staticResourceMatchers,
+		targetURL:             targetURL,
+		forwarder:             fwd,
+		casAuthenticated:      cas.IsAuthenticated,
+		headers:               headers,
+		logoutPath:            cfg.LogoutPath,
+		logoutRedirectionPath: cfg.LogoutRedirectPath,
+		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
 	}
 
 	return casClient.CreateHandler(pHandler), nil
@@ -104,7 +100,7 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
-	authenticationRequired := isAuthenticationRequired(p.staticResourceMatchers, r.URL.Path)
+	authenticationRequired := isAuthenticationRequired(staticResourceMatchers, r.URL.Path)
 	if !authenticationRequired {
 		log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
 		p.forwarder.ServeHTTP(w, r)

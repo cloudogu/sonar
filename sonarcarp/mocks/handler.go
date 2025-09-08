@@ -1,8 +1,9 @@
 package mocks
 
 import (
-	"github.com/stretchr/testify/mock"
 	"net/http"
+
+	"github.com/stretchr/testify/mock"
 )
 
 type Handler struct {
@@ -11,7 +12,7 @@ type Handler struct {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Called()
+	h.Called(w, r)
 	if h.MserveHTTP != nil {
 		h.MserveHTTP(w, r)
 	}
