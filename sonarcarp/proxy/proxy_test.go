@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"regexp"
 	"testing"
 
 	"github.com/cloudogu/sonar/sonarcarp/logging"
+	"github.com/cloudogu/sonar/sonarcarp/throttling"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -89,7 +89,7 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		}
 		testctx := context.Background()
 		cfg := config.Configuration{}
-		sut := logging.Middleware(NewThrottlingHandler(testctx, cfg, ph), "testThrottlingHandler")
+		sut := logging.Middleware(throttling.NewThrottlingHandler(testctx, cfg, ph), "testThrottlingHandler")
 
 		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/sonar/", nil)
 		req.Header.Add("Location", "https://192.168.56.2/cas/logout")
@@ -199,31 +199,6 @@ func Test_isInAdminGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equalf(t, tt.want, isInAdminGroup(tt.args.currentGroups, cesAdminGroup), "isInAdminGroup(%v, %v)", tt.args.currentGroups, cesAdminGroup)
-		})
-	}
-}
-
-func Test_isAuthenticationRequired(t *testing.T) {
-	staticUrlMatchers := []*regexp.Regexp{
-		regexp.MustCompile("/sonar/js/"),
-		regexp.MustCompile("/sonar/images/"),
-		regexp.MustCompile("/sonar/favicon.ico"),
-	}
-	tests := []struct {
-		name string
-		path string
-		want bool
-	}{
-		{"false for first matcher", "/sonar/js/AlmSettingsInstanceSelector-BZLX0vJ4.js", false},
-		{"false for nested path", "/sonar/images/alm/azure_grey.svg", false},
-		{"false for last matcher", "/sonar/favicon.ico", false},
-		{"true for UI endpoint", "/sonar/projects/create", true},
-		{"true for API endpoint", "/sonar/api/features/list", true},
-		{"true for basic traversal attack", "/sonar/js/../../sonar/api/features/list", true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, isAuthenticationRequired(staticUrlMatchers, tt.path), "isAuthenticationRequired(%v, %v)", staticUrlMatchers, tt.path)
 		})
 	}
 }

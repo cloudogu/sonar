@@ -1,4 +1,4 @@
-package proxy
+package throttling
 
 import (
 	"context"

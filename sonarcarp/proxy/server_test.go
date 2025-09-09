@@ -28,7 +28,7 @@ func Test_isBackChannelLogoutRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		actual := isBackChannelLogoutRequest()(req)
+		actual := isAlwaysDenyBackChannelLogoutRequest()(req)
 
 		// then
 		require.NoError(t, err)
@@ -40,7 +40,7 @@ func Test_isBackChannelLogoutRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		actual := isBackChannelLogoutRequest()(req)
+		actual := isAlwaysDenyBackChannelLogoutRequest()(req)
 
 		// then
 		require.NoError(t, err)

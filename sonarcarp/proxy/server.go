@@ -7,23 +7,23 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"strconv"
 
+	"github.com/cloudogu/sonar/sonarcarp/internal"
+	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
+	"github.com/cloudogu/sonar/sonarcarp/throttling"
 	"github.com/op/go-logging"
 
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
-	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
 )
 
 var log = logging.MustGetLogger("proxy")
-var staticResourceMatchers []*regexp.Regexp
 
 func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
 	casClient, err := NewCasClientFactory(configuration)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create CAS client: %w", err)
+		return nil, fmt.Errorf("failed to create CAS client during carp server start: %w", err)
 	}
 
 	headers := authorizationHeaders{
@@ -33,9 +33,9 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		Name:      configuration.NameHeader,
 	}
 
-	staticResourceMatchers, err = createStaticResourceMatchers(configuration.CarpResourcePaths)
+	err = internal.InitStaticResourceMatchers(configuration.CarpResourcePaths)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create static resource matchers: %w", err)
+		return nil, fmt.Errorf("failed to static resource matcher init during carp server start: %w", err)
 	}
 
 	router := http.NewServeMux()
@@ -46,11 +46,11 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		configuration,
 	)
 
-	loggedPHandler := carplog.Middleware(pHandler, "proxy")
+	throttlingHandler := throttling.NewThrottlingHandler(ctx, configuration, pHandler)
 
-	throttlingHandler := NewThrottlingHandler(ctx, configuration, loggedPHandler)
+	loggedThrHandler := carplog.Middleware(throttlingHandler, "throttling")
 
-	router.Handle("/sonar/", throttlingHandler)
+	router.Handle("/sonar/", loggedThrHandler)
 
 	log.Debugf("starting server on port %d", configuration.Port)
 
@@ -86,12 +86,12 @@ func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error
 		URL:             serviceUrl,
 		Client:          httpClient,
 		URLScheme:       urlScheme,
-		IsLogoutRequest: isBackChannelLogoutRequest(),
+		IsLogoutRequest: isAlwaysDenyBackChannelLogoutRequest(),
 	}), nil
 }
 
-func isBackChannelLogoutRequest() func(r *http.Request) bool {
+func isAlwaysDenyBackChannelLogoutRequest() func(r *http.Request) bool {
 	return func(r *http.Request) bool {
-		return r.Method == "POST" && (r.URL.Path == "/sonar/" || r.URL.Path == "/sonar")
+		return false
 	}
 }

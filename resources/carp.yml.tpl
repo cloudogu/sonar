@@ -29,12 +29,13 @@ sonar-admin-group: sonar-administrators
 application-exec-command: "{{ .Env.Get "carpExecCommand" }}"
 # The following list of regular expressions of SonarQube routes mark routes that do not need authorization.
 # For security reasons, here usually appear static resources like CSS files etc.
+# example: /sonar/css/ matches all requests that start with this path
 carp-resource-paths:
-  - sonar/api/.*
-  - sonar/css/.*
-  - sonar/favicon.ico
-  - sonar/fonts/.*
-  - sonar/images/.*
-  - sonar/js/.*
+  - /sonar/css/
+  - /sonar/favicon.ico
+  - /sonar/fonts/
+  - /sonar/images/
+  - /sonar/js/
+
 
 

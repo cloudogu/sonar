@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/vulcand/oxy/v2/forward"
+	"golang.org/x/time/rate"
+)
+
+var (
+	mu      sync.RWMutex
+	clients = make(map[string]*rate.Limiter)
 )
 
 type sonarAdminGroupMapping struct {
@@ -51,56 +57,45 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 		forwarder:             fwd,
 		casAuthenticated:      cas.IsAuthenticated,
 		headers:               headers,
+		casClient:             casClient,
 		logoutPath:            cfg.LogoutPath,
 		logoutRedirectionPath: cfg.LogoutRedirectPath,
 		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
 	}
 
-	return casClient.CreateHandler(pHandler), nil
+	casHandlingProxy := casClient.CreateHandler(pHandler)
+
+	return casHandlingProxy, nil
 }
 
-func createStaticResourceMatchers(paths []string) ([]*regexp.Regexp, error) {
-	var result []*regexp.Regexp
-
-	for _, path := range paths {
-		regex, err := regexp.Compile(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to compile regex for static resource path '%s' (is it a compatible regex?): %w", path, err)
-		}
-		result = append(result, regex)
-	}
-
-	return result, nil
-}
-
-func (p proxyHandler) isLogoutRequest(r *http.Request) bool {
+func (p proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
 	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
 	// So in that case we use the referrer to check if a request is a logout request.
 	return strings.HasSuffix(r.Referer(), p.logoutPath) && r.URL.Path == p.logoutRedirectionPath
 }
 
 func IsBrowserRequest(req *http.Request) bool {
-	return isBrowserUserAgent(req.Header.Get("User-Agent")) || isBackChannelLogoutRequest()(req)
-}
-
-func isBrowserUserAgent(userAgent string) bool {
-	lowerUserAgent := strings.ToLower(userAgent)
+	lowerUserAgent := strings.ToLower(req.Header.Get("User-Agent"))
 	return strings.Contains(lowerUserAgent, "mozilla") || strings.Contains(lowerUserAgent, "opera")
 }
 
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy handler was called for request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
-	if p.isLogoutRequest(r) {
-		log.Debug("Proxy: Logout request")
-		cas.RedirectToLogout(w, r)
-		return
-	}
-
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
-	authenticationRequired := isAuthenticationRequired(staticResourceMatchers, r.URL.Path)
+	if isBackChannelLogoutRequest(r) {
+		log.Debugf("Proxy: %s %s backchannel request found, logging out against sonar", r.Method, r.URL.String())
+		p.casClient.Logout(w, r)
+		r.URL.Path = p.logoutPath
+		p.forwarder.ServeHTTP(w, r)
+		return
+	} else {
+		log.Debugf("Proxy: %s %s backchannel request not found... continue with other stuff", r.Method, r.URL.String())
+	}
+
+	authenticationRequired := internal.IsAuthenticationRequired(r.URL.Path)
 	if !authenticationRequired {
 		log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
 		p.forwarder.ServeHTTP(w, r)
@@ -125,21 +120,6 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	setHeaders(r, p.headers, p.adminGroupMapping)
 
 	p.forwarder.ServeHTTP(w, r)
-}
-
-func isAuthenticationRequired(staticUrlMatchers []*regexp.Regexp, path string) bool {
-	for _, matcher := range staticUrlMatchers {
-
-		cleanedPath, err := url.JoinPath(path, "")
-		if err != nil {
-			log.Errorf("Error cleaning path '%s' (will require authentication though): %s", path, err.Error())
-		}
-		if matcher.MatchString(cleanedPath) {
-			return false
-		}
-	}
-
-	return true
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.
@@ -171,4 +151,8 @@ func isInAdminGroup(currentGroups []string, cesAdminGroup string) bool {
 	}
 
 	return false
+}
+
+func isBackChannelLogoutRequest(r *http.Request) bool {
+	return r.Method == "POST" && (r.URL.Path == "/sonar/" || r.URL.Path == "/sonar")
 }

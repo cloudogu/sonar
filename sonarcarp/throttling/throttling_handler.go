@@ -1,4 +1,4 @@
-package proxy
+package throttling
 
 import (
 	"context"
@@ -8,17 +8,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudogu/sonar/sonarcarp/config"
-	"github.com/cloudogu/sonar/sonarcarp/logging"
 	"golang.org/x/time/rate"
+
+	"github.com/op/go-logging"
+
+	"github.com/cloudogu/sonar/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/internal"
+	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
 )
 
 const _HttpHeaderXForwardedFor = "X-Forwarded-For"
-
-var (
-	mu      sync.RWMutex
-	clients = make(map[string]*rate.Limiter)
-)
 
 const (
 	// LimiterTokenRate contains the tokens per second that each client will receive to refill the limiter bucket.
@@ -28,6 +27,13 @@ const (
 	// LimiterCleanInterval contains the default time window in seconds between all clients will be checked if they can
 	// be reset by checking if at least one single token is available.
 	LimiterCleanInterval = 300
+)
+
+var log = logging.MustGetLogger("proxy")
+
+var (
+	mu      sync.RWMutex
+	clients = make(map[string]*rate.Limiter)
 )
 
 // NewThrottlingHandler creates a drop-in HTTP handler that returns HTTP 429 "Too Many Requests" if a client creates too
@@ -54,12 +60,13 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		statusWriter := logging.NewStatusResponseWriter(w)
+		log.Debugf("ThrottlingHandler was hit")
+		statusWriter := carplog.NewStatusResponseWriter(w, r, "throttler")
 
-		authenticationRequired := isAuthenticationRequired(staticResourceMatchers, r.URL.Path)
+		authenticationRequired := internal.IsAuthenticationRequired(r.URL.Path)
 		if !authenticationRequired {
 			log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
-			handler.ServeHTTP(w, r)
+			handler.ServeHTTP(statusWriter, r)
 			return
 		}
 
