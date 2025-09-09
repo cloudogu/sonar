@@ -5,18 +5,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/vulcand/oxy/v2/forward"
-	"golang.org/x/time/rate"
-)
-
-var (
-	mu      sync.RWMutex
-	clients = make(map[string]*rate.Limiter)
 )
 
 type sonarAdminGroupMapping struct {

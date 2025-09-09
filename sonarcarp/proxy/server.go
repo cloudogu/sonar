@@ -11,6 +11,7 @@ import (
 
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
+	"github.com/cloudogu/sonar/sonarcarp/session"
 	"github.com/cloudogu/sonar/sonarcarp/throttling"
 	"github.com/op/go-logging"
 
@@ -37,6 +38,8 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 	if err != nil {
 		return nil, fmt.Errorf("failed to static resource matcher init during carp server start: %w", err)
 	}
+
+	session.InitCleanJob(ctx, session.JwtSessionCleanInterval) // TODO configure interval
 
 	router := http.NewServeMux()
 

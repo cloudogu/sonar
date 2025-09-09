@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
