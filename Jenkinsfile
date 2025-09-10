@@ -17,6 +17,7 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
     dependedDogus       : ['cas', 'usermgt', 'postgresql'],
     doBatsTests         : true,
     checkMarkdown       : true,
+    runIntegrationTests : true,
     cypressImage        : 'cypress/included:13.14.2'
 
 ])
