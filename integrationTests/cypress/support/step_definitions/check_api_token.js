@@ -21,8 +21,24 @@ Given(/^reset API token$/, function () {
     generateToken()
 });
 
+Given(/^close welcome dialog$/, function () {
+    closeSonarWelcomeDialog()
+});
+
+<button class="ehbmmdy0 css-126bnyz e151mzoo3" aria-label="Close" type="button"><span aria-hidden="true" class="css-epok7e eqviqv51"></span></button>
+
+function closeSonarWelcomeDialog() {
+  cy.get('body').then($body => {
+    if ($body.find('div[role="dialog"]').length) {
+      cy.log('Sonar welcome dialog detected, closing it');
+      cy.get('button[aria-label="Close"]').click({ force: true });
+    }
+  });
+}
+
 function generateToken() {
     cy.visit("/" + env.GetDoguName() + "/account/security")
+    closeSonarWelcomeDialog();
     cy.get("button").contains("Dismiss").click({force: true})
     cy.get('#token-name').type(Math.random().toString(),{force: true})
     cy.get("div").contains("Select Token Type").click({force: true}) //select("User Token")
