@@ -25,8 +25,6 @@ Given(/^close welcome dialog$/, function () {
     closeSonarWelcomeDialog()
 });
 
-<button class="ehbmmdy0 css-126bnyz e151mzoo3" aria-label="Close" type="button"><span aria-hidden="true" class="css-epok7e eqviqv51"></span></button>
-
 function closeSonarWelcomeDialog() {
   cy.get('body').then($body => {
     if ($body.find('div[role="dialog"]').length) {
