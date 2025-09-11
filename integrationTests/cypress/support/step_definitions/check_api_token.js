@@ -21,18 +21,14 @@ Given(/^reset API token$/, function () {
     generateToken()
 });
 
-// Replace UI-driven generateToken() with an API-driven version
 function generateToken() {
-  const name = Math.random().toString();
-  cy.task("getAPIToken").then((adminToken) => {
-    // optionally revoke existing token(s) first:
-    // cy.requestSonarAPI(`/user_tokens/revoke?name=${encodeURIComponent('your-name')}`, adminToken, true, 204, "POST");
-    cy.requestSonarAPI(`/user_tokens/generate?name=${encodeURIComponent(name)}`, adminToken, true, 200, "POST")
-      .then((response) => {
-        // SonarQube returns the token in JSON; store it directly
-        cy.task("setAPIToken", response.body.token);
-      });
-  });
+    cy.visit("/" + env.GetDoguName() + "/account/security")
+    cy.get("button").contains("Dismiss").click({force: true})
+    cy.get('#token-name').type(Math.random().toString(),{force: true})
+    cy.get("div").contains("Select Token Type").click({force: true}) //select("User Token")
+    cy.get("#react-select-2-listbox").contains("User Token").click({force: true})
+    cy.get("button").contains("Generate").click({force: true})
+    cy.get("code").then((val) => {
+        cy.task("setAPIToken", val.text())
+    })
 }
-
-
