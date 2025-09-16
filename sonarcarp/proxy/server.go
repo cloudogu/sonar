@@ -51,9 +51,11 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 
 	throttlingHandler := throttling.NewThrottlingHandler(ctx, configuration, pHandler)
 
-	loggedThrHandler := carplog.Middleware(throttlingHandler, "throttling")
+	bcLogoutHandler := session.Middleware(throttlingHandler, configuration)
 
-	router.Handle("/sonar/", loggedThrHandler)
+	logHandler := carplog.Middleware(bcLogoutHandler, "throttling")
+
+	router.Handle("/sonar/", logHandler)
 
 	log.Debugf("starting server on port %d", configuration.Port)
 

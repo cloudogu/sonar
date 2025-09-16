@@ -9,6 +9,7 @@ import (
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
+	"github.com/cloudogu/sonar/sonarcarp/session"
 	"github.com/vulcand/oxy/v2/forward"
 )
 
@@ -50,7 +51,6 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 		forwarder:             fwd,
 		casAuthenticated:      cas.IsAuthenticated,
 		headers:               headers,
-		casClient:             casClient,
 		logoutPath:            cfg.LogoutPath,
 		logoutRedirectionPath: cfg.LogoutRedirectPath,
 		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
@@ -75,18 +75,14 @@ func IsBrowserRequest(req *http.Request) bool {
 func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy handler was called for request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
+	if p.isFrontChannelLogoutRequest(r) {
+		log.Debug("Proxy: Logout request")
+		cas.RedirectToLogout(w, r)
+		return
+	}
+
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
-
-	if isBackChannelLogoutRequest(r) {
-		log.Debugf("Proxy: %s %s backchannel request found, logging out against sonar", r.Method, r.URL.String())
-		p.casClient.Logout(w, r)
-		r.URL.Path = p.logoutPath
-		p.forwarder.ServeHTTP(w, r)
-		return
-	} else {
-		log.Debugf("Proxy: %s %s backchannel request not found... continue with other stuff", r.Method, r.URL.String())
-	}
 
 	authenticationRequired := internal.IsAuthenticationRequired(r.URL.Path)
 	if !authenticationRequired {
@@ -110,30 +106,39 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
-	setHeaders(r, p.headers, p.adminGroupMapping)
+	casUsername, casAttrs := getCasAttributes(r)
+	saveJwtSessionForBackchannelLogout(r, casUsername)
+	setHeaders(r, casUsername, casAttrs, p.headers, p.adminGroupMapping)
 
 	p.forwarder.ServeHTTP(w, r)
 }
 
-// setHeaders enriches a given request with SonarQube HTTP authorization headers.
-func setHeaders(r *http.Request, headers authorizationHeaders, adminGroupMapping sonarAdminGroupMapping) {
+func getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
 	username := cas.Username(r)
-	r.Header.Add(headers.Principal, username)
-
 	attrs := cas.Attributes(r)
-	r.Header.Add(headers.Name, attrs.Get("displayName"))
-	r.Header.Add(headers.Mail, attrs.Get("mail"))
-	// heads-up! do not use attrs.Get because it only returns the first group entry
-	userGroups := strings.Join(attrs["groups"], ",") // delimited by comma according the sonar.properties commentary
-	if isInAdminGroup(attrs["groups"], adminGroupMapping.cesAdminGroup) {
+	return username, attrs
+}
+
+func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
+	session.SaveJwtTokensFor(casUsername, r.Cookies())
+}
+
+// setHeaders enriches a given request with SonarQube HTTP authorization headers.
+func setHeaders(r *http.Request, casUsername string, casAttributes cas.UserAttributes, headers authorizationHeaders, adminGroupMapping sonarAdminGroupMapping) {
+	r.Header.Add(headers.Principal, casUsername)
+	r.Header.Add(headers.Name, casAttributes.Get("displayName"))
+	r.Header.Add(headers.Mail, casAttributes.Get("mail"))
+	// heads-up! do not use casAttributes.Get because it only returns the first group entry
+	userGroups := strings.Join(casAttributes["groups"], ",") // delimited by comma according the sonar.properties commentary
+	if isInAdminGroup(casAttributes["groups"], adminGroupMapping.cesAdminGroup) {
 		userGroups += "," + adminGroupMapping.sonarAdminGroup
 	}
 	r.Header.Add(headers.Role, userGroups)
 
-	if isInAdminGroup(attrs["groups"], adminGroupMapping.cesAdminGroup) {
+	if isInAdminGroup(casAttributes["groups"], adminGroupMapping.cesAdminGroup) {
 		r.Header.Add(adminGroupMapping.sonarAdminGroup, adminGroupMapping.cesAdminGroup)
 	}
-	log.Debugf("Groups found to user %s: %s", username, userGroups)
+	log.Debugf("Groups found to user %s: %s", casUsername, userGroups)
 }
 
 func isInAdminGroup(currentGroups []string, cesAdminGroup string) bool {
@@ -144,8 +149,4 @@ func isInAdminGroup(currentGroups []string, cesAdminGroup string) bool {
 	}
 
 	return false
-}
-
-func isBackChannelLogoutRequest(r *http.Request) bool {
-	return r.Method == "POST" && (r.URL.Path == "/sonar/" || r.URL.Path == "/sonar")
 }

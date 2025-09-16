@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/op/go-logging"
 	"os"
 	"slices"
+
+	"github.com/op/go-logging"
 )
 
 func initLogger(configuration Configuration) error {
