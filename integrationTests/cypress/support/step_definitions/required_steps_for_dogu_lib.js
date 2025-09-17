@@ -7,15 +7,38 @@ doguTestLibrary.registerSteps()
 
 
 When(/^the user clicks the dogu logout button$/, function () {
-    cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
-    // wait until the logoutMenuHandler is injected
-    // see https://github.com/cloudogu/sonar-cas-plugin/blob/develop/src/main/java/org/sonar/plugins/cas/logout/CasSonarSignOutInjectorFilter.java#L132
-    cy.wait(30000)
-    // Click user menu button
-    cy.get('#userAccountMenuDropdown-trigger').scrollIntoView().click();
-    // Click logout button
-    cy.contains("Log out").click();
+  const dogu = env.GetDoguName();
+  const triggerSel = '#dropdown-menu-trigger[aria-haspopup="menu"]';
+  const menuSel = '#dropdown-menu-dropdown';
+
+  // Go to the dogu root (CAS plugin injects logout handler there)
+  cy.visit(`/${dogu}`, { failOnStatusCode: false });
+  cy.closeDialogs();
+  // Wait for the account button to exist instead of a blind sleep
+  cy.screenshot('click-logout-dialogsclosed', { capture: 'viewport' });
+
+  cy.get(triggerSel, { timeout: 15000 }).should('be.visible');
+  // Open the dropdown (click twice is harmless with Radix)
+  cy.get(triggerSel).click({ force: true });
+
+  // Wait for Radix menu to be open & visible
+  cy.get(menuSel, { timeout: 10000 })
+    .should('have.attr', 'data-state', 'open')
+    .and('be.visible');
+
+  // Click "Log out" inside the dropdown (scoped)
+  cy.get(menuSel).within(() => {
+    cy.contains('a[role="menuitem"]', /^log out$/i, { timeout: 10000 })
+      .scrollIntoView()
+      .click({ force: true });
+  });
+
+  cy.screenshot('click-logout-success', { capture: 'viewport' });
+
+  // Clean up any leftovers
+  cy.clearCookies();
 });
+
 
 Then(/^the user has administrator privileges in the dogu$/, function () {
     cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })

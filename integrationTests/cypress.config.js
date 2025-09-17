@@ -25,6 +25,7 @@ async function setupNodeEvents(on, config) {
         getAPIToken() {
             return global.token ? global.token : null;
         },
+        log(message) { console.log('\t[cy.log]', message); return null; },
         setUserAPIToken(token) {
             global.usertoken = token;
             return null;
@@ -54,5 +55,7 @@ module.exports = defineConfig({
         setupNodeEvents,
         responseTimeout: 60000, // e.g., 60 seconds (60000ms)
         requestTimeout: 10000, // e.g., 10 seconds (10000ms) - if the request isn't even leaving the browser
+        viewportWidth: 1920,
+        viewportHeight: 1080,
     },
 });
