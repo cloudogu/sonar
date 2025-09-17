@@ -23,6 +23,7 @@ async function setupNodeEvents(on, config) {
         getAPIToken() {
             return global.token ? global.token : null;
         },
+        log(message) { console.log('\t[cy.log]', message); return null; },
         setUserAPIToken(token) {
             global.usertoken = token;
             return null;
@@ -49,6 +50,8 @@ module.exports = defineConfig({
         },
         videoCompression: false,
         specPattern: ["cypress/e2e/**/*.feature"],
-        setupNodeEvents,
+        viewportWidth: 1920,
+        viewportHeight: 1080,
+        setupNodeEvents
     },
 });
