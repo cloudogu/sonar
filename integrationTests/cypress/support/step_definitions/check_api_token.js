@@ -23,6 +23,7 @@ Given(/^reset API token$/, function () {
 
 function generateToken() {
     cy.visit("/" + env.GetDoguName() + "/account/security")
+    cy.closeDialogs();
     cy.get('#token-name').type(Math.random().toString(),{force: true})
     cy.get("div").contains("Select Token Type").click({force: true}) //select("User Token")
     cy.get("#react-select-2-listbox").contains("User Token").click({force: true})
