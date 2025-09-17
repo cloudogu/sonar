@@ -1,15 +1,9 @@
 #!groovy
-<<<<<<< HEAD
-@Library(['github.com/cloudogu/ces-build-lib@4.2.0', 'github.com/cloudogu/dogu-build-lib@v3.2.0'])
-import com.cloudogu.ces.cesbuildlib.*
-import com.cloudogu.ces.dogubuildlib.*
-=======
 @Library([
   'pipe-build-lib',
   'ces-build-lib',
   'dogu-build-lib'
 ]) _
->>>>>>> 17a09ceaa6d9df499441188fe8591eac2ca8be8a
 
 def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
     doguName           : 'sonar',
