@@ -33,15 +33,12 @@ type StatusResponseWriter struct {
 }
 
 func (srw *StatusResponseWriter) Header() http.Header {
-	log.Errorf("===== Some asked for the headers for %s", srw.r.URL.String())
 	return srw.writer.Header()
 }
 
 func (srw *StatusResponseWriter) Write(bytes []byte) (int, error) {
-	log.Errorf("===== writing %s bytes %s\n", srw.usage, srw.r.URL.String())
 	//log.Error("%s", string(debug.Stack()))
 	write, err := srw.writer.Write(bytes)
-	log.Errorf("===== end %s Write()", srw.usage)
 	return write, err
 }
 
@@ -51,13 +48,10 @@ func (srw *StatusResponseWriter) HttpStatusCode() int {
 
 // WriteHeader saves the status code for later use and then sends an HTTP response header with the provided status code.
 func (srw *StatusResponseWriter) WriteHeader(code int) {
-	log.Errorf("===== writing header code %d for %s %s\n", code, srw.r.Method, srw.r.URL.String())
-	//log.Errorf("===== %s %s was asked by %s ; %#v\n", srw.r.Method, srw.r.URL.String(), srw.r.UserAgent(), srw.r.Header)
-	//log.Error("%s", string(debug.Stack()))
+	log.Debugf("===== writing header code %d for %s %s\n", code, srw.r.Method, srw.r.URL.String())
 
 	srw.httpStatusCode = code
 	srw.writer.WriteHeader(code)
-	log.Errorf("===== %s end WriteHeader() for %s\n", srw.usage, srw.r.URL.String())
 }
 
 // Hijack enables support for websockets

@@ -9,6 +9,8 @@ type User struct {
 	// JwtToken contains the user's sonarqube session. This will be used during CAS backchannel logout request as there
 	// is no other information to handle this
 	JwtToken string
+	// Invalid marks JWT tokens that are supposed to keep //TODO
+	Invalid bool
 }
 
 func (u *User) isNullUser() bool {
@@ -22,5 +24,5 @@ func (u *User) String() string {
 	}
 	const cryptoHeaderLength = 21
 	printingSaveToken := string([]byte(u.JwtToken)[cryptoHeaderLength : cryptoHeaderLength+32])
-	return fmt.Sprintf("%s:%s...", u.UserName, printingSaveToken)
+	return fmt.Sprintf("%s:%s...:invalid? %t", u.UserName, printingSaveToken, u.Invalid)
 }

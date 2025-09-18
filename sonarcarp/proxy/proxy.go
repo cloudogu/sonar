@@ -107,6 +107,8 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
 	casUsername, casAttrs := getCasAttributes(r)
+	log.Debugf("#################### Hello General CASnobi %s %+v", casUsername, casAttrs)
+
 	saveJwtSessionForBackchannelLogout(r, casUsername)
 	setHeaders(r, casUsername, casAttrs, p.headers, p.adminGroupMapping)
 
@@ -120,7 +122,7 @@ func getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
 }
 
 func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
-	session.SaveJwtTokensFor(casUsername, r.Cookies())
+	session.SaveJwtTokensFor(casUsername, r.CookiesNamed("JWT-SESSION"))
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.

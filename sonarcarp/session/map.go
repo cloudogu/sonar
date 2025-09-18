@@ -35,11 +35,11 @@ func cleanClient(clientHandle string) {
 	delete(jwtUserSessions, clientHandle)
 }
 
-func upsertUser(username, jwtToken string) {
+func upsertUser(username, jwtToken string, invalid bool) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	jwtUserSessions[username] = User{UserName: username, JwtToken: jwtToken}
+	jwtUserSessions[username] = User{UserName: username, JwtToken: jwtToken, Invalid: invalid}
 
 	return
 }

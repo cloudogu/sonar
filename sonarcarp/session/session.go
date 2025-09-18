@@ -13,12 +13,9 @@ func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 			continue
 		}
 
-		if cookie.Path != "/sonar" { // TODO take configuration value instead
-			continue
-		}
-
+		// we do not check the cookie's path here because the sonar cookie is not set in the path attribute
 		log.Debugf("Found JWT session cookie for user %s, adding to session map", casUsername)
-		upsertUser(casUsername, cookie.Value)
+		upsertUser(casUsername, cookie.Value, false)
 
 		sessionCookieFound = true
 	}
@@ -28,10 +25,10 @@ func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 	}
 }
 
-func GetUserByUsername(casUsername string) User {
+func getUserByUsername(casUsername string) User {
 	mu.Lock()
 	defer mu.Unlock()
-
+	log.Errorf("##### current jwt session map %+v", jwtUserSessions)
 	user, ok := jwtUserSessions[casUsername]
 	if !ok {
 		log.Warningf("Could not find CAS user %s for session invalidation", casUsername)
@@ -39,8 +36,4 @@ func GetUserByUsername(casUsername string) User {
 	}
 
 	return user
-}
-
-func IsNullUser(user User) bool {
-	return user == nullUser
 }
