@@ -153,8 +153,7 @@
           "WARN",
           "DEBUG",
           "INFO",
-          "ERROR",
-          "TRACE"
+          "ERROR"
         ]
       }
     },
