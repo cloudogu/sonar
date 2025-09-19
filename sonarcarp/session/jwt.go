@@ -2,22 +2,22 @@ package session
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// TODO Georg use me :D
-func GetTokenUuidFromJwtToken(tokenStr string) (string, error) {
-	claims, err := parseJwtToken(tokenStr)
+func getTokenExpirationDate(tokenStr string) (time.Time, error) {
+	tokenClaims, err := parseJwtToken(tokenStr)
 	if err != nil {
-		return "", fmt.Errorf("could not parse JWT token %s to get sonarqube UID: %w", tokenStr, err)
+		return time.Time{}, fmt.Errorf("could not parse JWT tokenClaims %s to get expiration date: %w", tokenStr, err)
 	}
 
-	uid, err := claims.GetSubject()
-	if err != nil || uid == "" {
-		return "", fmt.Errorf("failed to get sonarqube UID from session JWT subject: %w", err)
+	expDate, err := tokenClaims.GetExpirationTime()
+	if err != nil {
+		return time.Time{}, err
 	}
-	return uid, nil
+	return expDate.Time, nil
 }
 
 // parseJwtToken takes a JWT token string and tries hard to parse it without failing for validity (because SonarQube's

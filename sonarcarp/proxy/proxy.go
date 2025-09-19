@@ -122,7 +122,7 @@ func getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
 }
 
 func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
-	session.SaveJwtTokensFor(casUsername, r.CookiesNamed("JWT-SESSION"))
+	session.SaveJwtTokensFor(casUsername, r.Cookies())
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.

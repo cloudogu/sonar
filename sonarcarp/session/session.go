@@ -7,22 +7,32 @@ import (
 const cookieNameJwtSession = "JWT-SESSION"
 
 func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
-	sessionCookieFound := false
+	jwtCookie := ""
+	xsrfCookie := ""
+
 	for _, cookie := range cookies {
-		if cookie.Name != cookieNameJwtSession {
+		if cookie.Name == cookieNameJwtSession {
+			log.Debugf("==== Hey I found a JWT: value: %s path %s ; dom %s ; exp %s", cookie.Value, cookie.Path, cookie.Domain, cookie.Expires)
+			jwtCookie = cookie.Value
 			continue
 		}
 
-		// we do not check the cookie's path here because the sonar cookie is not set in the path attribute
-		log.Debugf("Found JWT session cookie for user %s, adding to session map", casUsername)
-		upsertUser(casUsername, cookie.Value, false)
+		if cookie.Name == "XSRF-TOKEN" {
+			log.Debugf("==== Hey I found a xsrf: value: %s path %s ; dom %s ; exp %s", cookie.Value, cookie.Path, cookie.Domain, cookie.Expires)
+			xsrfCookie = cookie.Value
+			continue
+		}
 
-		sessionCookieFound = true
 	}
 
-	if !sessionCookieFound {
+	if jwtCookie == "" || xsrfCookie == "" {
 		log.Infof("No sonarqube session cookie found for %s", casUsername)
+		return
 	}
+
+	// we do not check the cookie's path here because the sonar cookie is not set in the path attribute
+	log.Debugf("Found JWT session cookie for user %s, adding to session map", casUsername)
+	upsertUser(casUsername, jwtCookie, xsrfCookie, false)
 }
 
 func getUserByUsername(casUsername string) User {

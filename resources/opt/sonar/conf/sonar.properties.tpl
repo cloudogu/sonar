@@ -294,15 +294,15 @@ sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
 
 # Global level of logs (applies to all 4 processes).
 # Supported values are INFO (default), DEBUG and TRACE
-sonar.log.level={{ .Env.Get "SONAR_LOGLEVEL" }}
+sonar.log.level=TRACE
 
 # Level of logs of each process can be controlled individually with their respective properties.
 # When specified, they overwrite the level defined at global level.
 # Supported values are INFO, DEBUG and TRACE
-#sonar.log.level.app=INFO
-#sonar.log.level.web=INFO
-#sonar.log.level.ce=INFO
-#sonar.log.level.es=INFO
+sonar.log.level.app=TRACE
+sonar.log.level.web=TRACE
+sonar.log.level.ce=INFO
+sonar.log.level.es=INFO
 
 # Path to log files. Can be absolute or relative to installation directory.
 # Default is <installation home>/logs

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -40,25 +41,21 @@ func Middleware(next http.Handler, configuration config.Configuration) http.Hand
 			return
 		}
 
-		// TODO replace fcl with sql mongering
-		// delete from session_tokens where uuid= jwt jti <- jwt parsing vorher machen
+		//// TODO replace fcl with sql mongering
+		//// delete from session_tokens where uuid= jwt jti <- jwt parsing vorher machen
+		//
+		//err := deleteSonarQubeFromDatabase(user.JwtToken)
 
-		err := deleteSonarQubeFromDatabase(user.JwtToken)
-
-		//if err := doFrontChannelLogout(configuration, user, casUser); err != nil {
-		//	log.Errorf("Failed to logout user %s against sonarqube: %s", casUser, err.Error())
-		//	next.ServeHTTP(writer, request)
-		//	return
-		//}
+		if err := doFrontChannelLogout(configuration, user, casUser); err != nil {
+			log.Errorf("Failed to logout user %s against sonarqube: %s", casUser, err.Error())
+			next.ServeHTTP(writer, request)
+			return
+		}
 
 		log.Debugf("Calling sonar logout for user %s", casUser)
 		next.ServeHTTP(writer, request)
 		return
 	})
-}
-
-func deleteSonarQubeFromDatabase(jwtToken string) error {
-
 }
 
 func doFrontChannelLogout(configuration config.Configuration, user User, casUser string) error {
@@ -75,7 +72,7 @@ func doFrontChannelLogout(configuration config.Configuration, user User, casUser
 
 	_, ok := jwtUserSessions[user.UserName]
 	if ok {
-		upsertUser(user.UserName, user.JwtToken, true)
+		upsertUser(user.UserName, user.JwtToken, user.XsrfToken, true)
 	}
 
 	log.Debugf("Sonar logout response is %d", logoutResp.StatusCode)
@@ -87,6 +84,8 @@ func doFrontChannelLogout(configuration config.Configuration, user User, casUser
 				return fmt.Errorf("failed to read logout response body while logging out user %s: %w", casUser, err)
 			}
 		}
+
+		logoutResp.Body = io.NopCloser(bytes.NewReader(respBody))
 		return fmt.Errorf("failed to logout user %s after CAS backchannel logout: Response HTTP %d: %s", casUser, logoutResp.StatusCode, string(respBody))
 	}
 
@@ -101,19 +100,36 @@ func buildLogoutRequest(configuration config.Configuration, user User) (*http.Re
 		return nil, fmt.Errorf("failed to join sonarqube logout request from %s and %s: %w", sonarBaseUrl, sonarLogoutUrl, err)
 	}
 
+	//FIXME ffs dont commit this!!! it might work tho (L_L')
+	fullLogoutUrl = "http://localhost:9000/sonar/api/authentication/logout"
+
 	sonarLogoutReq, err := http.NewRequest(http.MethodPost, fullLogoutUrl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sonarqube logout request: %w", err)
 	}
 
+	sonarLogoutReq.Header.Add("X-Forwarded-Proto", "https")
+
 	const maxAgeInSecs = 60
 	sessionCookie := &http.Cookie{
-		Name:   cookieNameJwtSession,
-		Value:  user.JwtToken,
-		MaxAge: maxAgeInSecs,
+		Name:     cookieNameJwtSession,
+		Value:    user.JwtToken,
+		HttpOnly: false,
+		Secure:   false,
+		Path:     "/sonar",
+	}
+	xsrfCookie := &http.Cookie{
+		Name:     "XSRF-TOKEN",
+		Value:    user.XsrfToken,
+		HttpOnly: false,
+		Secure:   false,
+		Path:     "/sonar",
 	}
 
+	log.Debugf("------------------- ..... using jwt cookie %s", user.JwtToken)
+	log.Debugf("------------------- ..... using xsrf cookie %s", user.XsrfToken)
 	sonarLogoutReq.AddCookie(sessionCookie)
+	sonarLogoutReq.AddCookie(xsrfCookie)
 
 	return sonarLogoutReq, nil
 }

@@ -9,6 +9,8 @@ type User struct {
 	// JwtToken contains the user's sonarqube session. This will be used during CAS backchannel logout request as there
 	// is no other information to handle this
 	JwtToken string
+	// cross site req forge
+	XsrfToken string
 	// Invalid marks JWT tokens that are supposed to keep //TODO
 	Invalid bool
 }
