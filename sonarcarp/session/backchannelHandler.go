@@ -17,7 +17,7 @@ var httpClient = &http.Client{}
 
 // Middleware creates a delegate ResponseWriter that catches backchannel logout requests and creates a side request to
 // logout in SonarQube.
-func Middleware(next http.Handler, configuration config.Configuration) http.Handler {
+func Middleware(next http.Handler, configuration config.Configuration, casClient *cas.Client) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		log.Debugf("backchannelHandler was called for %s", request.URL.String())
 
@@ -41,11 +41,6 @@ func Middleware(next http.Handler, configuration config.Configuration) http.Hand
 			return
 		}
 
-		//// TODO replace fcl with sql mongering
-		//// delete from session_tokens where uuid= jwt jti <- jwt parsing vorher machen
-		//
-		//err := deleteSonarQubeFromDatabase(user.JwtToken)
-
 		if err := doFrontChannelLogout(configuration, user, casUser); err != nil {
 			log.Errorf("Failed to logout user %s against sonarqube: %s", casUser, err.Error())
 			next.ServeHTTP(writer, request)
@@ -53,7 +48,7 @@ func Middleware(next http.Handler, configuration config.Configuration) http.Hand
 		}
 
 		log.Debugf("Calling sonar logout for user %s", casUser)
-		next.ServeHTTP(writer, request)
+		casClient.Logout(writer, request)
 		return
 	})
 }
@@ -108,21 +103,23 @@ func buildLogoutRequest(configuration config.Configuration, user User) (*http.Re
 		return nil, fmt.Errorf("failed to create sonarqube logout request: %w", err)
 	}
 
-	sonarLogoutReq.Header.Add("X-Forwarded-Proto", "https")
+	//sonarLogoutReq.Header.Add("X-Forwarded-Proto", "https")
+	sonarLogoutReq.Header.Add("X-XSRF-TOKEN", user.XsrfToken)
+	sonarLogoutReq.Header.Add("Referer", "https://192.168.56.2/sonar/sessions/logout")
+	sonarLogoutReq.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0")
 
-	const maxAgeInSecs = 60
 	sessionCookie := &http.Cookie{
 		Name:     cookieNameJwtSession,
 		Value:    user.JwtToken,
-		HttpOnly: false,
-		Secure:   false,
+		HttpOnly: true,
+		Secure:   true,
 		Path:     "/sonar",
 	}
 	xsrfCookie := &http.Cookie{
 		Name:     "XSRF-TOKEN",
 		Value:    user.XsrfToken,
 		HttpOnly: false,
-		Secure:   false,
+		Secure:   true,
 		Path:     "/sonar",
 	}
 
@@ -150,7 +147,7 @@ func getUserFromCasLogout(r *http.Request) (string, error) {
 	casUser, err := getUserFromSamlLogout(samlLogoutMessage)
 
 	// put a non-read body back to the request and avoid a lot of potential request precessing problems
-	//r.Body = io.NopCloser(bytes.NewBuffer(all)) // TODO CHECK if error
+	r.Body = io.NopCloser(bytes.NewBuffer([]byte("logoutRequest=" + samlLogoutMessage))) // TODO CHECK if error
 
 	return casUser, nil
 }

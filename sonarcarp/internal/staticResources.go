@@ -9,7 +9,7 @@ import (
 // staticResourceMatchers contains regexps that determine routes of unauthenticated web resources in sonarqube.
 var staticResourceMatchers []*regexp.Regexp
 
-// InitStaticResourceMatchers set up static resource matchers for IsAuthenticationRequired.
+// InitStaticResourceMatchers set up static resource matchers for IsInAlwaysAllowList.
 //
 // Usually, this initializer should be called once during the server start-up as there is no need for change
 // accommodation which would happen during container restart.
@@ -27,7 +27,7 @@ func InitStaticResourceMatchers(paths []string) error {
 	return nil
 }
 
-func IsAuthenticationRequired(path string) bool {
+func IsInAlwaysAllowList(path string) bool {
 	for _, matcher := range staticResourceMatchers {
 
 		cleanedPath, err := url.JoinPath(path, "")

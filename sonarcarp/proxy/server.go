@@ -51,7 +51,7 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 
 	throttlingHandler := throttling.NewThrottlingHandler(ctx, configuration, pHandler)
 
-	bcLogoutHandler := session.Middleware(throttlingHandler, configuration)
+	bcLogoutHandler := session.Middleware(throttlingHandler, configuration, casClient)
 
 	logHandler := carplog.Middleware(bcLogoutHandler, "throttling")
 

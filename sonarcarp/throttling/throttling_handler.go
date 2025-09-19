@@ -63,7 +63,7 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 		log.Debugf("ThrottlingHandler was hit")
 		statusWriter := carplog.NewStatusResponseWriter(w, r, "throttler")
 
-		authenticationRequired := internal.IsAuthenticationRequired(r.URL.Path)
+		authenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
 		if !authenticationRequired {
 			log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
 			handler.ServeHTTP(statusWriter, r)

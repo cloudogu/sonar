@@ -21,7 +21,7 @@ func Test_IsAuthenticationRequired(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, IsAuthenticationRequired(tt.path), "isAuthenticationRequired(%v)", tt.path)
+			assert.Equalf(t, tt.want, IsInAlwaysAllowList(tt.path), "isAuthenticationRequired(%v)", tt.path)
 		})
 	}
 }
