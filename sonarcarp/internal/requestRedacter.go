@@ -24,7 +24,7 @@ func RedactRequestHeaders(original http.Header) http.Header {
 
 	for key, values := range original {
 		switch strings.ToLower(key) {
-		case "cookies":
+		case "cookie":
 			fallthrough
 		case "set-cookie":
 			fallthrough
