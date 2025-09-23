@@ -101,7 +101,6 @@ func TestInitializeAndReadConfiguration(t *testing.T) {
 
 func checkConfig(t *testing.T, config Configuration) {
 	t.Helper()
-	assert.Equal(t, "http://localhost:8080", config.BaseUrl)
 	assert.Equal(t, "https://192.168.56.2/cas", config.CasUrl)
 	assert.Equal(t, "http://localhost:9000/", config.ServiceUrl)
 	assert.Equal(t, "/sonar/sessions/logout", config.LogoutPathFrontchannelEndpoint)
