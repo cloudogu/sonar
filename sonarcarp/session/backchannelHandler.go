@@ -89,42 +89,42 @@ func doFrontChannelLogout(configuration config.Configuration, user User, casUser
 }
 
 func buildLogoutRequest(configuration config.Configuration, user User) (*http.Request, error) {
-	sonarBaseUrl := configuration.ServiceUrl
+	sonarBaseUrl, err := url.JoinPath(configuration.ServiceUrl, configuration.AppContextPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sonarqube base url from %s and %s: %w", configuration.ServiceUrl, configuration.AppContextPath, err)
+	}
 	sonarLogoutUrl := configuration.LogoutPathFrontchannelEndpoint
-	fullLogoutUrl, err := url.JoinPath(sonarBaseUrl, configuration.AppContextPath, sonarLogoutUrl)
+	fullLogoutUrl, err := url.JoinPath(sonarBaseUrl, sonarLogoutUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to join sonarqube logout request from %s and %s: %w", sonarBaseUrl, sonarLogoutUrl, err)
 	}
-
-	fullLogoutUrl = "http://localhost:9000/sonar/api/authentication/logout"
 
 	sonarLogoutReq, err := http.NewRequest(http.MethodPost, fullLogoutUrl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sonarqube logout request: %w", err)
 	}
 
-	//sonarLogoutReq.Header.Add("X-Forwarded-Proto", "https")
+	sonarLogoutReq.Header.Add("Referer", fullLogoutUrl)
+	sonarLogoutReq.Header.Add("User-Agent", "Mozilla/5.0 (Go; Linux x86_64) sonarcarp Firefox/141.0")
+	// the X-XSRF-TOKEN is vital for a proper logout which will remove the user's session from the database
 	sonarLogoutReq.Header.Add("X-XSRF-TOKEN", user.XsrfToken)
-	sonarLogoutReq.Header.Add("Referer", "https://192.168.56.2/sonar/sessions/logout")
-	sonarLogoutReq.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0")
 
 	sessionCookie := &http.Cookie{
 		Name:     cookieNameJwtSession,
 		Value:    user.JwtToken,
 		HttpOnly: true,
 		Secure:   true,
-		Path:     "/sonar",
+		Path:     configuration.AppContextPath,
 	}
+
 	xsrfCookie := &http.Cookie{
-		Name:     "XSRF-TOKEN",
+		Name:     cookieNameXsrfToken,
 		Value:    user.XsrfToken,
 		HttpOnly: false,
 		Secure:   true,
-		Path:     "/sonar",
+		Path:     configuration.AppContextPath,
 	}
 
-	log.Debugf("------------------- ..... using jwt cookie %s", user.JwtToken)
-	log.Debugf("------------------- ..... using xsrf cookie %s", user.XsrfToken)
 	sonarLogoutReq.AddCookie(sessionCookie)
 	sonarLogoutReq.AddCookie(xsrfCookie)
 

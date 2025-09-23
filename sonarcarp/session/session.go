@@ -4,7 +4,10 @@ import (
 	"net/http"
 )
 
-const cookieNameJwtSession = "JWT-SESSION"
+const (
+	cookieNameJwtSession = "JWT-SESSION"
+	cookieNameXsrfToken  = "XSRF-TOKEN"
+)
 
 func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 	jwtCookie := ""
@@ -16,7 +19,7 @@ func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 			continue
 		}
 
-		if cookie.Name == "XSRF-TOKEN" {
+		if cookie.Name == cookieNameXsrfToken {
 			xsrfCookie = cookie.Value
 			continue
 		}
