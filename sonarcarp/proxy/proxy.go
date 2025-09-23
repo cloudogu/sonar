@@ -26,14 +26,14 @@ type authorizationHeaders struct {
 }
 
 type proxyHandler struct {
-	targetURL             *url.URL
-	forwarder             http.Handler
-	casClient             *cas.Client
-	headers               authorizationHeaders
-	logoutPath            string
-	logoutRedirectionPath string
-	casAuthenticated      func(r *http.Request) bool
-	adminGroupMapping     sonarAdminGroupMapping
+	targetURL         *url.URL
+	forwarder         http.Handler
+	casClient         *cas.Client
+	headers           authorizationHeaders
+	logoutPathUi      string
+	logoutApiEndpoint string
+	casAuthenticated  func(r *http.Request) bool
+	adminGroupMapping sonarAdminGroupMapping
 }
 
 func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
@@ -47,13 +47,13 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 	fwd := forward.New(true)
 
 	pHandler := proxyHandler{
-		targetURL:             targetURL,
-		forwarder:             fwd,
-		casAuthenticated:      cas.IsAuthenticated,
-		headers:               headers,
-		logoutPath:            cfg.LogoutPathFrontchannelEndpoint,
-		logoutRedirectionPath: cfg.AppContextPath,
-		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
+		targetURL:         targetURL,
+		logoutPathUi:      cfg.LogoutPathFrontchannelEndpoint,
+		logoutApiEndpoint: cfg.LogoutPathBackchannelEndpoint,
+		forwarder:         fwd,
+		casAuthenticated:  cas.IsAuthenticated,
+		headers:           headers,
+		adminGroupMapping: sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
 	}
 
 	casHandlingProxy := casClient.CreateHandler(pHandler)
@@ -64,7 +64,12 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 func (p proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
 	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
 	// So in that case we use the referrer to check if a request is a logout request.
-	return strings.HasSuffix(r.Referer(), p.logoutPath) && r.URL.Path == p.logoutRedirectionPath
+
+	// TODO: is not this rather a || than a && situation? EITHER referer is ui logout OR URL goes right to logout API
+	isFcLogout := strings.HasSuffix(r.Referer(), p.logoutPathUi) && strings.HasSuffix(r.URL.Path, p.logoutApiEndpoint)
+	log.Debugf("is request a frontchannel logout? %t", isFcLogout)
+
+	return isFcLogout
 }
 
 func IsBrowserRequest(req *http.Request) bool {

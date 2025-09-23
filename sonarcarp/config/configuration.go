@@ -11,7 +11,6 @@ import (
 const defaultFileName = "carp.yml"
 
 type Configuration struct {
-	BaseUrl             string `yaml:"base-url"`
 	CasUrl              string `yaml:"cas-url"`
 	ServiceUrl          string `yaml:"service-url"`
 	SkipSSLVerification bool   `yaml:"skip-ssl-verification"`

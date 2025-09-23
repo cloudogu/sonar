@@ -30,7 +30,7 @@ role-header: X-Forwarded-Groups
 mail-header: X-Forwarded-Email
 # the principal-header value must correspond with sonar.web.sso.nameHeader in sonar.properties
 name-header: X-Forwarded-Name
-# sonar-admin-group cotnains the name of the injected group information if a CES account was detected that belongs to
+# sonar-admin-group contains the name of the injected group information if a CES account was detected that belongs to
 # CES admin group and further administration permissions should be granted to the user.
 sonar-admin-group: sonar-administrators
 # ces-admin-group contains the name of the current Cloudogu EcoSystem admin group. If the request's user is a CES admin

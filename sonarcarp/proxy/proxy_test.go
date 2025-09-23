@@ -108,10 +108,10 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		fwdMock := &mocks.Handler{}
 
 		ph := proxyHandler{
-			targetURL:             tUrl,
-			forwarder:             fwdMock,
-			logoutPath:            "/sonar/sessions/logout",
-			logoutRedirectionPath: "/sonar/",
+			targetURL:         tUrl,
+			forwarder:         fwdMock,
+			logoutPathUi:      "/sonar/sessions/logout",
+			logoutApiEndpoint: "/sonar/",
 		}
 
 		req, err := http.NewRequest(http.MethodGet, "/sonar/", nil)

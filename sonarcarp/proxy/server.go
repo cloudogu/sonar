@@ -65,22 +65,28 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 	}, nil
 }
 
-func NewCasClientFactory(configuration config.Configuration) (*cas.Client, error) {
-	casUrl, err := url.Parse(configuration.CasUrl)
+func NewCasClientFactory(cfg config.Configuration) (*cas.Client, error) {
+	casUrl, err := url.Parse(cfg.CasUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cas url: %s: %w", configuration.CasUrl, err)
+		return nil, fmt.Errorf("failed to parse cas url: %s: %w", cfg.CasUrl, err)
 	}
 
-	serviceUrl, err := url.Parse(configuration.ServiceUrl)
+	// CAS needs something like https://fqdn/sonar to register a dogu as proper CAS client dogu.
+	sonarUrlWithContext, err := url.JoinPath(cfg.ServiceUrl, cfg.AppContextPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse service url: %s: %w", configuration.ServiceUrl, err)
+		return nil, fmt.Errorf("failed to join sonarqube context path for CAS clienting: %s: %w", cfg.CasUrl, err)
+	}
+
+	serviceUrl, err := url.Parse(sonarUrlWithContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service url: %s: %w", sonarUrlWithContext, err)
 	}
 
 	urlScheme := cas.NewDefaultURLScheme(casUrl)
 	urlScheme.ServiceValidatePath = path.Join("p3", "serviceValidate")
 
 	httpClient := &http.Client{}
-	if configuration.SkipSSLVerification {
+	if cfg.SkipSSLVerification {
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}

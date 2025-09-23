@@ -10,13 +10,13 @@ cas-url: https://{{.GlobalConfig.Get "fqdn"}}/cas
 # Change the port of this URL if you run your local SonarQube under another port
 # Typically, this URL is hidden from the user for security reasons to avoid bypassing
 service-url: http://localhost:9000/
-# app-context-path contains the payload application's context path.
+# app-context-path contains both the CARP's and SonarQube's context path.
 # This URL path also is used to detect backchannel logout requests as CAS default behaviour is to POST SAML parameters
 # against the main application path.
 # This value must correspond with sonar.web.context in the sonar.properties configuration file.
-app-context-path: /sonar/
+app-context-path: /sonar
 # logout-path-frontchannel-endpoint contains a URL endpoint (without context path) to detect SonarQube frontchannel logout
-logout-path-frontchannel-endpoint: /sonar/sessions/logout
+logout-path-frontchannel-endpoint: /sessions/logout
 # logout-path-backchannel-endpoint contains a URL endpoint (without context path) which will be called during channel logout to
 # terminate existing SonarQube sessions for the user provided by the CAS logout information.
 logout-path-backchannel-endpoint: /api/authentication/logout
@@ -30,7 +30,7 @@ role-header: X-Forwarded-Groups
 mail-header: X-Forwarded-Email
 # the principal-header value must correspond with sonar.web.sso.nameHeader in sonar.properties
 name-header: X-Forwarded-Name
-# sonar-admin-group cotnains the name of the injected group information if a CES account was detected that belongs to
+# sonar-admin-group contains the name of the injected group information if a CES account was detected that belongs to
 # CES admin group and further administration permissions should be granted to the user.
 sonar-admin-group: sonar-administrators
 # ces-admin-group contains the name of the current Cloudogu EcoSystem admin group. If the request's user is a CES admin

@@ -9,29 +9,19 @@ import (
 )
 
 const templateConfig = `
-base-url: https://localhost:8080
 cas-url: https://192.168.56.2/cas
-service-url: https://localhost:8080/sonar/login
+service-url: http://localhost:9000/
 target-url: http://localhost:3000/sonar/login
 logout-method: GET
-logout-path-frontchannel-endpoint: \/sonar\/(cas\/)?logout
+logout-path-frontchannel-endpoint: /sonar/sessions/logout
+logout-path-backchannel-endpoint: /api/authentication/logout
 port: 8080
-principal-header: X-WEBAUTH-USER
-role-header: X-WEBAUTH-ROLE
-mail-header: X-WEBAUTH-EMAIL
-name-header: X-WEBAUTH-NAME
-create-user-endpoint: http://localhost:3000/sonar/api/admin/users
-create-group-endpoint: http://localhost:3000/sonar/api/teams
-get-user-groups-endpoint: http://localhost:3000/sonar/api/users/%v/teams
-get-user-endpoint: http://localhost:3000/sonar/api/users/lookup?loginOrEmail=%s
-remove-user-from-group-endpoint: http://localhost:3000/sonar/api/teams/%v/members/%v
-add-user-to-group-endpoint: http://localhost:3000/sonar/api/teams/%v/members
-search-team-by-name-endpoint: http://localhost:3000/sonar/api/teams/search?name=%s
-set-organization-role-endpoint: http://localhost:3000/sonar/api/orgs/1/users/%v
+principal-header: X-Forwarded-Login
+role-header: X-Forwarded-Groups
+mail-header: X-Forwarded-Email
+name-header: X-Forwarded-Name
 ces-admin-group: cesAdmin
-sonar-admin-group: admin
-sonar-writer-group: writer
-sonar-reader-group: reader
+sonar-admin-group: sonar-administrators
 log-format: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}"
 application-exec-command: "exit 0"
 carp-resource-paths:
@@ -111,16 +101,17 @@ func TestInitializeAndReadConfiguration(t *testing.T) {
 
 func checkConfig(t *testing.T, config Configuration) {
 	t.Helper()
-	assert.Equal(t, "https://localhost:8080", config.BaseUrl)
+	assert.Equal(t, "http://localhost:8080", config.BaseUrl)
 	assert.Equal(t, "https://192.168.56.2/cas", config.CasUrl)
-	assert.Equal(t, "https://localhost:8080/sonar/login", config.ServiceUrl)
-	assert.Equal(t, "\\/sonar\\/(cas\\/)?logout", config.LogoutPathFrontchannelEndpoint)
+	assert.Equal(t, "http://localhost:9000/", config.ServiceUrl)
+	assert.Equal(t, "/sonar/sessions/logout", config.LogoutPathFrontchannelEndpoint)
+	assert.Equal(t, "/api/authentication/logout", config.LogoutPathBackchannelEndpoint)
 	assert.Equal(t, true, config.SkipSSLVerification)
 	assert.Equal(t, 8080, config.Port)
-	assert.Equal(t, "X-WEBAUTH-USER", config.PrincipalHeader)
-	assert.Equal(t, "X-WEBAUTH-ROLE", config.RoleHeader)
-	assert.Equal(t, "X-WEBAUTH-EMAIL", config.MailHeader)
-	assert.Equal(t, "X-WEBAUTH-NAME", config.NameHeader)
+	assert.Equal(t, "X-Forwarded-Login", config.PrincipalHeader)
+	assert.Equal(t, "X-Forwarded-Groups", config.RoleHeader)
+	assert.Equal(t, "X-Forwarded-Email", config.MailHeader)
+	assert.Equal(t, "X-Forwarded-Name", config.NameHeader)
 	assert.Equal(t, "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}", config.LoggingFormat)
 	assert.Equal(t, "DEBUG", config.LogLevel)
 	assert.Equal(t, "exit 0", config.ApplicationExecCommand)
