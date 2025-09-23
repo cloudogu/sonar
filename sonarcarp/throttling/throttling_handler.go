@@ -60,7 +60,7 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("ThrottlingHandler was hit")
+		log.Debugf("throttling middleware was called for %s", r.URL.String())
 		statusWriter := carplog.NewStatusResponseWriter(w, r, "throttler")
 
 		authenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
@@ -90,7 +90,7 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 			initialForwardedIpAddress = strings.TrimSpace(forwardedIpAddresses[0])
 		}
 
-		log.Debugf("Extracted IP  %s from %s for throttling: %s", initialForwardedIpAddress, _HttpHeaderXForwardedFor, username)
+		log.Debugf("Extracted IP %s from %s for throttling: %s", initialForwardedIpAddress, _HttpHeaderXForwardedFor, username)
 
 		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
 		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
@@ -112,7 +112,6 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 		if statusWriter.HttpStatusCode() >= 200 && statusWriter.HttpStatusCode() < 400 {
 			cleanClient(ipUsernameId)
 		}
-
 	})
 }
 
