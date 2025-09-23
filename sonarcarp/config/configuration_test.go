@@ -14,7 +14,7 @@ cas-url: https://192.168.56.2/cas
 service-url: https://localhost:8080/sonar/login
 target-url: http://localhost:3000/sonar/login
 logout-method: GET
-logout-path: \/sonar\/(cas\/)?logout
+logout-path-frontchannel-endpoint: \/sonar\/(cas\/)?logout
 port: 8080
 principal-header: X-WEBAUTH-USER
 role-header: X-WEBAUTH-ROLE
@@ -114,7 +114,7 @@ func checkConfig(t *testing.T, config Configuration) {
 	assert.Equal(t, "https://localhost:8080", config.BaseUrl)
 	assert.Equal(t, "https://192.168.56.2/cas", config.CasUrl)
 	assert.Equal(t, "https://localhost:8080/sonar/login", config.ServiceUrl)
-	assert.Equal(t, "\\/sonar\\/(cas\\/)?logout", config.LogoutPath)
+	assert.Equal(t, "\\/sonar\\/(cas\\/)?logout", config.LogoutPathFrontchannelEndpoint)
 	assert.Equal(t, true, config.SkipSSLVerification)
 	assert.Equal(t, 8080, config.Port)
 	assert.Equal(t, "X-WEBAUTH-USER", config.PrincipalHeader)

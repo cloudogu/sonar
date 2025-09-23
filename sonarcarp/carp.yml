@@ -16,7 +16,7 @@ service-url: http://localhost:9000/
 # This value must correspond with sonar.web.context in the sonar.properties configuration file.
 app-context-path: /sonar/
 # logout-path-frontchannel-endpoint contains a URL endpoint (without context path) to detect SonarQube frontchannel logout
-logout-path: /sonar/sessions/logout
+logout-path-frontchannel-endpoint: /sonar/sessions/logout
 # logout-path-backchannel-endpoint contains a URL endpoint (without context path) which will be called during channel logout to
 # terminate existing SonarQube sessions for the user provided by the CAS logout information.
 logout-path-backchannel-endpoint: /api/authentication/logout

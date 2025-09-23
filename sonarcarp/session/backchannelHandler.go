@@ -89,7 +89,7 @@ func doFrontChannelLogout(configuration config.Configuration, user User, casUser
 
 func buildLogoutRequest(configuration config.Configuration, user User) (*http.Request, error) {
 	sonarBaseUrl := configuration.ServiceUrl
-	sonarLogoutUrl := configuration.LogoutPath
+	sonarLogoutUrl := configuration.LogoutPathFrontchannelEndpoint
 	fullLogoutUrl, err := url.JoinPath(sonarBaseUrl, sonarLogoutUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to join sonarqube logout request from %s and %s: %w", sonarBaseUrl, sonarLogoutUrl, err)
