@@ -107,7 +107,6 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
 	casUsername, casAttrs := getCasAttributes(r)
-	log.Debugf("#################### Hello General CASnobi %s %+v", casUsername, casAttrs)
 
 	saveJwtSessionForBackchannelLogout(r, casUsername)
 	setHeaders(r, casUsername, casAttrs, p.headers, p.adminGroupMapping)
@@ -132,6 +131,7 @@ func setHeaders(r *http.Request, casUsername string, casAttributes cas.UserAttri
 	r.Header.Add(headers.Mail, casAttributes.Get("mail"))
 	// heads-up! do not use casAttributes.Get because it only returns the first group entry
 	userGroups := strings.Join(casAttributes["groups"], ",") // delimited by comma according the sonar.properties commentary
+
 	if isInAdminGroup(casAttributes["groups"], adminGroupMapping.cesAdminGroup) {
 		userGroups += "," + adminGroupMapping.sonarAdminGroup
 	}
@@ -140,6 +140,7 @@ func setHeaders(r *http.Request, casUsername string, casAttributes cas.UserAttri
 	if isInAdminGroup(casAttributes["groups"], adminGroupMapping.cesAdminGroup) {
 		r.Header.Add(adminGroupMapping.sonarAdminGroup, adminGroupMapping.cesAdminGroup)
 	}
+
 	log.Debugf("Groups found to user %s: %s", casUsername, userGroups)
 }
 

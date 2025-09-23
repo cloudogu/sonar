@@ -48,8 +48,6 @@ func (srw *StatusResponseWriter) HttpStatusCode() int {
 
 // WriteHeader saves the status code for later use and then sends an HTTP response header with the provided status code.
 func (srw *StatusResponseWriter) WriteHeader(code int) {
-	log.Debugf("===== writing header code %d for %s %s\n", code, srw.r.Method, srw.r.URL.String())
-
 	srw.httpStatusCode = code
 	srw.writer.WriteHeader(code)
 }
