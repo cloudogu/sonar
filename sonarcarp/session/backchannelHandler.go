@@ -36,13 +36,14 @@ func Middleware(next http.Handler, configuration config.Configuration, casClient
 
 		user := getUserByUsername(casUser)
 		if user.isNullUser() {
-			log.Warningf("Skipping sonarqube logout for user %s", casUser)
+			log.Warningf("Skipping sonarqube logout for detected null-user. Was the user %s not correctly detected?", casUser)
 			next.ServeHTTP(writer, request)
 			return
 		}
 
 		if err := doFrontChannelLogout(configuration, user, casUser); err != nil {
 			log.Errorf("Failed to logout user %s against sonarqube: %s", casUser, err.Error())
+			// TODO probably a fall-through to the casClient logout is more appropriate?
 			next.ServeHTTP(writer, request)
 			return
 		}
