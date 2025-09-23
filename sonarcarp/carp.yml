@@ -14,7 +14,7 @@ service-url: http://localhost:9000/
 # This URL path also is used to detect backchannel logout requests as CAS default behaviour is to POST SAML parameters
 # against the main application path.
 # This value must correspond with sonar.web.context in the sonar.properties configuration file.
-logout-redirect-path: /sonar/
+app-context-path: /sonar/
 # logout-path-frontchannel-endpoint contains a URL endpoint (without context path) to detect SonarQube frontchannel logout
 logout-path: /sonar/sessions/logout
 # logout-path-backchannel-endpoint contains a URL endpoint (without context path) which will be called during channel logout to

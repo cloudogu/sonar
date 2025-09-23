@@ -52,7 +52,7 @@ func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg
 		casAuthenticated:      cas.IsAuthenticated,
 		headers:               headers,
 		logoutPath:            cfg.LogoutPath,
-		logoutRedirectionPath: cfg.LogoutRedirectPath,
+		logoutRedirectionPath: cfg.AppContextPath,
 		adminGroupMapping:     sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
 	}
 
