@@ -11,27 +11,29 @@ import (
 const defaultFileName = "carp.yml"
 
 type Configuration struct {
-	BaseUrl                        string   `yaml:"base-url"`
-	CasUrl                         string   `yaml:"cas-url"`
-	ServiceUrl                     string   `yaml:"service-url"`
-	SkipSSLVerification            bool     `yaml:"skip-ssl-verification"`
-	Port                           int      `yaml:"port"`
-	PrincipalHeader                string   `yaml:"principal-header"`
-	RoleHeader                     string   `yaml:"role-header"`
-	MailHeader                     string   `yaml:"mail-header"`
-	NameHeader                     string   `yaml:"name-header"`
-	CesAdminGroup                  string   `yaml:"ces-admin-group"`
-	SonarAdminGroup                string   `yaml:"sonar-admin-group"`
-	AppContextPath                 string   `yaml:"app-context-path"`
-	LogoutPathFrontchannelEndpoint string   `yaml:"logout-path-frontchannel-endpoint"`
-	LogoutPathBackchannelEndpoint  string   `yaml:"logout-path-backchannel-endpoint"`
-	LoggingFormat                  string   `yaml:"log-format"`
-	LogLevel                       string   `yaml:"log-level"`
-	ApplicationExecCommand         string   `yaml:"application-exec-command"`
-	CarpResourcePaths              []string `yaml:"carp-resource-paths"`
-	LimiterTokenRate               int      `yaml:"limiter-token-rate"`
-	LimiterBurstSize               int      `yaml:"limiter-burst-size"`
-	LimiterCleanInterval           int      `yaml:"limiter-clean-interval"`
+	BaseUrl             string `yaml:"base-url"`
+	CasUrl              string `yaml:"cas-url"`
+	ServiceUrl          string `yaml:"service-url"`
+	SkipSSLVerification bool   `yaml:"skip-ssl-verification"`
+	Port                int    `yaml:"port"`
+	PrincipalHeader     string `yaml:"principal-header"`
+	RoleHeader          string `yaml:"role-header"`
+	MailHeader          string `yaml:"mail-header"`
+	NameHeader          string `yaml:"name-header"`
+	CesAdminGroup       string `yaml:"ces-admin-group"`
+	SonarAdminGroup     string `yaml:"sonar-admin-group"`
+	AppContextPath      string `yaml:"app-context-path"`
+	// LogoutPathFrontchannelEndpoint contains the respective endpoint for frontchannel logout detection.
+	LogoutPathFrontchannelEndpoint string `yaml:"logout-path-frontchannel-endpoint"`
+	// LogoutPathBackchannelEndpoint contains the frontchannel endpoint to call when a backchannel logout was detected.
+	LogoutPathBackchannelEndpoint string   `yaml:"logout-path-backchannel-endpoint"`
+	LoggingFormat                 string   `yaml:"log-format"`
+	LogLevel                      string   `yaml:"log-level"`
+	ApplicationExecCommand        string   `yaml:"application-exec-command"`
+	CarpResourcePaths             []string `yaml:"carp-resource-paths"`
+	LimiterTokenRate              int      `yaml:"limiter-token-rate"`
+	LimiterBurstSize              int      `yaml:"limiter-burst-size"`
+	LimiterCleanInterval          int      `yaml:"limiter-clean-interval"`
 }
 
 func InitializeAndReadConfiguration() (Configuration, error) {
