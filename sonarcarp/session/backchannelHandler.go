@@ -17,11 +17,11 @@ var httpClient = &http.Client{}
 
 // Middleware creates a delegate ResponseWriter that catches backchannel logout requests and creates a side request to
 // logout in SonarQube.
-func Middleware(next http.Handler, configuration config.Configuration, casClient *cas.Client) http.Handler {
+func Middleware(next http.Handler, cfg config.Configuration, casClient *cas.Client) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		log.Debugf("backchannelHandler was called for %s", request.URL.String())
 
-		if !isBackChannelLogoutRequest(request) {
+		if !isBackChannelLogoutRequest(request, cfg.AppContextPath) {
 			log.Debug("Request is not a backchannel logout, proceed in filter chain")
 			next.ServeHTTP(writer, request)
 			return
@@ -41,7 +41,7 @@ func Middleware(next http.Handler, configuration config.Configuration, casClient
 			return
 		}
 
-		if err := doFrontChannelLogout(configuration, user, casUser); err != nil {
+		if err := doFrontChannelLogout(cfg, user, casUser); err != nil {
 			log.Errorf("Failed to logout user %s against sonarqube: %s", casUser, err.Error())
 			// TODO probably a fall-through to the casClient logout is more appropriate?
 			next.ServeHTTP(writer, request)
@@ -162,18 +162,17 @@ func getUserFromSamlLogout(urldecodedSamlMsg string) (string, error) {
 	return samlParsed.NameID, nil
 }
 
-func isBackChannelLogoutRequest(r *http.Request) bool {
-	return r.Method == "POST" && (r.URL.Path == "/sonar/" || r.URL.Path == "/sonar")
+func isBackChannelLogoutRequest(r *http.Request, appContextPath string) bool {
+	path, _ := url.JoinPath(appContextPath, "/")
+
+	return r.Method == "POST" && (r.URL.Path == appContextPath || r.URL.Path == path)
 }
 
 type logoutSamlRequestMessage struct {
-	XMLName      xml.Name `xml:"LogoutRequest"`
-	NameID       string   `xml:"NameID"`
-	SessionIndex string   `xml:"SessionIndex"`
-}
-
-func getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
-	username := cas.Username(r)
-	attrs := cas.Attributes(r)
-	return username, attrs
+	// XMLName addresses the message root element and makes the message's nested NameID accessible in the first place.
+	XMLName xml.Name `xml:"LogoutRequest"`
+	// NameID contains the CAS user ID to be logged out.
+	NameID string `xml:"NameID"`
+	// NameID contains the CAS service ticket session.
+	SessionIndex string `xml:"SessionIndex"`
 }
