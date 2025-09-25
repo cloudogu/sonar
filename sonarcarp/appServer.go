@@ -1,4 +1,4 @@
-package proxy
+package main
 
 import (
 	"context"
@@ -9,17 +9,13 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/cloudogu/sonar/sonarcarp/internal"
-	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
-	"github.com/cloudogu/sonar/sonarcarp/session"
-	"github.com/cloudogu/sonar/sonarcarp/throttling"
-	"github.com/op/go-logging"
-
 	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/internal"
+	"github.com/cloudogu/sonar/sonarcarp/proxy"
+	"github.com/cloudogu/sonar/sonarcarp/session"
+	"github.com/cloudogu/sonar/sonarcarp/throttling"
 )
-
-var log = logging.MustGetLogger("proxy")
 
 func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
 	casClient, err := NewCasClientFactory(configuration)
@@ -27,7 +23,7 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 		return nil, fmt.Errorf("failed to create CAS client during carp server start: %w", err)
 	}
 
-	headers := authorizationHeaders{
+	headers := proxy.AuthorizationHeaders{
 		Principal: configuration.PrincipalHeader,
 		Role:      configuration.RoleHeader,
 		Mail:      configuration.MailHeader,
@@ -43,7 +39,7 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 
 	router := http.NewServeMux()
 
-	pHandler, err := createProxyHandler(
+	pHandler, err := proxy.CreateProxyHandler(
 		headers,
 		casClient,
 		configuration,
@@ -53,7 +49,7 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 
 	bcLogoutHandler := session.Middleware(throttlingHandler, configuration, casClient)
 
-	logHandler := carplog.Middleware(bcLogoutHandler, "throttling")
+	logHandler := internal.Middleware(bcLogoutHandler, "throttling")
 
 	router.Handle("/sonar/", logHandler)
 

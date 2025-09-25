@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/cloudogu/sonar/sonarcarp/logging"
+	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/cloudogu/sonar/sonarcarp/throttling"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +24,7 @@ func TestCreateProxyHandler(t *testing.T) {
 		targetURL := "testURL"
 		testCfg := config.Configuration{ServiceUrl: targetURL}
 
-		handler, err := createProxyHandler(authorizationHeaders{}, &cas.Client{}, testCfg)
+		handler, err := CreateProxyHandler(AuthorizationHeaders{}, &cas.Client{}, testCfg)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, handler)
@@ -34,7 +34,7 @@ func TestCreateProxyHandler(t *testing.T) {
 		invalidTargetURL := ":example.com"
 		testCfg := config.Configuration{ServiceUrl: invalidTargetURL}
 
-		_, err := createProxyHandler(authorizationHeaders{}, nil, testCfg)
+		_, err := CreateProxyHandler(AuthorizationHeaders{}, nil, testCfg)
 
 		assert.Error(t, err)
 	})
@@ -89,7 +89,7 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		}
 		testctx := context.Background()
 		cfg := config.Configuration{}
-		sut := logging.Middleware(throttling.NewThrottlingHandler(testctx, cfg, ph), "testThrottlingHandler")
+		sut := internal.Middleware(throttling.NewThrottlingHandler(testctx, cfg, ph), "testThrottlingHandler")
 
 		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/sonar/", nil)
 		req.Header.Add("Location", "https://192.168.56.2/cas/logout")

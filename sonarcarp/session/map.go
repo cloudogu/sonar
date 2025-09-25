@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 	"time"
-
-	"github.com/op/go-logging"
 )
 
 const (
@@ -25,7 +23,6 @@ func InitCleanJob(ctx context.Context, cleanInterval int) {
 }
 
 var nullUser = User{}
-var log = logging.MustGetLogger("session")
 
 func cleanClient(clientHandle string) {
 	mu.Lock()

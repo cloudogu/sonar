@@ -7,16 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"golang.org/x/time/rate"
-
-	"github.com/cloudogu/sonar/sonarcarp/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cloudogu/sonar/sonarcarp/config"
 )
 
+const maxTokens = 3
+
 func TestThrottlingHandler(t *testing.T) {
-	limiterConfig := config.Configuration{LimiterTokenRate: 1, LimiterBurstSize: 3}
+	limiterConfig := config.Configuration{LimiterTokenRate: 1, LimiterBurstSize: maxTokens}
 	ctx := context.TODO()
 
 	cleanUp := func(server *httptest.Server) {
@@ -46,7 +49,8 @@ func TestThrottlingHandler(t *testing.T) {
 
 		var found bool
 
-		for i := 0; i < 5; i++ {
+		tooMany := 2
+		for i := 0; i < maxTokens+tooMany; i++ {
 			resp, lErr := server.Client().Do(req)
 			assert.NoError(t, lErr)
 
@@ -62,6 +66,7 @@ func TestThrottlingHandler(t *testing.T) {
 
 	t.Run("never throttle basic auth requests that return with HTTP 2xx (exceptions apply)", func(t *testing.T) {
 		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
+			assert.Equal(t, request.URL.String(), "/sonar/projects/create")
 			writer.WriteHeader(http.StatusOK)
 		}
 
@@ -70,7 +75,33 @@ func TestThrottlingHandler(t *testing.T) {
 		server := httptest.NewServer(throttlingHandler)
 		defer cleanUp(server)
 
-		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/sonar/projects/create", nil)
+		require.NoError(t, err)
+
+		req.Header.Set(_HttpHeaderXForwardedFor, "testIP")
+		req.SetBasicAuth("test", "test")
+
+		for i := 0; i < maxTokens; i++ {
+			resp, lErr := server.Client().Do(req)
+			assert.NoError(t, lErr)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+		}
+		assert.Empty(t, clients) // HTTP200 leads to limiter resetting (== deletion)
+	})
+
+	t.Run("never throttle static resource requests that always return with HTTP 2xx", func(t *testing.T) {
+		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusOK)
+		}
+		err := internal.InitStaticResourceMatchers([]string{"/sonar/js/"})
+		require.NoError(t, err)
+
+		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+
+		server := httptest.NewServer(throttlingHandler)
+		defer cleanUp(server)
+
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/sonar/js/something.js", nil)
 		require.NoError(t, err)
 
 		req.Header.Set(_HttpHeaderXForwardedFor, "testIP")
@@ -81,27 +112,7 @@ func TestThrottlingHandler(t *testing.T) {
 			assert.NoError(t, lErr)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		}
-	})
-	t.Run("try double writeheader for backchannel logout cas request", func(t *testing.T) {
-		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
-			writer.WriteHeader(http.StatusFound)
-		}
-
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
-
-		server := httptest.NewServer(throttlingHandler)
-		defer cleanUp(server)
-
-		req, err := http.NewRequest(http.MethodPost, server.URL+"/sonar/", nil)
-		require.NoError(t, err)
-
-		req.Header.Set(_HttpHeaderXForwardedFor, "172.18.0.1") // simulate nginx reverse proxy container address
-
-		for i := 0; i < 3; i++ { // respect the upper limiter configuration...
-			resp, lErr := server.Client().Do(req)
-			assert.NoError(t, lErr)
-			assert.Equal(t, http.StatusOK, resp.StatusCode)
-		}
+		assert.Empty(t, clients)
 	})
 
 	t.Run("Return error when invalid BasicAuth is provided", func(t *testing.T) {

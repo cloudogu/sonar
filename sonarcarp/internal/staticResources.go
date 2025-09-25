@@ -24,6 +24,8 @@ func InitStaticResourceMatchers(paths []string) error {
 		result = append(result, regex)
 	}
 
+	staticResourceMatchers = result
+
 	return nil
 }
 

@@ -14,7 +14,6 @@ import (
 
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
-	carplog "github.com/cloudogu/sonar/sonarcarp/logging"
 )
 
 const _HttpHeaderXForwardedFor = "X-Forwarded-For"
@@ -29,7 +28,7 @@ const (
 	LimiterCleanInterval = 300
 )
 
-var log = logging.MustGetLogger("proxy")
+var log = logging.MustGetLogger("throttling")
 
 var (
 	mu      sync.RWMutex
@@ -61,11 +60,11 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("throttling middleware was called for %s", r.URL.String())
-		statusWriter := carplog.NewStatusResponseWriter(w, r, "throttler")
+		statusWriter := internal.NewStatusResponseWriter(w, r, "throttler")
 
 		authenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
 		if !authenticationRequired {
-			log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
+			log.Debugf("Throttling: %s request to %s does not need authentication", r.Method, r.URL.String())
 			handler.ServeHTTP(statusWriter, r)
 			return
 		}

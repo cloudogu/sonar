@@ -10,33 +10,43 @@ import (
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/cloudogu/sonar/sonarcarp/session"
+	"github.com/op/go-logging"
 	"github.com/vulcand/oxy/v2/forward"
 )
+
+var log = logging.MustGetLogger("proxy")
 
 type sonarAdminGroupMapping struct {
 	cesAdminGroup   string
 	sonarAdminGroup string
 }
 
-type authorizationHeaders struct {
+// AuthorizationHeaders contain the mapping from config value to HTTP header name for SonarQube HTTP proxy authentication.
+type AuthorizationHeaders struct {
+	// Principal contains the user ID header name.
 	Principal string
-	Role      string
-	Mail      string
-	Name      string
+	// Role contains the user group header name.
+	//
+	// Even without group, SonarQube will assign the group "sonar-users" internally.
+	Role string
+	// Mail contains the user mail header name.
+	Mail string
+	// Name contains the user display name header name.
+	Name string
 }
 
 type proxyHandler struct {
 	targetURL         *url.URL
 	forwarder         http.Handler
 	casClient         *cas.Client
-	headers           authorizationHeaders
+	headers           AuthorizationHeaders
 	logoutPathUi      string
 	logoutApiEndpoint string
 	casAuthenticated  func(r *http.Request) bool
 	adminGroupMapping sonarAdminGroupMapping
 }
 
-func createProxyHandler(headers authorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
+func CreateProxyHandler(headers AuthorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
 	log.Debugf("creating proxy middleware")
 
 	targetURL, err := url.Parse(cfg.ServiceUrl)
@@ -130,7 +140,7 @@ func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.
-func setHeaders(r *http.Request, casUsername string, casAttributes cas.UserAttributes, headers authorizationHeaders, adminGroupMapping sonarAdminGroupMapping) {
+func setHeaders(r *http.Request, casUsername string, casAttributes cas.UserAttributes, headers AuthorizationHeaders, adminGroupMapping sonarAdminGroupMapping) {
 	r.Header.Add(headers.Principal, casUsername)
 	r.Header.Add(headers.Name, casAttributes.Get("displayName"))
 	r.Header.Add(headers.Mail, casAttributes.Get("mail"))

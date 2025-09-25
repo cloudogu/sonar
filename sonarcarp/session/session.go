@@ -2,12 +2,16 @@ package session
 
 import (
 	"net/http"
+
+	"github.com/op/go-logging"
 )
 
 const (
 	cookieNameJwtSession = "JWT-SESSION"
 	cookieNameXsrfToken  = "XSRF-TOKEN"
 )
+
+var log = logging.MustGetLogger("session")
 
 func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 	jwtCookie := ""

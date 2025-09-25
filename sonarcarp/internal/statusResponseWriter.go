@@ -1,24 +1,16 @@
-package logging
+package internal
 
 import (
 	"bufio"
 	"fmt"
 	"net"
 	"net/http"
-
-	"github.com/cloudogu/sonar/sonarcarp/internal"
-	"github.com/op/go-logging"
 )
-
-var log = logging.MustGetLogger("logging")
 
 func NewStatusResponseWriter(respWriter http.ResponseWriter, r *http.Request, s string) *StatusResponseWriter {
 	return &StatusResponseWriter{
 		writer:         respWriter,
 		httpStatusCode: http.StatusOK,
-		r:              r,
-		id:             fmt.Sprintf("req%p:wr%p", r, respWriter),
-		usage:          s,
 	}
 }
 
@@ -27,9 +19,6 @@ func NewStatusResponseWriter(respWriter http.ResponseWriter, r *http.Request, s 
 type StatusResponseWriter struct {
 	writer         http.ResponseWriter
 	httpStatusCode int
-	r              *http.Request
-	id             string
-	usage          string
 }
 
 func (srw *StatusResponseWriter) Header() http.Header {
@@ -67,21 +56,14 @@ func (srw *StatusResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 // and response information (without body and sensitive headers) in DEBUG log level.
 func Middleware(next http.Handler, handlerName string) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		log.Debugf("Middleware(%s) was called for %s", handlerName, request.URL.String())
-		// TODO replace with constructor
-		srw := &StatusResponseWriter{
-			r:              request,
-			writer:         writer,
-			httpStatusCode: http.StatusOK, // this value will be overwritten during ServerHTTP() calling WriteHeader()
-			id:             fmt.Sprintf("%p:%p", request, writer),
-			usage:          "logger",
-		}
+		log.Debugf("logging middleware(%s) was called for %s", handlerName, request.URL.String())
+		srw := NewStatusResponseWriter(writer, request, handlerName)
 
 		next.ServeHTTP(srw, request)
 
 		log.Infof("%d %s %s", srw.httpStatusCode, request.Method, request.URL.Path)
 		if srw.httpStatusCode >= 300 {
-			log.Debugf("Response headers: %#v", internal.RedactRequestHeaders(srw.Header()))
+			log.Debugf("Response headers: %#v", RedactRequestHeaders(srw.Header()))
 		}
 	})
 }

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/cloudogu/sonar/sonarcarp/config"
-	"github.com/cloudogu/sonar/sonarcarp/proxy"
 	"github.com/op/go-logging"
 )
 
@@ -72,7 +71,7 @@ func main() {
 
 	ctx := context.Background()
 
-	server, err := proxy.NewServer(ctx, configuration)
+	server, err := NewServer(ctx, configuration)
 	if err != nil {
 		panic(err)
 	}
