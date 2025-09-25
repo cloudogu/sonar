@@ -20,20 +20,20 @@ func TestRedactRequestHeaders(t *testing.T) {
 	}{
 		{"redacts regular named cookie header", args{map[string][]string{
 			"Cock-a-doodle": {"kikiriki"},
-			"Cookies":       cookieValue,
+			"Cookie":        cookieValue,
 			"X-Cookies":     {"asdf"},
 		}}, http.Header{
 			"Cock-a-doodle": {"kikiriki"},
-			"Cookies":       {"[Redacted]"},
+			"Cookie":        {"[Redacted]"},
 			"X-Cookies":     {"asdf"}},
 		},
 		{"redacts uppercase named cookie header", args{map[string][]string{
 			"Cock-a-doodle": {"kikiriki"},
-			"COOKIES":       cookieValue,
+			"COOKIE":        cookieValue,
 			"X-Cookies":     {"asdf"},
 		}}, http.Header{
 			"Cock-a-doodle": {"kikiriki"},
-			"COOKIES":       {"[Redacted]"},
+			"COOKIE":        {"[Redacted]"},
 			"X-Cookies":     {"asdf"}},
 		},
 		{"redacts Authorization header", args{map[string][]string{
@@ -43,6 +43,15 @@ func TestRedactRequestHeaders(t *testing.T) {
 		}}, http.Header{
 			"Amazing-Header":   {"amazing!"},
 			"Authorization":    {"[Redacted]"},
+			"X-Authentication": {"Hello"}},
+		},
+		{"redacts cookie setting reponse header", args{map[string][]string{
+			"Resp-Header":      {"amazing!"},
+			"Set-cookie":       AuthValue,
+			"X-Authentication": {"Hello"},
+		}}, http.Header{
+			"Resp-Header":      {"amazing!"},
+			"Set-cookie":       {"[Redacted]"},
 			"X-Authentication": {"Hello"}},
 		},
 	}

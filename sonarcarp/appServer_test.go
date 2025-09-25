@@ -22,7 +22,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func Test_isBackChannelLogoutRequest(t *testing.T) {
-	t.Run("should return false for any other requests", func(t *testing.T) {
+	t.Run("should always return false", func(t *testing.T) {
 		// given
 		req, err := http.NewRequest(http.MethodPost, "http://10.12.14.16/sonar/qualityProfiles/123/", nil)
 		require.NoError(t, err)
@@ -33,17 +33,5 @@ func Test_isBackChannelLogoutRequest(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.False(t, actual)
-	})
-	t.Run("should return true for POSTs on /sonar", func(t *testing.T) {
-		// given
-		req, err := http.NewRequest(http.MethodPost, "http://10.12.14.16/sonar/", nil)
-		require.NoError(t, err)
-
-		// when
-		actual := isAlwaysDenyBackChannelLogoutRequest()(req)
-
-		// then
-		require.NoError(t, err)
-		assert.True(t, actual)
 	})
 }

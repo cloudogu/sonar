@@ -4,9 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_IsAuthenticationRequired(t *testing.T) {
+	err := InitStaticResourceMatchers([]string{"/sonar/js/", "/sonar/images/", "/sonar/favicon.ico"})
+	require.NoError(t, err)
+	defer InitStaticResourceMatchers(nil)
+
 	tests := []struct {
 		name string
 		path string

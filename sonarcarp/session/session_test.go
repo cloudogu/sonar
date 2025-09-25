@@ -2,6 +2,7 @@ package session
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,5 +14,6 @@ func Test_getTokenValidDate(t *testing.T) {
 	actual, err := getTokenExpirationDate(jwtExpiredAndInvalidSignature)
 
 	require.NoError(t, err)
-	assert.Equal(t, "asdf", actual)
+	expectedExpDate, _ := time.Parse(time.RFC3339, "2025-09-09T15:38:19+02:00")
+	assert.Equal(t, expectedExpDate, actual)
 }

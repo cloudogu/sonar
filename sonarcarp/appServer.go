@@ -97,6 +97,8 @@ func NewCasClientFactory(cfg config.Configuration) (*cas.Client, error) {
 	}), nil
 }
 
+// isAlwaysDenyBackChannelLogoutRequest returns always false to circumvent go-cas' buggy backchannel logout request
+// detection. Instead sonarcarp implements its own detection in session.Middleware.
 func isAlwaysDenyBackChannelLogoutRequest() func(r *http.Request) bool {
 	return func(r *http.Request) bool {
 		return false
