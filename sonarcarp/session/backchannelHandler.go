@@ -68,7 +68,7 @@ func doFrontChannelLogout(configuration config.Configuration, user User, casUser
 
 	_, ok := jwtUserSessions[user.UserName]
 	if ok {
-		upsertUser(user.UserName, user.JwtToken, user.XsrfToken, true)
+		upsertUser(user.UserName, user.JwtToken, user.XsrfToken)
 	}
 
 	log.Debugf("Sonar logout response is %d", logoutResp.StatusCode)

@@ -31,13 +31,13 @@ func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 	}
 
 	if jwtCookie == "" || xsrfCookie == "" {
-		log.Infof("No sonarqube session cookie found for %s", casUsername)
+		log.Infof("No sonarqube session cookies found for %s", casUsername)
 		return
 	}
 
 	// we do not check the cookie's path here because the sonar cookie is not set in the path attribute
-	log.Debugf("Found JWT session cookie for user %s, adding it to session map", casUsername)
-	upsertUser(casUsername, jwtCookie, xsrfCookie, false)
+	log.Debugf("Found session cookies for user %s, adding it to session map", casUsername)
+	upsertUser(casUsername, jwtCookie, xsrfCookie)
 }
 
 func getUserByUsername(casUsername string) User {

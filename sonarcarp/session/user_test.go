@@ -21,11 +21,11 @@ func TestUser_String(t *testing.T) {
 				UserName: "pdampfschiffer",
 				JwtToken: jwtExpiredAndInvalidSignature,
 			},
-			"pdampfschiffer:eyJzc29MYXN0UmVmcmVzaFRpbWUiOjE3...",
+			"pdampfschiffer : eyJzc29MYXN0UmVmcmVzaFRpbWUiOjE3...",
 		},
 		{"null user returns empty strings",
 			fields{},
-			"null",
+			"null : null",
 		},
 	}
 	for _, tt := range tests {

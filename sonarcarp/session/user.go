@@ -7,24 +7,27 @@ type User struct {
 	// UserName contains the CAS username
 	UserName string
 	// JwtToken contains the user's sonarqube session. This will be used during CAS backchannel logout request as there
-	// is no other information to handle this
+	// is no other information to handle this.
+	// It complements the XsrfToken for this purpose.
 	JwtToken string
-	// cross site req forge
+	// XsrfToken contains the user's cross site req forgery token as fetched while being logged-in.
+	// This token will be used to orderly log out the user against the sonarqube authentication API. It complements the
+	// JwtToken for this purpose.
 	XsrfToken string
-	// Invalid marks JWT tokens that are supposed to keep //TODO
-	Invalid bool
-}
-
-func (u *User) isNullUser() bool {
-	return *u == nullUser
 }
 
 // String returns a printable representation of a user and their sonarqube session token
 func (u *User) String() string {
 	if u.isNullUser() {
-		return "null"
+		return "null : null"
 	}
 	const cryptoHeaderLength = 21
+	// hide useless crypto algo header and cut the jwt just so some changes can be seen but not the whole thing
+	// to avoid data security inflictions.
 	printingSaveToken := string([]byte(u.JwtToken)[cryptoHeaderLength : cryptoHeaderLength+32])
-	return fmt.Sprintf("%s:%s...:invalid? %t", u.UserName, printingSaveToken, u.Invalid)
+	return fmt.Sprintf("%s : %s...", u.UserName, printingSaveToken)
+}
+
+func (u *User) isNullUser() bool {
+	return *u == nullUser
 }
