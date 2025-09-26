@@ -58,12 +58,12 @@ void runSonarQube(def sh) {
             branch = env.BRANCH_NAME
             gitWithCredentials("fetch --all")
 
-                if (branch == "main" || branch == "master") {
+                if (branch == "master") {
                 echo "This branch has been detected as the main branch."
                 sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName}"
             } else if (branch == "develop") {
                 echo "This branch has been detected as the develop branch."
-                sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.branch.name=${branch} -Dsonar.branch.target=main  "
+                    sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.branch.name=${branch} -Dsonar.branch.target=master  "
             } else if (env.CHANGE_TARGET) {
                 echo "This branch has been detected as a pull request."
                 sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName} -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=develop    "
