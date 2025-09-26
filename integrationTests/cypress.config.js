@@ -44,9 +44,9 @@ module.exports = defineConfig({
         env: {
             "DoguName": "sonar",
             "MaxLoginRetries": 3,
-            "AdminUsername": "admin",
-            "AdminPassword": "admin123",
-            "AdminGroup": "cesAdmins"
+            "AdminUsername": "ces-admin",
+            "AdminPassword": "Ecosystem2016!",
+            "AdminGroup": "CesAdministrators"
         },
         videoCompression: false,
         specPattern: ["cypress/e2e/**/*.feature"],
