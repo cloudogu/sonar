@@ -1,183 +1,161 @@
 package proxy
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
-	"github.com/cloudogu/sonar/sonarcarp/internal"
-	"github.com/cloudogu/sonar/sonarcarp/throttling"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cloudogu/go-cas"
-
 	"github.com/cloudogu/sonar/sonarcarp/config"
-	"github.com/cloudogu/sonar/sonarcarp/mocks"
 )
+
+const (
+	testAppContextPath = "/sonar"
+)
+
+var testHeaders = AuthorizationHeaders{
+	Principal: "X-Forwarded-Login",
+	Role:      "X-Forwarded-Groups",
+	Mail:      "X-Forwarded-Email",
+	Name:      "X-Forwarded-Name",
+}
 
 func TestCreateProxyHandler(t *testing.T) {
 	t.Run("create handler", func(t *testing.T) {
 		targetURL := "testURL"
 		testCfg := config.Configuration{ServiceUrl: targetURL}
 
-		handler, err := CreateProxyHandler(AuthorizationHeaders{}, &cas.Client{}, testCfg)
+		handler, err := CreateProxyHandler(AuthorizationHeaders{}, testCfg)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, handler)
+		assert.Implements(t, (*http.Handler)(nil), handler)
 	})
 
 	t.Run("invalid url", func(t *testing.T) {
 		invalidTargetURL := ":example.com"
 		testCfg := config.Configuration{ServiceUrl: invalidTargetURL}
 
-		_, err := CreateProxyHandler(AuthorizationHeaders{}, nil, testCfg)
+		_, err := CreateProxyHandler(AuthorizationHeaders{}, testCfg)
 
 		assert.Error(t, err)
 	})
 }
 
 func TestProxyHandler_ServeHTTP(t *testing.T) {
-	t.Run("ServeHTTP", func(t *testing.T) {
-		tUrl, err := url.Parse("otherURL")
+	cfg := config.Configuration{
+		AppContextPath:                 testAppContextPath,
+		LogoutPathFrontchannelEndpoint: "/sessions/logout",
+		LogoutPathBackchannelEndpoint:  "/api/authentication/logout",
+	}
+
+	t.Run("add auth headers to authenticated requests", func(t *testing.T) {
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, testAppContextPath+"/projects/create", r.URL.Path)
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
+
+		sut, err := CreateProxyHandler(testHeaders, cfg)
 		require.NoError(t, err)
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
+		targetUrl := carpServer.URL + testAppContextPath + "/projects/create"
 
-		fwdMock := &mocks.Handler{
-			MserveHTTP: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, tUrl, r.URL)
-			},
-		}
+		req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 
-		fwdMock.On("ServeHTTP", mock.Anything, mock.Anything)
-
-		ph := proxyHandler{
-			targetURL:        tUrl,
-			forwarder:        fwdMock,
-			casAuthenticated: func(r *http.Request) bool { return true },
-		}
-
-		req, err := http.NewRequest(http.MethodGet, "otherURL", nil)
+		actualResp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
-
-		ph.ServeHTTP(httptest.NewRecorder(), req)
-
-		fwdMock.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
-		fwdMock.AssertExpectations(t)
-	})
-	t.Run("try double writeheader for backchannel logout cas request", func(t *testing.T) {
-		tUrl, err := url.Parse("http://localhost:9000/sonar/")
-		require.NoError(t, err)
-
-		fwdMock := &mocks.Handler{
-			MserveHTTP: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, tUrl, r.URL)
-				w.WriteHeader(http.StatusFound)
-				_, lerr := w.Write([]byte("Location: https://192.168.56.2/cas/logout"))
-				require.NoError(t, lerr)
-			},
-		}
-
-		fwdMock.On("ServeHTTP", mock.Anything, mock.Anything).Return()
-
-		ph := proxyHandler{
-			targetURL:        tUrl,
-			forwarder:        fwdMock,
-			casAuthenticated: func(r *http.Request) bool { return true },
-		}
-		testctx := context.Background()
-		cfg := config.Configuration{}
-		sut := internal.Middleware(throttling.NewThrottlingHandler(testctx, cfg, ph), "testThrottlingHandler")
-
-		req, err := http.NewRequest(http.MethodPost, "http://localhost:8080/sonar/", nil)
-		req.Header.Add("Location", "https://192.168.56.2/cas/logout")
-		req.Header.Add("Set-Cookie", "_cas-session=102938471023984710239874")
-		require.NoError(t, err)
-
-		sut.ServeHTTP(httptest.NewRecorder(), req)
-
-		fwdMock.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
-		fwdMock.AssertExpectations(t)
+		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
 	})
 	t.Run("front channel logout", func(t *testing.T) {
-		tUrl, err := url.Parse("testURL")
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusFound)
+			w.Header().Add("Location", "/sonar/")
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
+
+		casClientMock := newMockCasClient(t)
+		casClientMock.EXPECT().RedirectToLogout(mock.Anything, mock.Anything).Run(func(w http.ResponseWriter, r *http.Request) {
+			log.Debugf("redirect to logout")
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/sonar/api/authentication/logout", r.URL.Path)
+		})
+
+		sut, err := CreateProxyHandler(testHeaders, cfg)
 		require.NoError(t, err)
+		sut.casClient = casClientMock
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
 
-		fwdMock := &mocks.Handler{}
+		// clicking on SonarQube's logout button leads first to a GET /sonar/sessions/logout request which will be redirected
+		// to a GET /sonar/api/authentication/logout request
+		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+cfg.LogoutPathBackchannelEndpoint, nil)
+		req.Header.Add("Referer", carpServer.URL+testAppContextPath+cfg.LogoutPathFrontchannelEndpoint)
 
-		ph := proxyHandler{
-			targetURL:         tUrl,
-			forwarder:         fwdMock,
-			logoutPathUi:      "/sonar/sessions/logout",
-			logoutApiEndpoint: "/sonar/",
-		}
+		// when
+		actualResp, err := http.DefaultClient.Do(req)
 
-		req, err := http.NewRequest(http.MethodGet, "/sonar/", nil)
-		req.Header.Add("Referer", "10.20.30.40/sonar/sessions/logout")
+		// then
 		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
+	})
+	t.Run("proxy non-auth resource requests as-is", func(t *testing.T) {
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			assert.Equal(t, "/sonar/js/lefile.js", r.URL.Path)
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
 
-		ph.ServeHTTP(httptest.NewRecorder(), req)
+		casClientMock := newMockCasClient(t)
 
-		fwdMock.AssertNotCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
-		fwdMock.AssertExpectations(t)
+		sut, err := CreateProxyHandler(testHeaders, cfg)
+		require.NoError(t, err)
+		sut.casClient = casClientMock
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
+
+		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+"/js/lefile.js", nil)
+
+		// when
+		actualResp, err := http.DefaultClient.Do(req)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
 	})
 	t.Run("Unauthenticated browser request does not call forwarder", func(t *testing.T) {
-		tUrl, err := url.Parse("/sonar/api/testURL")
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t.Fatalf("unexpected sonar call to %s", r.URL.Path)
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
+
+		casClientMock := newMockCasClient(t)
+		casClientMock.EXPECT().IsAuthenticated(mock.Anything).Return(false)
+		casClientMock.EXPECT().RedirectToLogout(mock.Anything, mock.Anything).Return()
+
+		sut, err := CreateProxyHandler(testHeaders, cfg)
 		require.NoError(t, err)
+		sut.casClient = casClientMock
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
 
-		fwdMock := &mocks.Handler{}
-
-		ph := proxyHandler{
-			targetURL:        tUrl,
-			forwarder:        fwdMock,
-			casAuthenticated: func(r *http.Request) bool { return false },
-		}
-
-		req, err := http.NewRequest(http.MethodGet, "/sonar/api/otherURL", nil)
-		require.NoError(t, err)
+		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+"/anything", nil)
 		req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0")
 
 		// when
-		ph.ServeHTTP(httptest.NewRecorder(), req)
+		actualResp, err := http.DefaultClient.Do(req)
 
 		// then
-		fwdMock.AssertNotCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
-		fwdMock.AssertExpectations(t)
-	})
-	t.Run("Unauthenticated other request goes through failing forwarder", func(t *testing.T) {
-		// given
-		tUrl, err := url.Parse("/sonar/api/testURL")
 		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
 
-		fwdMock := &mocks.Handler{}
-		fwdMock.On("ServeHTTP", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			// then
-			writerRaw := args.Get(0)
-			writer := writerRaw.(http.ResponseWriter)
-			writer.WriteHeader(http.StatusUnauthorized)
-			_, _ = writer.Write([]byte("you nasty hacker!"))
-		})
-
-		ph := proxyHandler{
-			targetURL:        tUrl,
-			forwarder:        fwdMock,
-			casAuthenticated: func(r *http.Request) bool { return false },
-		}
-
-		req, err := http.NewRequest(http.MethodGet, "/sonar/api/otherURL", nil)
-		require.NoError(t, err)
-		req.Header.Add("User-Agent", "curl/1.2.3")
-
-		recorder := httptest.NewRecorder()
-		// when
-		ph.ServeHTTP(recorder, req)
-
-		// then
-		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
-		fwdMock.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
-		fwdMock.AssertExpectations(t)
 	})
 }
 

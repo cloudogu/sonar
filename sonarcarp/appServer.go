@@ -39,17 +39,15 @@ func NewServer(ctx context.Context, configuration config.Configuration) (*http.S
 
 	router := http.NewServeMux()
 
-	pHandler, err := proxy.CreateProxyHandler(
-		headers,
-		casClient,
-		configuration,
-	)
+	proxyHandler, err := proxy.CreateProxyHandler(headers, configuration)
 
-	throttlingHandler := throttling.NewThrottlingHandler(ctx, configuration, pHandler)
+	casHandler := casClient.CreateHandler(proxyHandler)
+
+	throttlingHandler := throttling.NewThrottlingHandler(ctx, configuration, casHandler)
 
 	bcLogoutHandler := session.Middleware(throttlingHandler, configuration, casClient)
 
-	logHandler := internal.Middleware(bcLogoutHandler, "throttling")
+	logHandler := internal.Middleware(bcLogoutHandler, "logging")
 
 	router.Handle("/sonar/", logHandler)
 

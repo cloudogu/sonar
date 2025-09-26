@@ -16,62 +16,40 @@ import (
 
 var log = logging.MustGetLogger("proxy")
 
-type sonarAdminGroupMapping struct {
-	cesAdminGroup   string
-	sonarAdminGroup string
-}
-
-// AuthorizationHeaders contain the mapping from config value to HTTP header name for SonarQube HTTP proxy authentication.
-type AuthorizationHeaders struct {
-	// Principal contains the user ID header name.
-	Principal string
-	// Role contains the user group header name.
-	//
-	// Even without group, SonarQube will assign the group "sonar-users" internally.
-	Role string
-	// Mail contains the user mail header name.
-	Mail string
-	// Name contains the user display name header name.
-	Name string
-}
-
 type proxyHandler struct {
 	targetURL         *url.URL
 	forwarder         http.Handler
-	casClient         *cas.Client
 	headers           AuthorizationHeaders
 	logoutPathUi      string
 	logoutApiEndpoint string
-	casAuthenticated  func(r *http.Request) bool
 	adminGroupMapping sonarAdminGroupMapping
+	casClient         casClient
 }
 
-func CreateProxyHandler(headers AuthorizationHeaders, casClient *cas.Client, cfg config.Configuration) (http.Handler, error) {
+func CreateProxyHandler(headers AuthorizationHeaders, cfg config.Configuration) (*proxyHandler, error) {
 	log.Debugf("creating proxy middleware")
 
 	targetURL, err := url.Parse(cfg.ServiceUrl)
 	if err != nil {
-		return proxyHandler{}, fmt.Errorf("could not parse target url '%s': %w", cfg.ServiceUrl, err)
+		return &proxyHandler{}, fmt.Errorf("could not parse target url '%s': %w", cfg.ServiceUrl, err)
 	}
 
 	fwd := forward.New(true)
 
-	pHandler := proxyHandler{
+	pHandler := &proxyHandler{
 		targetURL:         targetURL,
 		logoutPathUi:      cfg.LogoutPathFrontchannelEndpoint,
 		logoutApiEndpoint: cfg.LogoutPathBackchannelEndpoint,
 		forwarder:         fwd,
-		casAuthenticated:  cas.IsAuthenticated,
 		headers:           headers,
 		adminGroupMapping: sonarAdminGroupMapping{cesAdminGroup: cfg.CesAdminGroup, sonarAdminGroup: cfg.SonarAdminGroup},
+		casClient:         &casClientAbstracter{},
 	}
 
-	casHandlingProxy := casClient.CreateHandler(pHandler)
-
-	return casHandlingProxy, nil
+	return pHandler, nil
 }
 
-func (p proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
+func (p *proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
 	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
 	// So in that case we use the referrer to check if a request is a logout request.
 
@@ -82,17 +60,12 @@ func (p proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
 	return isFcLogout
 }
 
-func IsBrowserRequest(req *http.Request) bool {
-	lowerUserAgent := strings.ToLower(req.Header.Get("User-Agent"))
-	return strings.Contains(lowerUserAgent, "mozilla") || strings.Contains(lowerUserAgent, "opera")
-}
-
-func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy handler was called for request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
 	if p.isFrontChannelLogoutRequest(r) {
 		log.Debug("Proxy: Logout request")
-		cas.RedirectToLogout(w, r)
+		p.casClient.RedirectToLogout(w, r)
 		return
 	}
 
@@ -113,15 +86,15 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !p.casAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
+	if !p.casClient.IsAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
 		log.Debugf("Proxy: Found non-authenticated %s request to %s", r.Method, r.URL.String())
-		cas.RedirectToLogin(w, r)
+		p.casClient.RedirectToLogout(w, r)
 		return
 	}
 
 	log.Debugf("proxy found authorized request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
-	casUsername, casAttrs := getCasAttributes(r)
+	casUsername, casAttrs := p.getCasAttributes(r)
 
 	saveJwtSessionForBackchannelLogout(r, casUsername)
 	setHeaders(r, casUsername, casAttrs, p.headers, p.adminGroupMapping)
@@ -129,10 +102,15 @@ func (p proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.forwarder.ServeHTTP(w, r)
 }
 
-func getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
-	username := cas.Username(r)
-	attrs := cas.Attributes(r)
+func (p *proxyHandler) getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
+	username := p.casClient.Username(r)
+	attrs := p.casClient.Attributes(r)
 	return username, attrs
+}
+
+func IsBrowserRequest(req *http.Request) bool {
+	lowerUserAgent := strings.ToLower(req.Header.Get("User-Agent"))
+	return strings.Contains(lowerUserAgent, "mozilla") || strings.Contains(lowerUserAgent, "opera")
 }
 
 func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
@@ -167,4 +145,26 @@ func isInAdminGroup(currentGroups []string, cesAdminGroup string) bool {
 	}
 
 	return false
+}
+
+type casClientAbstracter struct{}
+
+// RedirectToLogout allows CAS protected handlers to redirect a request to the CAS logout page.
+func (cca *casClientAbstracter) RedirectToLogout(w http.ResponseWriter, r *http.Request) {
+	cas.RedirectToLogout(w, r)
+}
+
+// Username returns a CAS username to a CAS session cookie from the given request.
+func (cca *casClientAbstracter) Username(r *http.Request) string {
+	return cas.Username(r)
+}
+
+// Attributes returns other CAS user attributes to a CAS session cookie from the given request.
+func (cca *casClientAbstracter) Attributes(r *http.Request) cas.UserAttributes {
+	return cas.Attributes(r)
+}
+
+// IsAuthenticated returns whether a request indicates if the request's user is CAS authenticated.
+func (cca *casClientAbstracter) IsAuthenticated(r *http.Request) bool {
+	return cas.IsAuthenticated(r)
 }
