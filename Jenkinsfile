@@ -58,7 +58,7 @@ void runSonarQube(def sh) {
             branch = env.BRANCH_NAME
             gitWithCredentials("fetch --all")
 
-            if (branch == "main") {
+                if (branch == "main" || branch == "master") {
                 echo "This branch has been detected as the main branch."
                 sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${projectName} -Dsonar.projectName=${projectName}"
             } else if (branch == "develop") {
