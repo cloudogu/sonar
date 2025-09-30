@@ -27,6 +27,8 @@ type sonarAdminGroupMapping struct {
 
 // casClient extracts static go-cas functions into testable functions.
 type casClient interface {
+	// RedirectToLogin handles unauthenticated users so the browser shows the CAS login page.
+	RedirectToLogin(w http.ResponseWriter, r *http.Request)
 	// RedirectToLogout allows CAS protected handlers to redirect a request to the CAS logout page.
 	RedirectToLogout(w http.ResponseWriter, r *http.Request)
 	// Username returns a CAS username to a CAS session cookie from the given request.

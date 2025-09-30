@@ -117,6 +117,40 @@ func (_c *mockCasClient_IsAuthenticated_Call) RunAndReturn(run func(*http.Reques
 	return _c
 }
 
+// RedirectToLogin provides a mock function with given fields: w, r
+func (_m *mockCasClient) RedirectToLogin(w http.ResponseWriter, r *http.Request) {
+	_m.Called(w, r)
+}
+
+// mockCasClient_RedirectToLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RedirectToLogin'
+type mockCasClient_RedirectToLogin_Call struct {
+	*mock.Call
+}
+
+// RedirectToLogin is a helper method to define mock.On call
+//   - w http.ResponseWriter
+//   - r *http.Request
+func (_e *mockCasClient_Expecter) RedirectToLogin(w interface{}, r interface{}) *mockCasClient_RedirectToLogin_Call {
+	return &mockCasClient_RedirectToLogin_Call{Call: _e.mock.On("RedirectToLogin", w, r)}
+}
+
+func (_c *mockCasClient_RedirectToLogin_Call) Run(run func(w http.ResponseWriter, r *http.Request)) *mockCasClient_RedirectToLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(http.ResponseWriter), args[1].(*http.Request))
+	})
+	return _c
+}
+
+func (_c *mockCasClient_RedirectToLogin_Call) Return() *mockCasClient_RedirectToLogin_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *mockCasClient_RedirectToLogin_Call) RunAndReturn(run func(http.ResponseWriter, *http.Request)) *mockCasClient_RedirectToLogin_Call {
+	_c.Run(run)
+	return _c
+}
+
 // RedirectToLogout provides a mock function with given fields: w, r
 func (_m *mockCasClient) RedirectToLogout(w http.ResponseWriter, r *http.Request) {
 	_m.Called(w, r)

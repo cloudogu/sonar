@@ -88,7 +88,7 @@ func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !p.casClient.IsAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
 		log.Debugf("Proxy: Found non-authenticated %s request to %s", r.Method, r.URL.String())
-		p.casClient.RedirectToLogout(w, r)
+		p.casClient.RedirectToLogin(w, r)
 		return
 	}
 
@@ -148,6 +148,10 @@ func isInAdminGroup(currentGroups []string, cesAdminGroup string) bool {
 }
 
 type casClientAbstracter struct{}
+
+func (cca *casClientAbstracter) RedirectToLogin(w http.ResponseWriter, r *http.Request) {
+	cas.RedirectToLogin(w, r)
+}
 
 // RedirectToLogout allows CAS protected handlers to redirect a request to the CAS logout page.
 func (cca *casClientAbstracter) RedirectToLogout(w http.ResponseWriter, r *http.Request) {
