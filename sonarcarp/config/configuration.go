@@ -24,9 +24,9 @@ type Configuration struct {
 	// AppContextPath contains both CARP's and SonarQube's web application context path. It must not be empty. It must
 	// start with a slash "/".
 	AppContextPath string `yaml:"app-context-path"`
-	// LogoutPathFrontchannelEndpoint contains the respective endpoint for frontchannel logout detection.
+	// LogoutPathFrontchannelEndpoint contains the respective endpoint for frontchannel logout *detection* only.
 	LogoutPathFrontchannelEndpoint string `yaml:"logout-path-frontchannel-endpoint"`
-	// LogoutPathBackchannelEndpoint contains the frontchannel endpoint to call when a backchannel logout was detected.
+	// LogoutPathBackchannelEndpoint contains the frontchannel endpoint to *call* when a backchannel logout was detected.
 	LogoutPathBackchannelEndpoint string   `yaml:"logout-path-backchannel-endpoint"`
 	LoggingFormat                 string   `yaml:"log-format"`
 	LogLevel                      string   `yaml:"log-level"`

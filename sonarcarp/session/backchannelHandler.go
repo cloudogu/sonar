@@ -93,7 +93,7 @@ func buildLogoutRequest(configuration config.Configuration, user User) (*http.Re
 	if err != nil {
 		return nil, fmt.Errorf("failed to build sonarqube base url from %s and %s: %w", configuration.ServiceUrl, configuration.AppContextPath, err)
 	}
-	sonarLogoutUrl := configuration.LogoutPathFrontchannelEndpoint
+	sonarLogoutUrl := configuration.LogoutPathBackchannelEndpoint
 	fullLogoutUrl, err := url.JoinPath(sonarBaseUrl, sonarLogoutUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to join sonarqube logout request from %s and %s: %w", sonarBaseUrl, sonarLogoutUrl, err)
