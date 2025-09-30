@@ -7,20 +7,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"golang.org/x/time/rate"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cloudogu/sonar/sonarcarp/config"
+	"github.com/cloudogu/sonar/sonarcarp/internal"
 )
 
 const maxTokens = 3
 
+var testCtx = context.Background()
+
 func TestThrottlingHandler(t *testing.T) {
-	limiterConfig := config.Configuration{LimiterTokenRate: 1, LimiterBurstSize: maxTokens}
-	ctx := context.TODO()
+	testCfg := config.Configuration{
+		PrincipalHeader:  "X-Forwarded-Login",
+		NameHeader:       "X-Forwarded-Name",
+		MailHeader:       "X-Forwarded-Email",
+		RoleHeader:       "X-Forwarded-Groups",
+		LimiterTokenRate: 1,
+		LimiterBurstSize: maxTokens,
+	}
 
 	cleanUp := func(server *httptest.Server) {
 		server.Close()
@@ -32,10 +40,10 @@ func TestThrottlingHandler(t *testing.T) {
 			writer.WriteHeader(http.StatusUnauthorized)
 		}
 
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+		sut := NewThrottlingHandler(testCtx, testCfg, handler)
 
 		var ctxHandler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
-			throttlingHandler.ServeHTTP(writer, request)
+			sut.ServeHTTP(writer, request)
 		}
 
 		server := httptest.NewServer(ctxHandler)
@@ -70,9 +78,9 @@ func TestThrottlingHandler(t *testing.T) {
 			writer.WriteHeader(http.StatusOK)
 		}
 
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+		sut := NewThrottlingHandler(testCtx, testCfg, handler)
 
-		server := httptest.NewServer(throttlingHandler)
+		server := httptest.NewServer(sut)
 		defer cleanUp(server)
 
 		req, err := http.NewRequest(http.MethodGet, server.URL+"/sonar/projects/create", nil)
@@ -96,9 +104,9 @@ func TestThrottlingHandler(t *testing.T) {
 		err := internal.InitStaticResourceMatchers([]string{"/sonar/js/"})
 		require.NoError(t, err)
 
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+		sut := NewThrottlingHandler(testCtx, testCfg, handler)
 
-		server := httptest.NewServer(throttlingHandler)
+		server := httptest.NewServer(sut)
 		defer cleanUp(server)
 
 		req, err := http.NewRequest(http.MethodGet, server.URL+"/sonar/js/something.js", nil)
@@ -120,10 +128,10 @@ func TestThrottlingHandler(t *testing.T) {
 			writer.WriteHeader(http.StatusUnauthorized)
 		}
 
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+		sut := NewThrottlingHandler(testCtx, testCfg, handler)
 
 		var ctxHandler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
-			throttlingHandler.ServeHTTP(writer, request)
+			sut.ServeHTTP(writer, request)
 		}
 
 		server := httptest.NewServer(ctxHandler)
@@ -144,10 +152,10 @@ func TestThrottlingHandler(t *testing.T) {
 			writer.WriteHeader(http.StatusUnauthorized)
 		}
 
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+		sut := NewThrottlingHandler(testCtx, testCfg, handler)
 
 		var ctxHandler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
-			throttlingHandler.ServeHTTP(writer, request)
+			sut.ServeHTTP(writer, request)
 		}
 
 		server := httptest.NewServer(ctxHandler)
@@ -163,7 +171,7 @@ func TestThrottlingHandler(t *testing.T) {
 		defer cancel()
 
 		// Using the same limiter config for client means, server can refresh tokens
-		clientLimiter := rate.NewLimiter(rate.Limit(limiterConfig.LimiterTokenRate), limiterConfig.LimiterBurstSize)
+		clientLimiter := rate.NewLimiter(rate.Limit(testCfg.LimiterTokenRate), testCfg.LimiterBurstSize)
 
 		for i := 0; i < 5; i++ {
 			lErr := clientLimiter.Wait(clientCtx)
@@ -176,12 +184,39 @@ func TestThrottlingHandler(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 		}
 	})
+	t.Run("Full throttling because malicious header attack", func(t *testing.T) {
+		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(http.StatusTeapot)
+			t.Fatalf("the request should not have passed through")
+		}
+
+		sut := NewThrottlingHandler(testCtx, testCfg, handler)
+
+		var ctxHandler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
+			sut.ServeHTTP(writer, request)
+		}
+
+		server := httptest.NewServer(ctxHandler)
+		defer cleanUp(server)
+
+		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		require.NoError(t, err)
+
+		req.Header.Set(_HttpHeaderXForwardedFor, "10.20.30.40") // this request comes over the nginx dogu so this header must be set, mustn't it?
+		req.Header.Set("X-Forwarded-Login", "baddy.mcbadface")
+
+		resp, lErr := server.Client().Do(req)
+		assert.NoError(t, lErr)
+
+		// block right away on the first request
+		assert.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
+	})
 
 	t.Run("Reset throttling after successful try", func(t *testing.T) {
 		reqCounter := 0
 
 		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
-			if reqCounter >= (limiterConfig.LimiterBurstSize - 1) {
+			if reqCounter >= (testCfg.LimiterBurstSize - 1) {
 				writer.WriteHeader(http.StatusOK)
 				reqCounter = 0
 				return
@@ -191,7 +226,7 @@ func TestThrottlingHandler(t *testing.T) {
 			reqCounter++
 		}
 
-		throttlingHandler := NewThrottlingHandler(ctx, limiterConfig, handler)
+		throttlingHandler := NewThrottlingHandler(testCtx, testCfg, handler)
 
 		var ctxHandler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
 			throttlingHandler.ServeHTTP(writer, request)
@@ -233,8 +268,8 @@ func TestThrottlingHandler(t *testing.T) {
 		limiterCleanInterval := 1
 
 		inputConfig := config.Configuration{
-			LimiterTokenRate:     limiterConfig.LimiterTokenRate,
-			LimiterBurstSize:     limiterConfig.LimiterBurstSize,
+			LimiterTokenRate:     testCfg.LimiterTokenRate,
+			LimiterBurstSize:     testCfg.LimiterBurstSize,
 			LimiterCleanInterval: limiterCleanInterval,
 		}
 
@@ -287,6 +322,45 @@ func Test_inUnauthenticatedEndpointList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equalf(t, tt.want, inUnauthenticatedEndpointList(tt.path), "inUnauthenticatedEndpointList(%v)", tt.path)
+		})
+	}
+}
+
+func Test_hasAlreadySonarQubeAuthHeaders(t *testing.T) {
+	cfg := config.Configuration{
+		PrincipalHeader: "X-Forwarded-Login",
+		NameHeader:      "X-Forwarded-Name",
+		MailHeader:      "X-Forwarded-Email",
+		RoleHeader:      "X-Forwarded-Groups",
+	}
+	type args struct {
+		header http.Header
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{"return true for single unwanted header", args{http.Header{"X-Forwarded-Login": []string{"test"}}}, true},
+		{"return true for multiple headers", args{http.Header{
+			"X-Forwarded-Login":  []string{"test"},
+			"X-Forwarded-Name":   []string{"test"},
+			"X-Forwarded-Email":  []string{"test"},
+			"X-Forwarded-Groups": []string{"test"}}}, true},
+		{"return true for uppercase headers", args{http.Header{
+			"X-FORWARDED-LOGIN": []string{"test"}}}, true},
+		{"return true for lowercase headers", args{http.Header{
+			"x-forwarded-login":  []string{"test"},
+			"x-forwarded-name":   []string{"test"},
+			"x-forwarded-email":  []string{"test"},
+			"x-forwarded-groups": []string{"test"}}}, true},
+
+		{"return false for similar but not quite", args{http.Header{"y-Forwarded-Login": []string{"test"}}}, false},
+		{"return false no headers", args{http.Header{}}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, hasAlreadySonarQubeAuthHeaders(cfg, tt.args.header), "hasAlreadySonarQubeAuthHeaders(%v, %v)", cfg, tt.args.header)
 		})
 	}
 }

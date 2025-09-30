@@ -16,6 +16,8 @@ import (
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 )
 
+// _HttpHeaderXForwardedFor contains a request header identifying the original client address through a reverse proxy.
+// The value may contain a list of hosts/IP addresses.
 const _HttpHeaderXForwardedFor = "X-Forwarded-For"
 
 const (
@@ -40,18 +42,18 @@ var (
 //
 // Using the Leaky-Bucket-algorithm, this handler will take a configuration which configures a time window, burst size,
 // and token refresh rate to set up the throttle agent.
-func NewThrottlingHandler(ctx context.Context, configuration config.Configuration, handler http.Handler) http.Handler {
-	limiterTokenRateInSecs := configuration.LimiterTokenRate
+func NewThrottlingHandler(ctx context.Context, cfg config.Configuration, handler http.Handler) http.Handler {
+	limiterTokenRateInSecs := cfg.LimiterTokenRate
 	if limiterTokenRateInSecs == 0 {
 		limiterTokenRateInSecs = LimiterTokenRate
 	}
 
-	limiterBurstSize := configuration.LimiterBurstSize
+	limiterBurstSize := cfg.LimiterBurstSize
 	if limiterBurstSize == 0 {
 		limiterBurstSize = LimiterBurstSize
 	}
 
-	limiterCleanIntervalInSecs := configuration.LimiterCleanInterval
+	limiterCleanIntervalInSecs := cfg.LimiterCleanInterval
 	if limiterCleanIntervalInSecs == 0 {
 		limiterCleanIntervalInSecs = LimiterCleanInterval
 	}
@@ -62,6 +64,24 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 		log.Debugf("throttling middleware was called for %s", r.URL.String())
 		statusWriter := internal.NewStatusResponseWriter(w, r, "throttler")
 
+		forwardedIpAddrRaw := r.Header.Get(_HttpHeaderXForwardedFor)
+		username, _, ok := r.BasicAuth()
+		if !ok {
+			username = "sonarcarp.throttling@ces.invalid"
+		}
+		forwardedIpAddresses, ipUsernameId, limiter := createLimiter(forwardedIpAddrRaw, username, limiterTokenRateInSecs, limiterBurstSize)
+
+		// check BEFORE any other requests pass through the system to avoid that SonarQube issues any form of session cookie
+		if hasAlreadySonarQubeAuthHeaders(cfg, r.Header) {
+			log.Errorf("Found request with malicious SQ authentication headers from %s, %s to URL %s: Throttle all requests for now", forwardedIpAddresses, ipUsernameId, r.URL.String())
+
+			for limiter.Allow() {
+			} // consume all tokens for good measure against the hacker client
+
+			http.Error(statusWriter, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
+			return
+		}
+
 		authenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
 		if !authenticationRequired {
 			log.Debugf("Throttling: %s request to %s does not need authentication", r.Method, r.URL.String())
@@ -69,30 +89,12 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 			return
 		}
 
-		username, _, ok := r.BasicAuth()
-		if !ok {
-			username = "sonarcarp.throttling@ces.invalid"
-		}
-
-		forwardedIpAddrRaw := r.Header.Get(_HttpHeaderXForwardedFor)
 		isCesInternalDoguCall := forwardedIpAddrRaw == ""
 		if isCesInternalDoguCall {
 			log.Debugf("No %s header is set for request. Forwarding internal dogu request without throttling", _HttpHeaderXForwardedFor)
 			handler.ServeHTTP(statusWriter, r)
 			return
 		}
-
-		// go reverse proxy may add additional IP addresses from localhost. We need to take the right one.
-		forwardedIpAddresses := strings.Split(forwardedIpAddrRaw, ",")
-		initialForwardedIpAddress := ""
-		if len(forwardedIpAddresses) > 0 {
-			initialForwardedIpAddress = strings.TrimSpace(forwardedIpAddresses[0])
-		}
-
-		log.Debugf("Extracted IP %s from %s for throttling: %s", initialForwardedIpAddress, _HttpHeaderXForwardedFor, username)
-
-		ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
-		limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
 
 		// Consume one token AND check if r is still allowed
 		if !limiter.Allow() {
@@ -112,6 +114,41 @@ func NewThrottlingHandler(ctx context.Context, configuration config.Configuratio
 			cleanClient(ipUsernameId)
 		}
 	})
+}
+
+func hasAlreadySonarQubeAuthHeaders(cfg config.Configuration, header http.Header) bool {
+	usernameHeader := strings.ToLower(cfg.PrincipalHeader)
+	nameHeader := strings.ToLower(cfg.NameHeader)
+	mailHeader := strings.ToLower(cfg.MailHeader)
+	groupsHeader := strings.ToLower(cfg.RoleHeader)
+
+	for key := range (map[string][]string)(header) {
+		switch strings.ToLower(key) {
+		case usernameHeader:
+			fallthrough
+		case nameHeader:
+			fallthrough
+		case mailHeader:
+			fallthrough
+		case groupsHeader:
+			return true
+		}
+	}
+
+	return false
+}
+
+func createLimiter(forwardedIpAddrRaw string, username string, limiterTokenRateInSecs int, limiterBurstSize int) ([]string, string, *rate.Limiter) {
+	// go reverse proxy may add additional IP addresses from localhost. We need to take the right one.
+	forwardedIpAddresses := strings.Split(forwardedIpAddrRaw, ",")
+	initialForwardedIpAddress := ""
+	if len(forwardedIpAddresses) > 0 {
+		initialForwardedIpAddress = strings.TrimSpace(forwardedIpAddresses[0])
+	}
+
+	ipUsernameId := fmt.Sprintf("%s:%s", initialForwardedIpAddress, username)
+	limiter := getOrCreateLimiter(ipUsernameId, limiterTokenRateInSecs, limiterBurstSize)
+	return forwardedIpAddresses, ipUsernameId, limiter
 }
 
 func inUnauthenticatedEndpointList(path string) bool {
