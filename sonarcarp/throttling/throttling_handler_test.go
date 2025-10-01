@@ -120,7 +120,7 @@ func TestThrottlingHandler(t *testing.T) {
 			assert.NoError(t, lErr)
 			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		}
-		assert.Empty(t, clients)
+		assert.InDelta(t, clients["testIP:test"].Tokens(), 3.0, 0.1)
 	})
 
 	t.Run("Return error when invalid BasicAuth is provided", func(t *testing.T) {
@@ -164,7 +164,7 @@ func TestThrottlingHandler(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 		require.NoError(t, err)
 
-		req.Header.Set(_HttpHeaderXForwardedFor, "testIP")
+		req.Header.Set(_HttpHeaderXForwardedFor, "anotherIP")
 		req.SetBasicAuth("test", "test")
 
 		clientCtx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)

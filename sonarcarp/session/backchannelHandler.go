@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/config"
 )
 
@@ -17,7 +16,7 @@ var httpClient = &http.Client{}
 
 // Middleware creates a delegate ResponseWriter that catches backchannel logout requests and creates a side request to
 // logout in SonarQube.
-func Middleware(next http.Handler, cfg config.Configuration, casClient *cas.Client) http.Handler {
+func Middleware(next http.Handler, cfg config.Configuration, casClient casClient) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		log.Debugf("backchannelHandler was called for %s", request.URL.String())
 
@@ -69,6 +68,7 @@ func doFrontChannelLogout(configuration config.Configuration, user User, casUser
 	_, ok := jwtUserSessions[user.UserName]
 	if ok {
 		upsertUser(user.UserName, user.JwtToken, user.XsrfToken)
+		defer cleanJwtUserSessions()
 	}
 
 	log.Debugf("Sonar logout response is %d", logoutResp.StatusCode)
@@ -145,9 +145,12 @@ func getUserFromCasLogout(r *http.Request) (string, error) {
 
 	samlLogoutMessage := r.PostForm.Get("logoutRequest") // as sent by the CAS request
 	casUser, err := getUserFromSamlLogout(samlLogoutMessage)
+	if err != nil {
+		return "", fmt.Errorf("failed to get username from CAS logout data: %s ", samlLogoutMessage)
+	}
 
-	// put a non-read body back to the request and avoid a lot of potential request precessing problems
-	r.Body = io.NopCloser(bytes.NewBuffer([]byte("logoutRequest=" + samlLogoutMessage))) // TODO CHECK if error
+	// put a pristine body back to the request and avoid a lot of potential request processing problems
+	r.Body = io.NopCloser(bytes.NewBuffer([]byte("logoutRequest=" + samlLogoutMessage)))
 
 	return casUser, nil
 }

@@ -138,7 +138,7 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 
 		casClientMock := newMockCasClient(t)
 		casClientMock.EXPECT().IsAuthenticated(mock.Anything).Return(false)
-		casClientMock.EXPECT().RedirectToLogout(mock.Anything, mock.Anything).Return()
+		casClientMock.EXPECT().RedirectToLogin(mock.Anything, mock.Anything).Return()
 
 		sut, err := CreateProxyHandler(testHeaders, cfg)
 		require.NoError(t, err)
