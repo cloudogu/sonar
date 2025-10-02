@@ -27,7 +27,7 @@ func parseJwtTokenToClaims(tokenStr string) (claims jwt.Claims, err error) {
 	token, err := jwt.Parse(
 		tokenStr,
 		func(token *jwt.Token) (any, error) { return []byte("unknownHS256SecretKey"), nil },
-		jwt.WithValidMethods([]string{"HS256"}))
+		jwt.WithoutClaimsValidation())
 	if err != nil && token == nil {
 		return claims, fmt.Errorf("failed to sufficently parse sonarqube session JWT: %w", err)
 	}

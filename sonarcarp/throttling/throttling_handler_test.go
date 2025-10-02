@@ -161,27 +161,40 @@ func TestThrottlingHandler(t *testing.T) {
 		server := httptest.NewServer(ctxHandler)
 		defer cleanUp(server)
 
+		clientCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		req = req.WithContext(clientCtx)
 		require.NoError(t, err)
 
 		req.Header.Set(_HttpHeaderXForwardedFor, "anotherIP")
 		req.SetBasicAuth("test", "test")
 
-		clientCtx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
-		defer cancel()
-
-		// Using the same limiter config for client means, server can refresh tokens
-		clientLimiter := rate.NewLimiter(rate.Limit(testCfg.LimiterTokenRate), testCfg.LimiterBurstSize)
-
+		// Test Idea:
+		// Try 3 times with "401 not found" which exhausts all 3 tokens (testCfg.LimiterBurstSize).
+		// This should lead to one "429 too many requests".
+		// Then, gain time to replenish at least on token so a previous HTTP 401 can take place
+		// Result: Replenishing tokens could be proved
 		for i := 0; i < 5; i++ {
-			lErr := clientLimiter.Wait(clientCtx)
+			resp, lErr := (&http.Client{}).Do(req)
 			assert.NoError(t, lErr)
-
-			resp, lErr := server.Client().Do(req)
-			assert.NoError(t, lErr)
-
 			t.Log(i, resp.StatusCode)
-			assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+			switch i {
+			case 0:
+				fallthrough
+			case 1:
+				fallthrough
+			case 2:
+				assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+			case 3:
+				assert.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
+				time.Sleep(2 * time.Second)
+			default:
+				// tadaaa! same as runs 0,1,2
+				assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+				time.Sleep(1 * time.Second)
+			}
 		}
 	})
 	t.Run("Full throttling because malicious header attack", func(t *testing.T) {

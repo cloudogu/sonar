@@ -9,7 +9,7 @@ import (
 const (
 	// JwtSessionCleanInterval contains the default time window in seconds between all JWT tokens will be checked if
 	// they can be removed.
-	JwtSessionCleanInterval = 3000
+	JwtSessionCleanInterval = 86400
 )
 
 var (
@@ -19,17 +19,20 @@ var (
 
 // InitCleanJob starts the background job responsible for cleaning up invalid sonarqube session JWT tokens.
 func InitCleanJob(ctx context.Context, cleanInterval int) {
+	if cleanInterval == 0 {
+		cleanInterval = JwtSessionCleanInterval
+	}
 	go startCleanJob(ctx, cleanInterval)
 }
 
 var nullUser = User{}
 
-func cleanClient(clientHandle string) {
+func cleanUser(username string) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	log.Debugf("Resetting limiter for %s", clientHandle)
-	delete(jwtUserSessions, clientHandle)
+	log.Debugf("Resetting limiter for %s", username)
+	delete(jwtUserSessions, username)
 }
 
 func upsertUser(username, jwtToken, xsrfToken string) {
@@ -46,15 +49,15 @@ func cleanJwtUserSessions() {
 	defer mu.Unlock()
 
 	numberCleaned := 0
-	for jwtToken, user := range jwtUserSessions {
-		expirationDate, err := getTokenExpirationDate(jwtToken)
+	for username, user := range jwtUserSessions {
+		expirationDate, err := getTokenExpirationDate(user.JwtToken)
 		if err != nil {
-			log.Errorf("Could not get expiration date for token %s: %v", jwtToken, err)
+			log.Errorf("Could not get expiration date for user %s and token %s: %v", username, user.JwtToken, err)
 			continue
 		}
-		if time.Now().Before(expirationDate) {
+		if expirationDate.Before(time.Now()) {
 			log.Debugf("Cleaning token for %s", user.UserName)
-			delete(jwtUserSessions, jwtToken)
+			delete(jwtUserSessions, username) // DO NOT refactor with cleanUser() because both try to acquire a lock
 		}
 		numberCleaned++
 	}

@@ -49,6 +49,7 @@ func Middleware(next http.Handler, cfg config.Configuration, casClient casClient
 
 		log.Debugf("Calling sonar logout for user %s", casUser)
 		casClient.Logout(writer, request)
+		cleanUser(casUser)
 		return
 	})
 }

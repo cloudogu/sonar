@@ -17,44 +17,44 @@ import (
 	"github.com/cloudogu/sonar/sonarcarp/throttling"
 )
 
-func NewServer(ctx context.Context, configuration config.Configuration) (*http.Server, error) {
-	casClient, err := NewCasClientFactory(configuration)
+func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, error) {
+	casClient, err := NewCasClientFactory(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CAS client during carp server start: %w", err)
 	}
 
 	headers := proxy.AuthorizationHeaders{
-		Principal: configuration.PrincipalHeader,
-		Role:      configuration.RoleHeader,
-		Mail:      configuration.MailHeader,
-		Name:      configuration.NameHeader,
+		Principal: cfg.PrincipalHeader,
+		Role:      cfg.RoleHeader,
+		Mail:      cfg.MailHeader,
+		Name:      cfg.NameHeader,
 	}
 
-	err = internal.InitStaticResourceMatchers(configuration.CarpResourcePaths)
+	err = internal.InitStaticResourceMatchers(cfg.CarpResourcePaths)
 	if err != nil {
 		return nil, fmt.Errorf("failed to static resource matcher init during carp server start: %w", err)
 	}
 
-	session.InitCleanJob(ctx, session.JwtSessionCleanInterval) // TODO configure interval
+	session.InitCleanJob(ctx, cfg.JwtSessionCleanInterval)
 
 	router := http.NewServeMux()
 
-	proxyHandler, err := proxy.CreateProxyHandler(headers, configuration)
+	proxyHandler, err := proxy.CreateProxyHandler(headers, cfg)
 
 	casHandler := casClient.CreateHandler(proxyHandler)
 
-	throttlingHandler := throttling.NewThrottlingHandler(ctx, configuration, casHandler)
+	throttlingHandler := throttling.NewThrottlingHandler(ctx, cfg, casHandler)
 
-	bcLogoutHandler := session.Middleware(throttlingHandler, configuration, casClient)
+	bcLogoutHandler := session.Middleware(throttlingHandler, cfg, casClient)
 
 	logHandler := internal.Middleware(bcLogoutHandler, "logging")
 
 	router.Handle("/sonar/", logHandler)
 
-	log.Debugf("starting server on port %d", configuration.Port)
+	log.Debugf("starting server on port %d", cfg.Port)
 
 	return &http.Server{
-		Addr:    ":" + strconv.Itoa(configuration.Port),
+		Addr:    ":" + strconv.Itoa(cfg.Port),
 		Handler: router,
 	}, nil
 }

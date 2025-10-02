@@ -127,5 +127,7 @@ func TestThrottlingHandler(t *testing.T) {
 		assert.Equal(t, casWasHitByHttpClient, resp.StatusCode)
 		assert.True(t, casWasCalled)
 		assert.True(t, sonarWasCalled)
+		// memory management was done for this user
+		assert.Empty(t, jwtUserSessions)
 	})
 }

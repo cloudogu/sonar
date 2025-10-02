@@ -13,6 +13,7 @@ const (
 
 var log = logging.MustGetLogger("session")
 
+// SaveJwtTokensFor saves SonarQube JWT and XSRF session cookies to a memory map for later backchannel log out.
 func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 	jwtCookie := ""
 	xsrfCookie := ""
@@ -27,7 +28,6 @@ func SaveJwtTokensFor(casUsername string, cookies []*http.Cookie) {
 			xsrfCookie = cookie.Value
 			continue
 		}
-
 	}
 
 	if jwtCookie == "" || xsrfCookie == "" {

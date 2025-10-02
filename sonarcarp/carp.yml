@@ -68,3 +68,19 @@ carp-resource-paths:
   - /sonar/fonts/
   - /sonar/images/
   - /sonar/js/
+
+# Throttling
+#
+# limiter-token-rate contains the tokens per second that each client will receive to refill the limiter bucket.
+limiter-token-rate: 1
+# limiter-burst-size contains the maximum number of tokens until requests get throttled
+limiter-burst-size: 150
+# limiter-clean-interval contains the default time window in seconds between all throttled clients will be checked if
+# they can be reset by checking if at least one single token is available.
+limiter-clean-interval: 300
+
+# Session
+#
+# jwt-session-clean-interval contains the default time window in seconds between all user session tokens will be checked
+# if they can be reset. A too low value may lead to defunct backchannel user logout.
+jwt-session-clean-interval: 86400

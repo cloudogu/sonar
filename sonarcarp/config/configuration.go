@@ -35,6 +35,7 @@ type Configuration struct {
 	LimiterTokenRate              int      `yaml:"limiter-token-rate"`
 	LimiterBurstSize              int      `yaml:"limiter-burst-size"`
 	LimiterCleanInterval          int      `yaml:"limiter-clean-interval"`
+	JwtSessionCleanInterval       int      `yaml:"jwt-session-clean-interval"`
 }
 
 func InitializeAndReadConfiguration() (Configuration, error) {
