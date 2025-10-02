@@ -19,6 +19,10 @@ const (
 	browserUserAgent   = "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0"
 )
 
+const (
+	testUsername = "john.q.public"
+)
+
 var testHeaders = AuthorizationHeaders{
 	Principal: "X-Forwarded-Login",
 	Role:      "X-Forwarded-Groups",
@@ -214,7 +218,7 @@ func Test_proxyHandler_getCasAttributes(t *testing.T) {
 		testReq := &http.Request{}
 
 		casClientMock := newMockCasClient(t)
-		casClientMock.EXPECT().Username(testReq).Return("john.q.public")
+		casClientMock.EXPECT().Username(testReq).Return(testUsername)
 		mockedAttrs := cas.UserAttributes{}
 		// the actual keys are subject to configuration
 		mockedAttrs.Add("1-name", "John Q Public")
@@ -228,7 +232,7 @@ func Test_proxyHandler_getCasAttributes(t *testing.T) {
 		actualUser, actualAttrs := sut.getCasAttributes(testReq)
 
 		// then
-		assert.Equal(t, "john.q.public", actualUser)
+		assert.Equal(t, testUsername, actualUser)
 		assert.Equal(t, "John Q Public", actualAttrs.Get("1-name"))
 		assert.Equal(t, "jqp@example.invalid", actualAttrs.Get("2-mail"))
 		assert.Equal(t, "super-sonar-users", actualAttrs.Get("3-groups"))
@@ -241,4 +245,52 @@ func Test_saveJwtSessionForBackchannelLogout(t *testing.T) {
 	testReq.AddCookie(&http.Cookie{Name: "A", Value: "uninteresting"})
 
 	saveJwtSessionForBackchannelLogout(testReq, "testuser")
+}
+
+func Test_setHeaders(t *testing.T) {
+	testAdminGroupMapping := sonarAdminGroupMapping{
+		cesAdminGroup:   "ces-super-admin-3000",
+		sonarAdminGroup: "sonar-administrators",
+	}
+
+	t.Run("should set regular headers", func(t *testing.T) {
+		// given
+		sut, err := http.NewRequest(http.MethodGet, "https://example.invalid/", nil)
+		require.NoError(t, err)
+
+		testCasAttrs := cas.UserAttributes{}
+		testCasAttrs.Add("displayName", "John Q Public")
+		testCasAttrs.Add("mail", "jqp@example.invalid")
+		testCasAttrs.Add("groups", "super-duper-sonar-users,common-ces-user")
+
+		// when
+		setHeaders(sut, testUsername, testCasAttrs, testHeaders, testAdminGroupMapping)
+
+		// then
+		require.Len(t, sut.Header, 4)
+		assert.Equal(t, "john.q.public", sut.Header.Get(testHeaders.Principal))
+		assert.Equal(t, "John Q Public", sut.Header.Get(testHeaders.Name))
+		assert.Equal(t, "jqp@example.invalid", sut.Header.Get(testHeaders.Mail))
+		assert.Equal(t, "super-duper-sonar-users,common-ces-user", sut.Header.Get(testHeaders.Role))
+	})
+	t.Run("should add sonar admin group to CES admin user", func(t *testing.T) {
+		// given
+		sut, err := http.NewRequest(http.MethodGet, "https://example.invalid/", nil)
+		require.NoError(t, err)
+
+		testCasAttrs := cas.UserAttributes{}
+		testCasAttrs.Add("displayName", "John Q Public")
+		testCasAttrs.Add("mail", "jqp@example.invalid")
+		testCasAttrs.Add("groups", "super-duper-sonar-users,common-ces-user,ces-super-admin-3000")
+
+		// when
+		setHeaders(sut, testUsername, testCasAttrs, testHeaders, testAdminGroupMapping)
+
+		// then
+		require.Len(t, sut.Header, 4)
+		assert.Equal(t, "john.q.public", sut.Header.Get(testHeaders.Principal))
+		assert.Equal(t, "John Q Public", sut.Header.Get(testHeaders.Name))
+		assert.Equal(t, "jqp@example.invalid", sut.Header.Get(testHeaders.Mail))
+		assert.Equal(t, "super-duper-sonar-users,common-ces-user,ces-super-admin-3000,sonar-administrators", sut.Header.Get(testHeaders.Role))
+	})
 }

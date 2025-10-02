@@ -123,16 +123,14 @@ func setHeaders(r *http.Request, casUsername string, casAttributes cas.UserAttri
 	r.Header.Add(headers.Name, casAttributes.Get("displayName"))
 	r.Header.Add(headers.Mail, casAttributes.Get("mail"))
 	// heads-up! do not use casAttributes.Get because it only returns the first group entry
-	userGroups := strings.Join(casAttributes["groups"], ",") // delimited by comma according the sonar.properties commentary
+	userGroups := strings.Join(casAttributes["groups"], ",")
 
-	if isInAdminGroup(casAttributes["groups"], adminGroupMapping.cesAdminGroup) {
+	splitCasGroups := strings.Split(userGroups, ",")
+	if isInAdminGroup(splitCasGroups, adminGroupMapping.cesAdminGroup) {
+		// groups are delimited by comma according the sonar.properties commentary
 		userGroups += "," + adminGroupMapping.sonarAdminGroup
 	}
 	r.Header.Add(headers.Role, userGroups)
-
-	if isInAdminGroup(casAttributes["groups"], adminGroupMapping.cesAdminGroup) {
-		r.Header.Add(adminGroupMapping.sonarAdminGroup, adminGroupMapping.cesAdminGroup)
-	}
 
 	log.Debugf("Groups found to user %s: %s", casUsername, userGroups)
 }
