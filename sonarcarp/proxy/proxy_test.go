@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,6 +16,7 @@ import (
 
 const (
 	testAppContextPath = "/sonar"
+	browserUserAgent   = "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0"
 )
 
 var testHeaders = AuthorizationHeaders{
@@ -50,6 +53,7 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		AppContextPath:                 testAppContextPath,
 		LogoutPathFrontchannelEndpoint: "/sessions/logout",
 		LogoutPathBackchannelEndpoint:  "/api/authentication/logout",
+		CarpResourcePaths:              []string{"/sonar/js/"},
 	}
 
 	t.Run("add auth headers to authenticated requests", func(t *testing.T) {
@@ -66,6 +70,29 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		targetUrl := carpServer.URL + testAppContextPath + "/projects/create"
 
 		req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
+
+		actualResp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
+	})
+	t.Run("proxy passes-thru requests to resources marked as non-auth-worthy", func(t *testing.T) {
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, testAppContextPath+"/js/lefile.js", r.URL.Path)
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
+
+		sut, err := CreateProxyHandler(testHeaders, cfg)
+		require.NoError(t, err)
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
+		targetUrl := carpServer.URL + testAppContextPath + "/js/lefile.js"
+		err = internal.InitStaticResourceMatchers([]string{testAppContextPath + "/js"})
+		require.NoError(t, err)
+		defer internal.InitStaticResourceMatchers([]string{})
+
+		req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
+		req.Header.Set("User-Agent", browserUserAgent)
 
 		actualResp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
@@ -147,7 +174,7 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		defer carpServer.Close()
 
 		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+"/anything", nil)
-		req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0")
+		req.Header.Add("User-Agent", browserUserAgent)
 
 		// when
 		actualResp, err := http.DefaultClient.Do(req)
@@ -179,4 +206,39 @@ func Test_isInAdminGroup(t *testing.T) {
 			assert.Equalf(t, tt.want, isInAdminGroup(tt.args.currentGroups, cesAdminGroup), "isInAdminGroup(%v, %v)", tt.args.currentGroups, cesAdminGroup)
 		})
 	}
+}
+
+func Test_proxyHandler_getCasAttributes(t *testing.T) {
+	t.Run("should return attributes", func(t *testing.T) {
+		// given
+		testReq := &http.Request{}
+
+		casClientMock := newMockCasClient(t)
+		casClientMock.EXPECT().Username(testReq).Return("john.q.public")
+		mockedAttrs := cas.UserAttributes{}
+		// the actual keys are subject to configuration
+		mockedAttrs.Add("1-name", "John Q Public")
+		mockedAttrs.Add("2-mail", "jqp@example.invalid")
+		mockedAttrs.Add("3-groups", "super-sonar-users")
+		casClientMock.EXPECT().Attributes(testReq).Return(mockedAttrs)
+
+		sut := proxyHandler{casClient: casClientMock}
+
+		// when
+		actualUser, actualAttrs := sut.getCasAttributes(testReq)
+
+		// then
+		assert.Equal(t, "john.q.public", actualUser)
+		assert.Equal(t, "John Q Public", actualAttrs.Get("1-name"))
+		assert.Equal(t, "jqp@example.invalid", actualAttrs.Get("2-mail"))
+		assert.Equal(t, "super-sonar-users", actualAttrs.Get("3-groups"))
+	})
+}
+
+func Test_saveJwtSessionForBackchannelLogout(t *testing.T) {
+	testReq, err := http.NewRequest(http.MethodGet, "https://example.invalid/", nil)
+	require.NoError(t, err)
+	testReq.AddCookie(&http.Cookie{Name: "A", Value: "uninteresting"})
+
+	saveJwtSessionForBackchannelLogout(testReq, "testuser")
 }

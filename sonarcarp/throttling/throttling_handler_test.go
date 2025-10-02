@@ -22,13 +22,18 @@ var testCtx = context.Background()
 
 func TestThrottlingHandler(t *testing.T) {
 	testCfg := config.Configuration{
-		PrincipalHeader:  "X-Forwarded-Login",
-		NameHeader:       "X-Forwarded-Name",
-		MailHeader:       "X-Forwarded-Email",
-		RoleHeader:       "X-Forwarded-Groups",
-		LimiterTokenRate: 1,
-		LimiterBurstSize: maxTokens,
+		PrincipalHeader:   "X-Forwarded-Login",
+		NameHeader:        "X-Forwarded-Name",
+		MailHeader:        "X-Forwarded-Email",
+		RoleHeader:        "X-Forwarded-Groups",
+		LimiterTokenRate:  1,
+		LimiterBurstSize:  maxTokens,
+		CarpResourcePaths: []string{"/sonar/js/"},
 	}
+
+	err := internal.InitStaticResourceMatchers([]string{"/sonar/js/"})
+	require.NoError(t, err)
+	defer internal.InitStaticResourceMatchers([]string{})
 
 	cleanUp := func(server *httptest.Server) {
 		server.Close()
@@ -49,7 +54,7 @@ func TestThrottlingHandler(t *testing.T) {
 		server := httptest.NewServer(ctxHandler)
 		defer cleanUp(server)
 
-		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/sonar/projects/create", nil)
 		require.NoError(t, err)
 
 		req.Header.Set(_HttpHeaderXForwardedFor, "testIP")
@@ -101,8 +106,6 @@ func TestThrottlingHandler(t *testing.T) {
 		var handler http.HandlerFunc = func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusOK)
 		}
-		err := internal.InitStaticResourceMatchers([]string{"/sonar/js/"})
-		require.NoError(t, err)
 
 		sut := NewThrottlingHandler(testCtx, testCfg, handler)
 

@@ -72,8 +72,8 @@ func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.URL.Host = p.targetURL.Host     // copy target URL but not the URL path, only the host
 	r.URL.Scheme = p.targetURL.Scheme // (and scheme because they get lost on the way)
 
-	authenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
-	if !authenticationRequired {
+	noAuthenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
+	if noAuthenticationRequired {
 		log.Debugf("Proxy: %s request to %s does not need authentication", r.Method, r.URL.String())
 		p.forwarder.ServeHTTP(w, r)
 		return

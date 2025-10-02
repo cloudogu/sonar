@@ -82,8 +82,8 @@ func NewThrottlingHandler(ctx context.Context, cfg config.Configuration, handler
 			return
 		}
 
-		authenticationRequired := internal.IsInAlwaysAllowList(r.URL.Path)
-		if !authenticationRequired {
+		authenticationNoRequired := internal.IsInAlwaysAllowList(r.URL.Path)
+		if authenticationNoRequired {
 			log.Debugf("Throttling: %s request to %s does not need authentication", r.Method, r.URL.String())
 			handler.ServeHTTP(statusWriter, r)
 			return

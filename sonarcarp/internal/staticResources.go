@@ -37,9 +37,9 @@ func IsInAlwaysAllowList(path string) bool {
 			log.Errorf("Error cleaning path '%s' (will require authentication though): %s", path, err.Error())
 		}
 		if matcher.MatchString(cleanedPath) {
-			return false
+			return true
 		}
 	}
 
-	return true
+	return false
 }
