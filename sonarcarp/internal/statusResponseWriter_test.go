@@ -52,3 +52,54 @@ func TestLoggingMiddleware(t *testing.T) {
 	mh.AssertCalled(t, "ServeHTTP", mock.Anything, mock.Anything)
 	mh.AssertExpectations(t)
 }
+
+func TestStatusResponseWriter_Write(t *testing.T) {
+	t.Run("should use the underlying writer", func(t *testing.T) {
+		// given
+		rwMock := httptest.NewRecorder()
+
+		sut := StatusResponseWriter{writer: rwMock}
+
+		// when
+		actualInt, err := sut.Write([]byte("hello"))
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, 5, actualInt)
+		assert.Equal(t, "hello", rwMock.Body.String())
+	})
+}
+
+func TestStatusResponseWriter_HttpStatusCode(t *testing.T) {
+	sut := StatusResponseWriter{}
+	sut.httpStatusCode = http.StatusTeapot
+
+	assert.Equal(t, http.StatusTeapot, sut.HttpStatusCode())
+}
+
+func TestStatusResponseWriter_Header(t *testing.T) {
+	// given
+	rwMock := httptest.NewRecorder()
+	sut := StatusResponseWriter{writer: rwMock}
+
+	// when
+	sut.Header().Add("X-A", "value")
+
+	// then
+	assert.Equal(t, "value", rwMock.Header().Get("X-A"))
+}
+
+func TestStatusResponseWriter_Hijack(t *testing.T) {
+	t.Run("should return not-implemented error", func(t *testing.T) {
+		// given
+		rwMock := httptest.NewRecorder()
+		sut := StatusResponseWriter{writer: rwMock}
+
+		// when
+		_, _, err := sut.Hijack()
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "http websocket connector/hijacker is not implemented")
+	})
+}
