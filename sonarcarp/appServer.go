@@ -50,7 +50,7 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 
 	logHandler := internal.Middleware(bcLogoutHandler, "logging")
 
-	router.Handle("/sonar/", logHandler)
+	router.Handle(cfg.AppContextPath, logHandler)
 
 	log.Debugf("starting server on port %d", cfg.Port)
 
