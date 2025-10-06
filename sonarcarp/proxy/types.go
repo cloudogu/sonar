@@ -6,20 +6,6 @@ import (
 	"github.com/cloudogu/go-cas"
 )
 
-// AuthorizationHeaders contain the mapping from config value to HTTP header name for SonarQube HTTP proxy authentication.
-type AuthorizationHeaders struct {
-	// Principal contains the user ID header name.
-	Principal string
-	// Role contains the user group header name.
-	//
-	// Even without group, SonarQube will assign the group "sonar-users" internally.
-	Role string
-	// Mail contains the user mail header name.
-	Mail string
-	// Name contains the user display name header name.
-	Name string
-}
-
 type sonarAdminGroupMapping struct {
 	cesAdminGroup   string
 	sonarAdminGroup string
@@ -37,4 +23,18 @@ type casClient interface {
 	Attributes(r *http.Request) cas.UserAttributes
 	// IsAuthenticated returns whether a request indicates if the request's user is CAS authenticated.
 	IsAuthenticated(*http.Request) bool
+}
+
+// AuthorizationHeaders contain the mapping from config value to HTTP header name for SonarQube HTTP proxy authentication.
+type AuthorizationHeaders struct {
+	// Principal contains the user ID header name.
+	Principal string
+	// Role contains the user group header name.
+	//
+	// Even without group, SonarQube will assign the group "sonar-users" internally.
+	Role string
+	// Mail contains the user mail header name.
+	Mail string
+	// Name contains the user display name header name.
+	Name string
 }

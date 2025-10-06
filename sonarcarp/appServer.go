@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/sonar/sonarcarp/casfilter"
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/cloudogu/sonar/sonarcarp/proxy"
@@ -18,7 +19,7 @@ import (
 )
 
 func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, error) {
-	casClient, err := NewCasClientFactory(cfg)
+	casBrowserClient, casRestClient, err := NewCasClientFactory(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CAS client during carp server start: %w", err)
 	}
@@ -41,11 +42,11 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 
 	proxyHandler, err := proxy.CreateProxyHandler(headers, cfg)
 
-	casHandler := casClient.CreateHandler(proxyHandler)
+	casHandler := casfilter.Middleware(casBrowserClient, casRestClient, proxyHandler)
 
 	throttlingHandler := throttling.NewThrottlingHandler(ctx, cfg, casHandler)
 
-	bcLogoutHandler := session.Middleware(throttlingHandler, cfg, casClient)
+	bcLogoutHandler := session.Middleware(throttlingHandler, cfg, casBrowserClient)
 
 	logHandler := internal.Middleware(bcLogoutHandler, "logging")
 
@@ -59,21 +60,21 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 	}, nil
 }
 
-func NewCasClientFactory(cfg config.Configuration) (*cas.Client, error) {
+func NewCasClientFactory(cfg config.Configuration) (*cas.Client, *cas.RestClient, error) {
 	casUrl, err := url.Parse(cfg.CasUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cas url: %s: %w", cfg.CasUrl, err)
+		return nil, nil, fmt.Errorf("failed to parse cas url: %s: %w", cfg.CasUrl, err)
 	}
 
 	// CAS needs something like https://fqdn/sonar to register a dogu as proper CAS client dogu.
 	sonarUrlWithContext, err := url.JoinPath(cfg.ServiceUrl, cfg.AppContextPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to join sonarqube context path for CAS clienting: %s: %w", cfg.CasUrl, err)
+		return nil, nil, fmt.Errorf("failed to join sonarqube context path for CAS clienting: %s: %w", cfg.CasUrl, err)
 	}
 
 	serviceUrl, err := url.Parse(sonarUrlWithContext)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse service url: %s: %w", sonarUrlWithContext, err)
+		return nil, nil, fmt.Errorf("failed to parse service url: %s: %w", sonarUrlWithContext, err)
 	}
 
 	urlScheme := cas.NewDefaultURLScheme(casUrl)
@@ -87,12 +88,20 @@ func NewCasClientFactory(cfg config.Configuration) (*cas.Client, error) {
 		httpClient.Transport = transport
 	}
 
-	return cas.NewClient(&cas.Options{
+	browserClient := cas.NewClient(&cas.Options{
 		URL:             serviceUrl,
 		Client:          httpClient,
 		URLScheme:       urlScheme,
 		IsLogoutRequest: isAlwaysDenyBackChannelLogoutRequest(),
-	}), nil
+	})
+	restClient := cas.NewRestClient(&cas.RestOptions{
+		ServiceURL:                         serviceUrl,
+		Client:                             httpClient,
+		URLScheme:                          urlScheme,
+		CasURL:                             casUrl,
+		ForwardUnauthenticatedRESTRequests: true,
+	})
+	return browserClient, restClient, nil
 }
 
 // isAlwaysDenyBackChannelLogoutRequest returns always false to circumvent go-cas' buggy backchannel logout request

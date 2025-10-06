@@ -12,9 +12,12 @@ const requestSonarAPI = (APIEndpoint, token = "", failOnStatusCode = true, expec
     cy.request({
         method: method,
         url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api" + APIEndpoint,
-        headers: token !== "" ? {
-            authorization: 'bearer ' + token
-        } : {},
+        headers:
+            token !== "" ? {
+                'User-Agent': 'curl', // remove default user-agent otherwise it will be recognized as browser (!= API call?)
+                authorization: 'bearer ' + token
+            } : {'User-Agent': 'curl',},
+
         failOnStatusCode: failOnStatusCode
     }).then((response) => {
         expect(response.status).to.eq(expectedResponseStatusCode)

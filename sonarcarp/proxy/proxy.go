@@ -49,17 +49,6 @@ func CreateProxyHandler(headers AuthorizationHeaders, cfg config.Configuration) 
 	return pHandler, nil
 }
 
-func (p *proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
-	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
-	// So in that case we use the referrer to check if a request is a logout request.
-
-	// TODO: is not this rather a || than a && situation? EITHER referer is ui logout OR URL goes right to logout API
-	isFcLogout := strings.HasSuffix(r.Referer(), p.logoutPathUi) && strings.HasSuffix(r.URL.Path, p.logoutApiEndpoint)
-	log.Debugf("is request a frontchannel logout? %t", isFcLogout)
-
-	return isFcLogout
-}
-
 func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("proxy handler was called for request to %s and headers %+v", r.URL.String(), internal.RedactRequestHeaders(r.Header))
 
@@ -80,7 +69,7 @@ func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// let everything-REST through
-	if !IsBrowserRequest(r) {
+	if !internal.IsBrowserRequest(r) {
 		log.Debugf("Proxy: Found non-browser %s request to %s", r.Method, r.URL.String())
 		p.forwarder.ServeHTTP(w, r)
 		return
@@ -102,15 +91,21 @@ func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.forwarder.ServeHTTP(w, r)
 }
 
+func (p *proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
+	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
+	// So in that case we use the referrer to check if a request is a logout request.
+
+	// TODO: is not this rather a || than a && situation? EITHER referer is ui logout OR URL goes right to logout API
+	isFcLogout := strings.HasSuffix(r.Referer(), p.logoutPathUi) && strings.HasSuffix(r.URL.Path, p.logoutApiEndpoint)
+	log.Debugf("is request a frontchannel logout? %t", isFcLogout)
+
+	return isFcLogout
+}
+
 func (p *proxyHandler) getCasAttributes(r *http.Request) (string, cas.UserAttributes) {
 	username := p.casClient.Username(r)
 	attrs := p.casClient.Attributes(r)
 	return username, attrs
-}
-
-func IsBrowserRequest(req *http.Request) bool {
-	lowerUserAgent := strings.ToLower(req.Header.Get("User-Agent"))
-	return strings.Contains(lowerUserAgent, "mozilla") || strings.Contains(lowerUserAgent, "opera")
 }
 
 func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
