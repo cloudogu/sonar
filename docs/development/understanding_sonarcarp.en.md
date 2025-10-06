@@ -43,7 +43,7 @@ backchannelLogoutHandler (detects and handles backchannel logout)
 ⬇️     ⬆️
 throttlingHandler (detects HTTP401 and handles client requests through throttling) 
 ⬇️     ⬆️
-casHandler (detects CAS authentication)
+casHandler (distinguishes between REST and browser requests, checks requests against CAS)
 ⬇️     ⬆️
 proxyHandler (handles remaining authentication parts and implementation of request/response proxying)
 ⬇️     ⬆️

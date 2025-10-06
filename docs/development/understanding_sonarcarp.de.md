@@ -45,7 +45,7 @@ backchannelLogoutHandler (erkennt und behandelt Backchannel-Logout)
 ⬇️     ⬆️
 throttlingHandler (erkennt HTTP401 und behandelt Client-Requests durch Throttling) 
 ⬇️     ⬆️
-casHandler (erkennt CAS-Authentifizierung)
+casHandler (unterscheidet Rest- von Browser-Requests, prüft Anfragen ggü. CAS)
 ⬇️     ⬆️
 proxyHandler (bewältigt übrige Authentifizierungsteile und Umsetzung des Request-/Response-Proxyings)
 ⬇️     ⬆️
