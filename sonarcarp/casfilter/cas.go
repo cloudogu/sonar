@@ -8,10 +8,10 @@ import (
 	"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("cas")
+var log = logging.MustGetLogger("casfilter")
 
 func Middleware(casBrowserClient *cas.Client, casRestClient *cas.RestClient, next http.Handler) http.Handler {
-	log.Debugf("creating proxy middleware")
+	log.Debugf("creating cas middleware")
 
 	casBrowserHandler := casBrowserClient.CreateHandler(next)
 	casRestHandler := casRestClient.HandleFunc(next.ServeHTTP)
