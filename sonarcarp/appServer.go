@@ -19,7 +19,7 @@ import (
 )
 
 func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, error) {
-	casBrowserClient, casRestClient, err := NewCasClientFactory(cfg)
+	casBrowserClient, casRestClient, err := NewCasClients(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CAS client during carp server start: %w", err)
 	}
@@ -60,7 +60,7 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 	}, nil
 }
 
-func NewCasClientFactory(cfg config.Configuration) (*cas.Client, *cas.RestClient, error) {
+func NewCasClients(cfg config.Configuration) (*cas.Client, *cas.RestClient, error) {
 	casUrl, err := url.Parse(cfg.CasUrl)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to parse cas url: %s: %w", cfg.CasUrl, err)
