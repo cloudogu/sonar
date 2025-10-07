@@ -665,7 +665,6 @@ runMain() {
   echo "sonarcarp exited with ${carpExitCode}"
   if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits..."
-#    exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
     export carpExecCommand="java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar"
   else
     # Retrieve configurable java limits from etcd, valid default values exist
@@ -673,9 +672,6 @@ runMain() {
     MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
 
     echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
-#    exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
-#      -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
-#      -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
     export carpExecCommand="java -XX:MaxRAMPercentage=${MEMORY_LIMIT_MAX_PERCENTAGE} -XX:MinRAMPercentage=${MEMORY_LIMIT_MIN_PERCENTAGE} -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar"
   fi
 

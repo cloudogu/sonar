@@ -7,6 +7,8 @@
 With SonarQube 2025, the Sonar CAS plugin had to be replaced by a CAS Authentication Reverse Proxy (CARP) due to 
 inadequate support.
 
+When Dogu starts, SonarQube startup parameters are first rendered into the CARP configuration file. Sonarcarp then uses this command to run SonarQube in order to avoid multiple main processes in the container (and thus, for example, problems arising when stopping containers).
+
 This Sonarcarp is located at the exposed port of the SonarQube container and, like a machine-in-the-middle, intercepts 
 all requests and first compares them with the started SonarQube server. This is done because SonarQube allows internal 
 user accounts (as opposed to external accounts, i.e., from CAS/LDAP), whose query in CAS could lead to unnecessary 
