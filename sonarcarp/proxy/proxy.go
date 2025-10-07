@@ -95,7 +95,6 @@ func (p *proxyHandler) isFrontChannelLogoutRequest(r *http.Request) bool {
 	// Clicking on logout performs a browser side redirect from the actual logout path back to index => Backend cannot catch the first request
 	// So in that case we use the referrer to check if a request is a logout request.
 
-	// TODO: is not this rather a || than a && situation? EITHER referer is ui logout OR URL goes right to logout API
 	isFcLogout := strings.HasSuffix(r.Referer(), p.logoutPathUi) && strings.HasSuffix(r.URL.Path, p.logoutApiEndpoint)
 	log.Debugf("is request a frontchannel logout? %t", isFcLogout)
 
