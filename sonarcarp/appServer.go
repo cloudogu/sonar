@@ -50,7 +50,12 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 
 	logHandler := internal.Middleware(bcLogoutHandler, "logging")
 
-	router.Handle(cfg.AppContextPath, logHandler)
+	appContextPathWithTrailingSlash, err := url.JoinPath(cfg.AppContextPath + "/")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create app-context-path %s/: %w", cfg.AppContextPath, err)
+	}
+
+	router.Handle(appContextPathWithTrailingSlash, logHandler)
 
 	log.Debugf("starting server on port %d", cfg.Port)
 
