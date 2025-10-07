@@ -17,13 +17,33 @@ After a successful login, a CAS cookie is first issued. However, this is recogni
 request is copied to SonarQube and provided with special authentication headers that indicate external authentication to
 SonarQube. SonarQube's response is then reflected back to the original request (the one after the CAS login).
 
-### Frontchannel Log-out
+### Frontchannel logout
 
-tbd
+It is worth noting that logout calls must not be subject to session inspection. This means that even unauthenticated users should be able to call the logout endpoints listed below.
+
+SonarQube session cookies are required to perform a front channel. These are stored at runtime so that they can be used in the event of a back channel logout. After use, they are deleted from memory. Front channel logouts also take place artificially during back channel logouts.
+
+Front channel logout currently works as follows:
+
+1. The user clicks on the logout navigation item
+2. This leads to a request to the `/sonar/sessions/logout` endpoint
+3. This leads to a request to the `/sonar/api/authentication/logout` endpoint
+4. Sonarcarp receives this call:
+   - Initially does NOT execute this request against SonarQube
+   - Redirects to the CAS logout, which performs a backchannel logout for all registered services (including SonarQube).
+5. This is followed by a backchannel logout, which Sonarcarp receives and cleans up its own state (see below)
 
 ### Backchannel Log-out 
 
-tbd
+Backchannel logout currently works as follows:
+
+1. The user logs out of another service (or by clicking the logout link in the Warp menu)
+2. This triggers a POST request from CAS to `/sonar/`
+3. Sonarcarp receives this call:
+   - Sonarcarp performs an artificial front channel logout via request (including session and XSRF tokens) to SonarQube
+   - SonarcarprRedirects to the CAS logout, which performs a backchannel logout to all other services
+      - No recursion is achieved here, as CAS knows from the CAS session that it does not need to perform any further logouts
+4. Sonarcarp cleans up the session map from the current account-to-cookie mapping.
 
 ## Filters
 
