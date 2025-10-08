@@ -3,14 +3,13 @@ package casfilter
 import (
 	"net/http"
 
-	"github.com/cloudogu/go-cas"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("casfilter")
 
-func Middleware(casBrowserClient *cas.Client, casRestClient *cas.RestClient, next http.Handler) http.Handler {
+func Middleware(casBrowserClient casBrowserClient, casRestClient casRestClient, next http.Handler) http.Handler {
 	log.Debugf("creating cas middleware")
 
 	casBrowserHandler := casBrowserClient.CreateHandler(next)

@@ -1,7 +1,6 @@
 package session
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -37,8 +36,6 @@ func Test_getUserFromSamlLogout(t *testing.T) {
 		})
 	}
 }
-
-var testCtx = context.Background()
 
 func TestThrottlingHandler(t *testing.T) {
 	testCfg := config.Configuration{
