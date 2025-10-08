@@ -16,7 +16,8 @@ func Test_getTokenValidDate(t *testing.T) {
 
 	require.NoError(t, err)
 	expectedExpDate, _ := time.Parse(time.RFC3339, "2019-05-09T20:04:59+02:00")
-	assert.Equal(t, expectedExpDate, actual)
+	expectedUTC := expectedExpDate.UTC()
+	assert.Equal(t, expectedUTC, actual.UTC())
 }
 
 func TestSaveJwtTokensFor(t *testing.T) {
