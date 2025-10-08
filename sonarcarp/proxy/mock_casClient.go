@@ -5,7 +5,7 @@ package proxy
 import (
 	http "net/http"
 
-	cas "github.com/cloudogu/go-cas"
+	cas "github.com/cloudogu/go-cas/v2"
 
 	mock "github.com/stretchr/testify/mock"
 )

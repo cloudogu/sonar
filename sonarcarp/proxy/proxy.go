@@ -6,12 +6,14 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cloudogu/go-cas"
+	"github.com/op/go-logging"
+	"github.com/vulcand/oxy/v2/forward"
+
+	"github.com/cloudogu/go-cas/v2"
+
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/cloudogu/sonar/sonarcarp/session"
-	"github.com/op/go-logging"
-	"github.com/vulcand/oxy/v2/forward"
 )
 
 var log = logging.MustGetLogger("proxy")

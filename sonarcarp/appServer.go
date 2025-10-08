@@ -9,7 +9,8 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/go-cas/v2"
+
 	"github.com/cloudogu/sonar/sonarcarp/casfilter"
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"

@@ -3,7 +3,7 @@ package proxy
 import (
 	"net/http"
 
-	"github.com/cloudogu/go-cas"
+	"github.com/cloudogu/go-cas/v2"
 )
 
 type sonarAdminGroupMapping struct {
