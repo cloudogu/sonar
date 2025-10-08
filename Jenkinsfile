@@ -56,6 +56,7 @@ pipe.insertStageAfter("Build sonarcarp", "Test sonarcarp") {
                 ctx.sh 'cd sonarcarp && make unit-test'
             }
     ctx.junit allowEmptyResults: true, testResults: 'sonarcarp/target/unit-tests/*-tests.xml'
+    ctx.archiveArtifacts "sonarcarp/target/unit-tests/*-tests.xml"
 }
 
 pipe.insertStageAfter("Test sonarcarp", "Static analysis", {
