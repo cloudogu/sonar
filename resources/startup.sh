@@ -594,10 +594,8 @@ runMain() {
 
   # check whether firstSonarStart has already been performed
   if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
-    IS_FIRST_START="true"
     first_sonar_start
   else
-    IS_FIRST_START="false"
     subsequent_sonar_start
   fi
 
