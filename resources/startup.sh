@@ -369,8 +369,13 @@ function startSonarQubeInBackground() {
   local reason="${1}"
 
   if [[ -f /opt/sonar/data/es8/node.lock ]] ; then
-    echo "Found elasticsearch lockfile. Removing..."
+    echo "Found elasticsearch node lockfile. Removing..."
     rm -f /opt/sonar/data/es8/node.lock
+  fi
+
+  if [[ -f /opt/sonar/data/es8/_state/write.lock ]] ; then
+    echo "Found elasticsearch state write lockfile. Removing..."
+    rm -f /opt/sonar/data/es8/_state/write.lock
   fi
 
   if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
