@@ -42,7 +42,7 @@ var (
 //
 // Using the Leaky-Bucket-algorithm, this handler will take a configuration which configures a time window, burst size,
 // and token refresh rate to set up the throttle agent.
-func NewThrottlingHandler(ctx context.Context, cfg config.Configuration, handler http.Handler) http.Handler {
+func NewThrottlingHandler(ctx context.Context, cfg config.Configuration, next http.Handler) http.Handler {
 	limiterTokenRateInSecs := cfg.LimiterTokenRate
 	if limiterTokenRateInSecs == 0 {
 		limiterTokenRateInSecs = LimiterTokenRate
@@ -60,6 +60,10 @@ func NewThrottlingHandler(ctx context.Context, cfg config.Configuration, handler
 
 	go startCleanJob(ctx, limiterCleanIntervalInSecs)
 
+	return createHandlerFunc(cfg, next, limiterTokenRateInSecs, limiterBurstSize)
+}
+
+func createHandlerFunc(cfg config.Configuration, handler http.Handler, limiterTokenRateInSecs, limiterBurstSize int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("throttling middleware was called for %s", r.URL.String())
 		statusWriter := internal.NewStatusResponseWriter(w, r, "throttler")
