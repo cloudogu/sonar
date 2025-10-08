@@ -368,6 +368,11 @@ function run_first_start_tasks() {
 function startSonarQubeInBackground() {
   local reason="${1}"
 
+  if [[ -f /opt/sonar/data/es8/node.lock ]] ; then
+    echo "Found elasticsearch lockfile. Removing..."
+    rm -f /opt/sonar/data/es8/node.lock
+  fi
+
   if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits for ${reason}... "
     java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
@@ -624,12 +629,6 @@ runMain() {
 
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
-
-  if [[ "${IS_FIRST_START}" == "true" ]]; then
-    # remove the es6 cache since it contains leftovers of the default admin
-    echo "Removing es6 cache..."
-  #  rm -r /opt/sonar/data/es6
-  fi
 
   echo "Removing temporary admin..."
   remove_user "${TEMPORARY_ADMIN_USER}"
