@@ -1,5 +1,5 @@
-github.com/cloudogu/go-cas/v2 v2.3.0 h1:DImwBtyfcLa8WpJ+bxvzvI+G5V8t/aEFrnoytgiTbic=
-github.com/cloudogu/go-cas/v2 v2.3.0/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
+github.com/cloudogu/go-cas/v2 v2.3.1 h1:wMXKmANU+SIMSEQTO/g5qL7O3U0MT0C92ljImCxwE9g=
+github.com/cloudogu/go-cas/v2 v2.3.1/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=
