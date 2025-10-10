@@ -3,7 +3,7 @@ module github.com/cloudogu/sonar/sonarcarp
 go 1.24.5
 
 require (
-	github.com/cloudogu/go-cas/v2 v2.3.1
+	github.com/cloudogu/go-cas/v2 v2.3.1-0.20251010124238-33c4aec03334
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/op/go-logging v0.0.0-20160211212156-b2cb9fa56473
 	github.com/stretchr/testify v1.10.0

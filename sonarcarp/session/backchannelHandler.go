@@ -40,6 +40,7 @@ func Middleware(next http.Handler, cfg config.Configuration, casClient casClient
 			return
 		}
 
+		log.Debugf("Calling sonar logout for user %s", casUser)
 		if err := doFrontChannelLogout(cfg, user, casUser); err != nil {
 			log.Errorf("Failed to logout user %s against sonarqube: %s", casUser, err.Error())
 			// TODO probably a fall-through to the casClient logout is more appropriate?
@@ -47,7 +48,7 @@ func Middleware(next http.Handler, cfg config.Configuration, casClient casClient
 			return
 		}
 
-		log.Debugf("Calling sonar logout for user %s", casUser)
+		log.Debugf("Doing backchannel cas logout for user %s", casUser)
 		casClient.Logout(writer, request)
 		cleanUser(casUser)
 		return

@@ -61,6 +61,13 @@ func Middleware(next http.Handler, handlerName string) http.Handler {
 
 		next.ServeHTTP(srw, request)
 
+		for key, value := range srw.Header() {
+			log.Debugf("found header in response to %s: key %s value %s", request.URL.String(), key, value)
+		}
+		if srw.Header().Get("Set-Cookie") != "" {
+			log.Debugf("SET-COOKIE in response to %s: %s", request.URL.String(), srw.Header().Get("Set-Cookie"))
+		}
+
 		log.Infof("%d %s %s", srw.httpStatusCode, request.Method, request.URL.Path)
 		if srw.httpStatusCode >= 300 {
 			log.Debugf("Response headers: %#v", RedactRequestHeaders(srw.Header()))
