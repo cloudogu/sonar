@@ -679,9 +679,14 @@ runMain() {
 
   echo "Rendering CAS Authentication Reverse Proxy configuration..."
   doguctl template carp.yml.tpl "${STARTUP_DIR}"carp/carp.yml
-  echo "Starting carp and sonar..."
+  echo "Starting carp with delve and sonar..."
   cd "${STARTUP_DIR}"carp/
-  ./sonarcarp || carpExitCode=$?
+
+  if [ "${STAGE:-}" = "DEBUG" ]; then
+    ./dlv --listen=:2345 --headless=true --log=true --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc --accept-multiclient --api-version=2 exec ./sonarcarp || carpExitCode=$?;
+  else
+    ./sonarcarp || carpExitCode=$?;
+  fi
 }
 
 # make the script only run when executed, not when sourced from bats tests)

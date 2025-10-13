@@ -20,6 +20,11 @@ include build/make/mocks.mk
 SONARCARP_DIR=sonarcarp
 SONARCARP_MAKEFILES=${SONARCARP_DIR}/build
 
+STAGE_FLAG :=
+ifeq ($(DEBUG),true)
+STAGE_FLAG := --build-arg STAGE=debug
+endif
+
 unit-test: ${SONARCARP_MAKEFILES}
 	@cd ${SONARCARP_DIR} && make unit-test
 
@@ -31,3 +36,14 @@ compile: ${SONARCARP_MAKEFILES}
 
 ${SONARCARP_MAKEFILES}:
 	@cp -r build $@
+
+.PHONY: docker-build
+docker-build: check-docker-credentials check-k8s-image-env-var ${BINARY_YQ} ## Builds the docker image of the K8s app.
+	@echo "Building docker image $(IMAGE)..."
+	@DOCKER_BUILDKIT=1 docker build . -t $(IMAGE)
+
+.PHONY: docker-build
+docker-build: check-docker-credentials check-k8s-image-env-var ${BINARY_YQ} ## Overwrite docker-build from k8s.mk to include build arguments
+	@echo "Building docker image $(IMAGE)..."
+	@echo "Building image with STAGE_FLAG: $(STAGE_FLAG)"
+	@docker build . -t "$(IMAGE)" $(STAGE_FLAG)
