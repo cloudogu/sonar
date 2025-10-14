@@ -67,8 +67,10 @@ func TestWithBackChannelLogoutRequestCheck(t *testing.T) {
 			req := &http.Request{
 				Method: tt.method,
 				URL:    &url.URL{Path: tt.path},
-				Header: map[string][]string{"Content-Type": {tt.contentType}},
+				Header: map[string][]string{},
 			}
+
+			req.Header.Set("Content-Type", tt.contentType)
 
 			testFunc := WithBackChannelLogoutRequestCheck(testPath)
 
