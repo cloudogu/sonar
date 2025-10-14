@@ -26,7 +26,6 @@ func (srw *StatusResponseWriter) Header() http.Header {
 }
 
 func (srw *StatusResponseWriter) Write(bytes []byte) (int, error) {
-	//log.Error("%s", string(debug.Stack()))
 	write, err := srw.writer.Write(bytes)
 	return write, err
 }
@@ -63,9 +62,6 @@ func Middleware(next http.Handler, handlerName string) http.Handler {
 
 		for key, value := range srw.Header() {
 			log.Debugf("found header in response to %s: key %s value %s", request.URL.String(), key, value)
-		}
-		if srw.Header().Get("Set-Cookie") != "" {
-			log.Debugf("SET-COOKIE in response to %s: %s", request.URL.String(), srw.Header().Get("Set-Cookie"))
 		}
 
 		log.Infof("%d %s %s", srw.httpStatusCode, request.Method, request.URL.Path)
