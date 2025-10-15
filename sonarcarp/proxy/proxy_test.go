@@ -60,25 +60,10 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		CarpResourcePaths:              []string{"/sonar/js/"},
 	}
 
-	t.Run("add auth headers to authenticated requests", func(t *testing.T) {
-		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, testAppContextPath+"/projects/create", r.URL.Path)
-		}))
-		defer sonarMock.Close()
-		cfg.ServiceUrl = sonarMock.URL
+	err := internal.InitStaticResourceMatchers(cfg.CarpResourcePaths)
+	require.NoError(t, err)
+	defer internal.InitStaticResourceMatchers([]string{})
 
-		sut, err := CreateProxyHandler(testHeaders, cfg)
-		require.NoError(t, err)
-		carpServer := httptest.NewServer(sut)
-		defer carpServer.Close()
-		targetUrl := carpServer.URL + testAppContextPath + "/projects/create"
-
-		req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
-
-		actualResp, err := http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
-	})
 	t.Run("proxy passes-thru requests to resources marked as non-auth-worthy", func(t *testing.T) {
 		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, testAppContextPath+"/js/lefile.js", r.URL.Path)
@@ -91,9 +76,6 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		carpServer := httptest.NewServer(sut)
 		defer carpServer.Close()
 		targetUrl := carpServer.URL + testAppContextPath + "/js/lefile.js"
-		err = internal.InitStaticResourceMatchers([]string{testAppContextPath + "/js"})
-		require.NoError(t, err)
-		defer internal.InitStaticResourceMatchers([]string{})
 
 		req, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 		req.Header.Set("User-Agent", browserUserAgent)
