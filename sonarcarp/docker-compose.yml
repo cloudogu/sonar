@@ -8,11 +8,12 @@ services:
       - "5000:5000"
     environment:
       - SONARQUBE_WEB_JVM_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000
-    volumes:
-      - ./sonar-home/data:/opt/sonarqube/data
-      - ./sonar-home/plugins:/opt/sonarqube/extensions/plugins
-      - ./sonar-home/conf:/opt/sonarqube/conf
-      - ./sonar-home/temp:/opt/sonarqube/temp
-      - ./sonar-home/logs:/opt/sonarqube/logs
+      - SONAR_WEB_SSO_ENABLE=true
+      - SONAR_WEB_SSO_LOGINHEADER=X-Forwarded-Login
+      - SONAR_WEB_SSO_NAMEHEADER=X-Forwarded-Name
+      - SONAR_WEB_SSO_EMAILHEADER=X-Forwarded-Email
+      - SONAR_WEB_SSO_GROUPSHEADER=X-Forwarded-Groups
+      - SONAR_WEB_SSO_REFRESHINTERVALINMINUTES=5
+      - SONAR_LOG_LEVEL=DEBUG
     extra_hosts:
       - "cas.hitchhiker.com:${SONAR_CAS_LOCAL_IP}"
