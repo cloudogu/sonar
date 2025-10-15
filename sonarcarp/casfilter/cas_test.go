@@ -20,7 +20,7 @@ func TestMiddleware(t *testing.T) {
 		casBrowserHandler.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		casBrowserMock := newMockCasBrowserClient(t)
-		casBrowserMock.EXPECT().CreateHandler(mock.Anything).Return(casBrowserHandler)
+		casBrowserMock.EXPECT().Handle(mock.Anything).Return(casBrowserHandler)
 		casRestMock := newMockCasRestClient(t)
 		casRestMock.EXPECT().HandleFunc(mock.Anything).Return(nil) // this one will not be used for browser requests
 
@@ -45,7 +45,7 @@ func TestMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		casBrowserHandler.AssertExpectations(t)
 	})
-	t.Run("cas rest client handles request without useragent", func(t *testing.T) {
+	t.Run("cas rest client handles request with authorization header", func(t *testing.T) {
 		var next = toHandler(func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(http.StatusOK)
 		})
@@ -54,7 +54,7 @@ func TestMiddleware(t *testing.T) {
 		casRestHandler.On("ServeHTTP", mock.Anything, mock.Anything).Return()
 
 		casBrowserMock := newMockCasBrowserClient(t)
-		casBrowserMock.EXPECT().CreateHandler(mock.Anything).Return(nil) // this one will not be used for Rest calls
+		casBrowserMock.EXPECT().Handle(mock.Anything).Return(nil) // this one will not be used for Rest calls
 		casRestMock := newMockCasRestClient(t)
 		casRestMock.EXPECT().HandleFunc(mock.Anything).Return(casRestHandler)
 
@@ -70,6 +70,8 @@ func TestMiddleware(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
 		// no user agent here
 		require.NoError(t, err)
+
+		req.Header.Set("Authorization", "testValue")
 
 		// when
 		resp, lErr := server.Client().Do(req)

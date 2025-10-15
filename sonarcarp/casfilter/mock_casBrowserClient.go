@@ -21,12 +21,12 @@ func (_m *mockCasBrowserClient) EXPECT() *mockCasBrowserClient_Expecter {
 	return &mockCasBrowserClient_Expecter{mock: &_m.Mock}
 }
 
-// CreateHandler provides a mock function with given fields: nextHandler
-func (_m *mockCasBrowserClient) CreateHandler(nextHandler http.Handler) http.Handler {
+// Handle provides a mock function with given fields: nextHandler
+func (_m *mockCasBrowserClient) Handle(nextHandler http.Handler) http.Handler {
 	ret := _m.Called(nextHandler)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateHandler")
+		panic("no return value specified for Handle")
 	}
 
 	var r0 http.Handler
@@ -41,30 +41,30 @@ func (_m *mockCasBrowserClient) CreateHandler(nextHandler http.Handler) http.Han
 	return r0
 }
 
-// mockCasBrowserClient_CreateHandler_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateHandler'
-type mockCasBrowserClient_CreateHandler_Call struct {
+// mockCasBrowserClient_Handle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Handle'
+type mockCasBrowserClient_Handle_Call struct {
 	*mock.Call
 }
 
-// CreateHandler is a helper method to define mock.On call
+// Handle is a helper method to define mock.On call
 //   - nextHandler http.Handler
-func (_e *mockCasBrowserClient_Expecter) CreateHandler(nextHandler interface{}) *mockCasBrowserClient_CreateHandler_Call {
-	return &mockCasBrowserClient_CreateHandler_Call{Call: _e.mock.On("CreateHandler", nextHandler)}
+func (_e *mockCasBrowserClient_Expecter) Handle(nextHandler interface{}) *mockCasBrowserClient_Handle_Call {
+	return &mockCasBrowserClient_Handle_Call{Call: _e.mock.On("Handle", nextHandler)}
 }
 
-func (_c *mockCasBrowserClient_CreateHandler_Call) Run(run func(nextHandler http.Handler)) *mockCasBrowserClient_CreateHandler_Call {
+func (_c *mockCasBrowserClient_Handle_Call) Run(run func(nextHandler http.Handler)) *mockCasBrowserClient_Handle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(http.Handler))
 	})
 	return _c
 }
 
-func (_c *mockCasBrowserClient_CreateHandler_Call) Return(_a0 http.Handler) *mockCasBrowserClient_CreateHandler_Call {
+func (_c *mockCasBrowserClient_Handle_Call) Return(_a0 http.Handler) *mockCasBrowserClient_Handle_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockCasBrowserClient_CreateHandler_Call) RunAndReturn(run func(http.Handler) http.Handler) *mockCasBrowserClient_CreateHandler_Call {
+func (_c *mockCasBrowserClient_Handle_Call) RunAndReturn(run func(http.Handler) http.Handler) *mockCasBrowserClient_Handle_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -6,7 +6,7 @@ import (
 
 // casBrowserClient extracts static go-cas functions into testable functions.
 type casBrowserClient interface {
-	CreateHandler(nextHandler http.Handler) http.Handler
+	Handle(nextHandler http.Handler) http.Handler
 }
 
 // casBrowserClient extracts static go-cas functions into testable functions.

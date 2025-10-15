@@ -12,7 +12,7 @@ var log = logging.MustGetLogger("casfilter")
 func Middleware(casBrowserClient casBrowserClient, casRestClient casRestClient, next http.Handler) http.Handler {
 	log.Debugf("creating cas middleware")
 
-	casBrowserHandler := casBrowserClient.CreateHandler(next)
+	casBrowserHandler := casBrowserClient.Handle(next)
 	casRestHandler := casRestClient.HandleFunc(next.ServeHTTP)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
