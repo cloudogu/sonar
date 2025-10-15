@@ -47,9 +47,9 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 
 	throttlingHandler := throttling.NewThrottlingHandler(ctx, cfg, casHandler)
 
-	bcLogoutHandler := session.Middleware(throttlingHandler, cfg, casBrowserClient)
+	//bcLogoutHandler := session.Middleware(throttlingHandler, cfg, casBrowserClient)
 
-	logHandler := internal.Middleware(bcLogoutHandler, "logging")
+	logHandler := internal.Middleware(throttlingHandler, "logging")
 
 	appContextPathWithTrailingSlash, err := url.JoinPath(cfg.AppContextPath + "/")
 	if err != nil {
@@ -83,6 +83,7 @@ func NewCasClients(cfg config.Configuration) (*cas.Client, *cas.RestClient, erro
 		return nil, nil, fmt.Errorf("failed to parse service url: %s: %w", sonarUrlWithContext, err)
 	}
 
+	// Add support for CAS protocol 3.0
 	urlScheme := cas.NewDefaultURLScheme(casUrl)
 	urlScheme.ServiceValidatePath = path.Join("p3", "serviceValidate")
 
@@ -95,25 +96,24 @@ func NewCasClients(cfg config.Configuration) (*cas.Client, *cas.RestClient, erro
 	}
 
 	browserClient := cas.NewClient(&cas.Options{
-		URL:             serviceUrl,
+		URL:             casUrl,
 		Client:          httpClient,
-		URLScheme:       urlScheme,
-		IsLogoutRequest: isAlwaysDenyBackChannelLogoutRequest(),
+		IsLogoutRequest: internal.WithBackChannelLogoutRequestCheck(cfg.AppContextPath),
+		Cookie: &http.Cookie{
+			MaxAge:   86400,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+			Path:     cfg.AppContextPath,
+		},
 	})
+
 	restClient := cas.NewRestClient(&cas.RestOptions{
 		ServiceURL:                         serviceUrl,
 		Client:                             httpClient,
-		URLScheme:                          urlScheme,
 		CasURL:                             casUrl,
 		ForwardUnauthenticatedRESTRequests: true,
 	})
-	return browserClient, restClient, nil
-}
 
-// isAlwaysDenyBackChannelLogoutRequest returns always false to circumvent go-cas' buggy backchannel logout request
-// detection. Instead sonarcarp implements its own detection in session.Middleware.
-func isAlwaysDenyBackChannelLogoutRequest() func(r *http.Request) bool {
-	return func(r *http.Request) bool {
-		return false
-	}
+	return browserClient, restClient, nil
 }
