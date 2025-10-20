@@ -221,14 +221,6 @@ func Test_proxyHandler_getCasAttributes(t *testing.T) {
 	})
 }
 
-func Test_saveJwtSessionForBackchannelLogout(t *testing.T) {
-	testReq, err := http.NewRequest(http.MethodGet, "https://example.invalid/", nil)
-	require.NoError(t, err)
-	testReq.AddCookie(&http.Cookie{Name: "A", Value: "uninteresting"})
-
-	saveJwtSessionForBackchannelLogout(testReq, "testuser")
-}
-
 func Test_setHeaders(t *testing.T) {
 	testAdminGroupMapping := sonarAdminGroupMapping{
 		cesAdminGroup:   "ces-super-admin-3000",

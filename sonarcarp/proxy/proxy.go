@@ -13,7 +13,6 @@ import (
 
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
-	"github.com/cloudogu/sonar/sonarcarp/session"
 )
 
 var log = logging.MustGetLogger("proxy")
@@ -87,7 +86,6 @@ func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	casUsername, casAttrs := p.getCasAttributes(r)
 
-	saveJwtSessionForBackchannelLogout(r, casUsername)
 	setHeaders(r, casUsername, casAttrs, p.headers, p.adminGroupMapping)
 
 	p.forwarder.ServeHTTP(w, r)
@@ -107,10 +105,6 @@ func (p *proxyHandler) getCasAttributes(r *http.Request) (string, cas.UserAttrib
 	username := p.casClient.Username(r)
 	attrs := p.casClient.Attributes(r)
 	return username, attrs
-}
-
-func saveJwtSessionForBackchannelLogout(r *http.Request, casUsername string) {
-	session.SaveJwtTokensFor(casUsername, r.Cookies())
 }
 
 // setHeaders enriches a given request with SonarQube HTTP authorization headers.

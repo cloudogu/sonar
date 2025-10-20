@@ -15,7 +15,6 @@ import (
 	"github.com/cloudogu/sonar/sonarcarp/config"
 	"github.com/cloudogu/sonar/sonarcarp/internal"
 	"github.com/cloudogu/sonar/sonarcarp/proxy"
-	"github.com/cloudogu/sonar/sonarcarp/session"
 	"github.com/cloudogu/sonar/sonarcarp/throttling"
 )
 
@@ -37,8 +36,6 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 		return nil, fmt.Errorf("failed to static resource matcher init during carp server start: %w", err)
 	}
 
-	session.InitCleanJob(ctx, cfg.JwtSessionCleanInterval)
-
 	router := http.NewServeMux()
 
 	proxyHandler, err := proxy.CreateProxyHandler(headers, cfg)
@@ -46,8 +43,6 @@ func NewServer(ctx context.Context, cfg config.Configuration) (*http.Server, err
 	casHandler := casfilter.Middleware(casBrowserClient, casRestClient, proxyHandler)
 
 	throttlingHandler := throttling.NewThrottlingHandler(ctx, cfg, casHandler)
-
-	//bcLogoutHandler := session.Middleware(throttlingHandler, cfg, casBrowserClient)
 
 	logHandler := internal.Middleware(throttlingHandler, "logging")
 
