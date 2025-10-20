@@ -136,7 +136,7 @@ sonar.web.context=/sonar
 # period of time, the user is logged out.
 # The default value is set to 3 days (4320 minutes)
 # and cannot be greater than 3 months. Value must be strictly positive.
-#sonar.web.sessionTimeoutInMinutes=4320
+sonar.web.sessionTimeoutInMinutes={{ .Config.GetOrDefault "sonar.web.sso.refreshIntervalInMinutes" "1440"}}
 
 # A passcode can be defined to access some web services from monitoring
 # tools without having to use the credentials of a system administrator.
@@ -169,7 +169,7 @@ sonar.web.sso.groupsHeader=X-Forwarded-Groups
 
 # Interval used to know when to refresh name, email and groups.
 # During this interval, if for instance the name of the user is changed in the header, it will only be updated after X minutes.
-sonar.web.sso.refreshIntervalInMinutes=5
+sonar.web.sso.refreshIntervalInMinutes={{ .Config.GetOrDefault "sonar.web.sso.refreshIntervalInMinutes" "5"}}
 
 
 #--------------------------------------------------------------------------------------------------
