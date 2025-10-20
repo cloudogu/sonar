@@ -29,8 +29,14 @@ pipe.addDefaultStages()
 
 pipe.overrideStage('Setup') {
     ecoSystem.loginBackend('cesmarvin-setup')
-    ecoSystem.setup([additionalDependencies: ['official/postgresql']])
+    ecoSystem.setup([])
+    ecoSystem.setup([registryConfig:"""
+            "sonar": {
+                "sonar.web.sso.refreshIntervalInMinutes": "0"
+            },
+        """, additionalDependencies: ['official/postgresql']])
 }
+
 pipe.overrideStage("Integration tests") {
     com.cloudogu.ces.dogubuildlib.EcoSystem eco = pipe.ecoSystem
     eco.runCypressIntegrationTests([enableVideo      : params.EnableVideoRecording,
