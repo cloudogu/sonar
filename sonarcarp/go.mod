@@ -23,4 +23,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/cloudogu/go-cas/v2 v2.3.2 => github.com/cloudogu/go-cas/v2 v2.3.2-0.20251015181419-1fda156d6947
+replace github.com/cloudogu/go-cas/v2 v2.3.2 => github.com/cloudogu/go-cas/v2 v2.3.2-0.20251020071802-2034df607dd9
