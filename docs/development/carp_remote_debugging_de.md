@@ -31,6 +31,61 @@ Der Remote-Debugger kann dann eine Verbindung zu `localhost:2345` herstellen.
 
 ## CES-VM
 
-Wegen der Schlüsselgestaltung von Services im etcd (`/services/`) ist es nicht möglich, solch ein Debug-Image als Dogu
-zu deployen. Hierzu müsste der Port aus der VM heraus exportiert werden, das üblicherweise mittels `ExposedPort` in 
-`dogu.json` geschieht. Dies führt jedoch zu gänzlich unterschiedlichen 
+## CES-VM
+
+Es erfordert etwas mehr Aufwand (im Wesentlichen zwei geänderte Dateien und eine deaktivierte Firewall), um Sonarcarp in einer CES-VM zu debuggen.
+
+**`dogu.json`**
+Fügen Sie die folgende Zeile `ExposedPort` zur Datei `dogu.json` hinzu, um den Port außerhalb der VM freizugeben.
+
+**WARNUNG**
+Achten Sie darauf, diese Zeile NICHT ZU COMMITTEN, da sie Dogu ohne Einschränkungen vollständig nach außen offenlegt.
+
+```
+  "ExposedPorts": [
+    { "Type": "tcp", "Container": 2345, "Host": 2345 }
+  ]
+```
+
+Fügen Sie dann die angepasste `dogu.json` zu Ihrer Registrierung hinzu
+
+**`Dockerfile`**
+
+Fügen Sie diese Zeilen in der letzten Phase zur `Dockerfile` hinzu, z. B. in der Nähe des Startbefehls `CMD`:
+
+```dockerfile
+# ...Rest von Dockerfile
+
+ENV SERVICE_8080_TAGS="webapp" \
+    SERVICE_8080_NAME="sonar"
+
+CMD ["/startup.sh"]
+```
+
+Diese Zeilen konfigurieren die richtigen `services`-Schlüssel in der CES-Registrierung, sodass nginx eine korrekte Route
+zu `/sonar` erstellt. Andernfalls würden die beiden freigegebenen Ports (Anwendung und Delve) wie `/sonar-8080` geroutet, 
+was in keiner Weise funktioniert.
+
+```shell
+cd /vagrant/containers/sonar # oder wo auch immer sich Ihr Sonarqube-Repo befindet
+cesapp build . && cesapp start sonar
+```
+
+Deaktivieren Sie dann die Firewall der VM, damit der Port tatsächlich verbunden werden kann.
+```shell
+sudo ufw disable
+```
+
+`cesapp` verarbeitet die erforderliche Umgebungsvariable `STAGE=debug` überhaupt nicht, aber die Variable wird benötigt, 
+um dieses Image zu erstellen, damit `dlv` ausgeführt werden kann. Ersetzen wir das Dogu-Image durch eines, das den 
+`dlv`-fähigen Build enthält, mit diesen beiden Aufrufen aus der CES-VM heraus:
+
+```shell
+make docker-build
+cesapp recreate --start sonar
+```
+
+Wie oben für die Multinode-Installation beschrieben, wird dogu erst dann funktionsfähig, wenn Sie Ihren Debugger mit `dlv` verbinden. Richten Sie
+Ihren Debugger auf die äußere VM-IP-Adresse an Port 2345 (z. B. `192.168.56.2:2345`)
+
+**DIES MUSS UNBEDINGT VOR EINEM COMMIT AUFGERÄUMT WERDEN**
