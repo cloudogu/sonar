@@ -3,7 +3,7 @@ module github.com/cloudogu/sonar/sonarcarp
 go 1.24.5
 
 require (
-	github.com/cloudogu/go-cas/v2 v2.3.2
+	github.com/cloudogu/go-cas/v2 v2.4.0
 	github.com/op/go-logging v0.0.0-20160211212156-b2cb9fa56473
 	github.com/stretchr/testify v1.10.0
 	github.com/vulcand/oxy/v2 v2.0.3
@@ -13,7 +13,6 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
@@ -22,5 +21,3 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/cloudogu/go-cas/v2 v2.3.2 => github.com/cloudogu/go-cas/v2 v2.3.2-0.20251020071802-2034df607dd9
