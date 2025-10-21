@@ -29,12 +29,11 @@ pipe.addDefaultStages()
 
 pipe.overrideStage('Setup') {
     ecoSystem.loginBackend('cesmarvin-setup')
-    ecoSystem.setup([])
     ecoSystem.setup([registryConfig:"""
-            "sonar": {
-                "sonar.web.sso.refreshIntervalInMinutes": "0"
-            },
-        """, additionalDependencies: ['official/postgresql']])
+    	"sonar": {
+        	"sonar.web.sso.refreshIntervalInMinutes": "0"
+        }
+    """, additionalDependencies: ['official/postgresql']])
 }
 
 pipe.overrideStage("Integration tests") {
