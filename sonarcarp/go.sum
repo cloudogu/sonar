@@ -1,16 +1,7 @@
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251015135642-939fd26da8ee h1:cVV8sZ8TeOtQ3mNBeEdd+UlUuGfCwim/xtrj13v1C+0=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251015135642-939fd26da8ee/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251015181419-1fda156d6947 h1:JQ6uKvSQOsHPEXItJqy1gh/pP2DVvaB8mqTjrlxtuT0=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251015181419-1fda156d6947/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251016135801-8dfc7c5240c9 h1:tyHS8dmmLeb2mzku6eWflPiBSJwAeJ49B2pmCnzYYCk=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251016135801-8dfc7c5240c9/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251020071802-2034df607dd9 h1:L/Legpnihpm8zNu3080c62r5UlKZik+D0uRmuasFECQ=
-github.com/cloudogu/go-cas/v2 v2.3.2-0.20251020071802-2034df607dd9/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
+github.com/cloudogu/go-cas/v2 v2.4.0 h1:hPrhOv2dOuzPz//w5LeCaHJmo2re+wAUWq+80ywTubM=
 github.com/cloudogu/go-cas/v2 v2.4.0/go.mod h1:3OUjLydr2g+EJLYV79WDagRjYogKM/ugOqlutyKmPXo=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=
-github.com/golang-jwt/jwt/v5 v5.3.0/go.mod h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE=
 github.com/golang/glog v1.2.5 h1:DrW6hGnjIhtvhOIiAKT6Psh/Kd/ldepEa81DKeiRJ5I=
 github.com/golang/glog v1.2.5/go.mod h1:6AhwSGph0fcJtXVM/PEHPqZlFeoLxhs7/t5UDAwmO+w=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
