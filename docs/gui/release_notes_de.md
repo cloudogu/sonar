@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+* Eine Validierung wurde hinzugefügt, mit der nur Upgrades von Version 9 zu 25 möglich sind.
+* Das Sonar-CAS-Plugin wurde durch eine neue Authentifizierungsmethode ersetzt.
 
 ## [v25.1.0-5] - 2025-05-13
 * Wir haben nur technische Änderungen vorgenommen. Näheres finden Sie in den Changelogs.
