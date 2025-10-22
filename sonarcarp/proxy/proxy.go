@@ -28,7 +28,7 @@ type proxyHandler struct {
 }
 
 func CreateProxyHandler(headers AuthorizationHeaders, cfg config.Configuration) (*proxyHandler, error) {
-	log.Debugf("creating proxy middleware")
+	log.Debug("creating proxy middleware")
 
 	targetURL, err := url.Parse(cfg.ServiceUrl)
 	if err != nil {
