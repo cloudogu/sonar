@@ -12,7 +12,7 @@ COPY build /app/build
 
 RUN make vendor compile-generic
 
-FROM golang:1.25.2-alpine3.21 AS compiler-debug
+FROM golang:1.24.5-alpine3.21 AS compiler-debug
 WORKDIR /app
 COPY sonarcarp /app
 
