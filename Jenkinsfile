@@ -29,6 +29,7 @@ pipe.addDefaultStages()
 
 pipe.overrideStage('Setup') {
     ecoSystem.loginBackend('cesmarvin-setup')
+    // set refreshIntervalInMinutes to 0 to have integration tests running properly, esp. privilege modification tests.
     ecoSystem.setup([registryConfig:"""
     	"sonar": {
         	"sonar.web.sso.refreshIntervalInMinutes": "0"
