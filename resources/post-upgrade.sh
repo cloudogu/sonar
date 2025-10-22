@@ -108,7 +108,7 @@ run_post_upgrade() {
     echo "No db migration is needed"
   fi
 
-  if [[ ${FROM_VERSION} =~ ^[6789|25.0].* ]] && [[ ${TO_VERSION} =~ ^25.[1-9]* ]]; then
+  if [[ ${FROM_VERSION} =~ ^[6789|25.1].* ]] && [[ ${TO_VERSION} =~ ^25.[1-9]* ]]; then
     # use sonarcarp instead of the CAS plugin
     removeCasPlugin
   else
