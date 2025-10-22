@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Implement sonar carp that uses HTTP header authentication
     - Remove Sonar-CAS-Plugin from Sonar
 
+### Fixed
+- Remove stale elasticsearch lockfiles after container start
+  - left lockfiles may prohibit a proper SonarQube start
+
 ## [v25.1.0-5] - 2025-05-13
 ### Fixed
 - [#132] Update sonar-Cas-Plugin to 6.1.0
