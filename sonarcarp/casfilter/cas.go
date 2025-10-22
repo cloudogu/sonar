@@ -19,7 +19,7 @@ func Middleware(casBrowserClient casBrowserClient, casRestClient casRestClient, 
 		log.Debugf("cas middleware was called with request %s", r.URL.String())
 
 		if internal.IsBrowserRequest(r) {
-			log.Debugf("Request is browser request")
+			log.Debug("Request is browser request")
 			casBrowserHandler.ServeHTTP(w, r)
 			return
 		}
