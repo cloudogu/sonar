@@ -24,7 +24,7 @@ func Middleware(casBrowserClient casBrowserClient, casRestClient casRestClient, 
 			return
 		}
 
-		log.Debugf("Request is REST request")
+		log.Debug("Request is REST request")
 
 		casRestHandler.ServeHTTP(w, r)
 	})
