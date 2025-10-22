@@ -354,7 +354,8 @@ sonar.log.level={{ .Env.Get "SONAR_LOGLEVEL" }}
 # By sharing anonymous SonarQube statistics, you help us understand how SonarQube is used so we can improve the product to work even better for you.
 # We don't collect source code or IP addresses. And we don't share the data with anyone else.
 # To see an example of the data shared: login as a global administrator, call the WS api/system/info and check the Statistics field.
-#sonar.telemetry.enable=true
+# The value is true by default.
+sonar.telemetry.enable=false
 
 
 #--------------------------------------------------------------------------------------------------
