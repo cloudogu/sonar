@@ -17,6 +17,10 @@ function run_upgrade_notification() {
     exit 1
   fi
 
+  if [[ ${FROM_MAJOR_VERSION} == ${TO_MAJOR_VERSION} ]]; then
+    exit 0
+  fi
+
   if [[ ${FROM_MAJOR_VERSION} -lt 8 ]]; then
     echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. It is not safe to migrate between"
     echo "several major versions in one step."
