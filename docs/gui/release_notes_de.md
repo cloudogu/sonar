@@ -6,6 +6,11 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.1.0-6] - 2025-10-22
+* Eine Validierung wurde hinzugefügt, mit der nur Upgrades von Version 9 zu 25 möglich sind.
+* Das Sonar-CAS-Plugin wurde durch eine neue Authentifizierungsmethode ersetzt.
+* Das Teilen von Telemetriedaten mit SonarSource wurde aus Sicherheitsgründen deaktiviert.
+
 ## [v25.1.0-5] - 2025-05-13
 * Wir haben nur technische Änderungen vorgenommen. Näheres finden Sie in den Changelogs.
 

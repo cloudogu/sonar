@@ -10,3 +10,7 @@ out/
 .env
 .bin/
 target/
+# avoid duplicating the makefile includes. These must be copied f.i. with make compile from the root Makefile
+sonarcarp/build
+
+sonarcarp/vendor

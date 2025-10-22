@@ -6,6 +6,11 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.1.0-6] - 2025-10-22
+* Validation has been added to allow only upgrades from version 9 to 25.
+* The Sonar CAS plugin has been replaced with a new authentication method.
+* Sharing telemetry data with SonarSource has been disabled for added security.
+
 ## [v25.1.0-5] - 2025-05-13
 * We have only made technical changes. You can find more details in the changelogs.
 

@@ -1,0 +1,19 @@
+services:
+
+  sonar:
+    image: sonarqube:25.1.0.102122-community
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+      - "5000:5000"
+    environment:
+      - SONARQUBE_WEB_JVM_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5000
+      - SONAR_WEB_SSO_ENABLE=true
+      - SONAR_WEB_SSO_LOGINHEADER=X-Forwarded-Login
+      - SONAR_WEB_SSO_NAMEHEADER=X-Forwarded-Name
+      - SONAR_WEB_SSO_EMAILHEADER=X-Forwarded-Email
+      - SONAR_WEB_SSO_GROUPSHEADER=X-Forwarded-Groups
+      - SONAR_WEB_SSO_REFRESHINTERVALINMINUTES=5
+      - SONAR_LOG_LEVEL=DEBUG
+    extra_hosts:
+      - "cas.hitchhiker.com:${SONAR_CAS_LOCAL_IP}"

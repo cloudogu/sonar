@@ -17,5 +17,41 @@ const deleteUserFromDoguViaAPI = (username, exitOnFail = false) => {
     })
 }
 
+function closePromoDialog() {
+  cy.get('body').then(($body) => {
+    const $dialog = $body.find('.it__promotion_notification');
+    if ($dialog.length) {
+      cy.task('log', 'Promo dialog detected, closing it');
+
+      // click the Dismiss button inside the dialog
+      cy.wrap($dialog).within(() => {
+        cy.contains('button', 'Dismiss', { matchCase: false }).click({ force: true });
+        // alternative: cy.get('button.sw-justify-center').click({ force: true })
+      });
+    } else {
+      cy.task('log', 'No Promo dialog visible');
+    }
+  });
+}
+
+function closeSonarWelcomeDialog() {
+  cy.get('body').then($body => {
+    if ($body.find('div[role="dialog"]').length) {
+      cy.task('log','Sonar welcome dialog detected, closing it');
+      cy.get('button[aria-label="Close"]').click({ force: true });
+    }
+    else {
+      cy.task('log','No Sonar welcome dialog visible');
+    }
+  });
+};
+
+const closeDialogs = () => {
+    cy.wait(1000)
+    closeSonarWelcomeDialog();
+    closePromoDialog();
+};
+
 // Implement the necessary commands for the dogu integration test library
 Cypress.Commands.add("deleteUserFromDoguViaAPI", deleteUserFromDoguViaAPI)
+Cypress.Commands.add("closeDialogs", closeDialogs)

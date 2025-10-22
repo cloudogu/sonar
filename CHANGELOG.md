@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.1.0-6] - 2025-10-22
+### Added
+- [#136] Add upgrade validation to only allow upgrades from version 9.9.x to 25.1.x
+
+### Changed
+- [#136] Use reverse proxy for authentication against CAS-Dogu
+    - Implement sonar carp that uses HTTP header authentication
+    - Remove Sonar-CAS-Plugin from Sonar
+- [#143] disable on-by-default sharing of analysis telemetry data
+
+### Fixed
+- Remove stale elasticsearch lockfiles after container start
+  - left lockfiles may prohibit a proper SonarQube start
+
 ## [v25.1.0-5] - 2025-05-13
 ### Fixed
 - [#132] Update sonar-Cas-Plugin to 6.1.0

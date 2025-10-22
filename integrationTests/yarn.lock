@@ -92,10 +92,10 @@
   dependencies:
     debug "4.3.4"
 
-"@cloudogu/dogu-integration-test-library@6.1.1":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@cloudogu/dogu-integration-test-library/-/dogu-integration-test-library-6.1.1.tgz#76a3cc5b585c84fdab92669b7f2b55c87482d040"
-  integrity sha512-plQpFu7QbuX4Kuuvq4XVhWNUwy5rKk5KPF3DY8XSQyodWvtuPtTWEgoJ2e8TwqN6WK5c0aEcMMBLoboiTh/CJg==
+"@cloudogu/dogu-integration-test-library@6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@cloudogu/dogu-integration-test-library/-/dogu-integration-test-library-6.2.0.tgz#17201192bb8191b98ff73385cebfa166929160ac"
+  integrity sha512-1935b0qs0GZ8QR19x95QdmKlGfUxQusH70PVOVlr9FjxbzAVqWkLdP17CqYNIVxzVK8t098vLOSy31wuK7VTWg==
   dependencies:
     "@badeball/cypress-cucumber-preprocessor" "^16.0.0"
     cypress "^12.9.0"
