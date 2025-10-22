@@ -30,7 +30,7 @@ printCloudoguLogo() {
 
 sourcingExitCode=0
 # shellcheck disable=SC1090,SC1091
-source "${STARTUP_DIR}"/util.sh || sourcingExitCode=$?
+source "${STARTUP_DIR}"util.sh || sourcingExitCode=$?
 if [[ ${sourcingExitCode} -ne 0 ]]; then
   echo "ERROR: An error occurred while sourcing ${STARTUP_DIR}/util.sh."
 fi
@@ -56,7 +56,9 @@ function setVariables() {
   # initialize database variables form util.sh
   setDbVars
 
+  # export for carp.yaml usage
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
+  export CES_ADMIN_GROUP
   CES_ADMIN_GROUP_LAST=$(get_last_admin_group_or_global_admin_group)
   FQDN=$(doguctl config --global fqdn)
   DOMAIN=$(doguctl config --global domain)
@@ -366,6 +368,16 @@ function run_first_start_tasks() {
 function startSonarQubeInBackground() {
   local reason="${1}"
 
+  if [[ -f /opt/sonar/data/es8/node.lock ]] ; then
+    echo "Found elasticsearch node lockfile. Removing..."
+    rm -f /opt/sonar/data/es8/node.lock
+  fi
+
+  if [[ -f /opt/sonar/data/es8/_state/write.lock ]] ; then
+    echo "Found elasticsearch state write lockfile. Removing..."
+    rm -f /opt/sonar/data/es8/_state/write.lock
+  fi
+
   if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits for ${reason}... "
     java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar \
@@ -398,13 +410,10 @@ function stopSonarQube() {
 }
 
 function create_temporary_admin() {
-  echo "Creating Temporary admin user..."
   # Create temporary admin only in database
-  echo "Adding temporary admin group..."
+  echo "Creating a temporary admin user..."
   add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-  echo "Adding temporary admin user..."
   add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  echo "Adding temporary admin user to temporary admin group..."
   assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 }
 
@@ -547,16 +556,7 @@ runMain() {
   printCloudoguLogo
 
   setVariables
-
-  if [[ -e ${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar ]]; then
-    echo "Moving cas plugin to plugins folder..."
-    mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
-    if ls "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar 1>/dev/null 2>&1; then
-      rm "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
-    fi
-    mv "${SONARQUBE_HOME}/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar" "${SONARQUBE_HOME}/extensions/plugins/sonar-cas-plugin-${CAS_PLUGIN_VERSION}.jar"
-  fi
-
+  mkdir -p "${SONARQUBE_HOME}/extensions/plugins"
   doguctl state "waitingForPostgreSQL"
 
   echo "Waiting until postgresql passes all health checks..."
@@ -595,15 +595,12 @@ runMain() {
   remove_last_temp_admin
   update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 
-  echo "Creating Temporary admin user..."
   create_temporary_admin
 
   # check whether firstSonarStart has already been performed
   if [[ "$(doguctl config successfulFirstStart)" != "true" ]]; then
-    IS_FIRST_START="true"
     first_sonar_start
   else
-    IS_FIRST_START="false"
     subsequent_sonar_start
   fi
 
@@ -636,12 +633,6 @@ runMain() {
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
 
-  if [[ "${IS_FIRST_START}" == "true" ]]; then
-    # remove the es6 cache since it contains leftovers of the default admin
-    echo "Removing es6 cache..."
-  #  rm -r /opt/sonar/data/es6
-  fi
-
   echo "Removing temporary admin..."
   remove_user "${TEMPORARY_ADMIN_USER}"
   remove_group "${TEMPORARY_ADMIN_GROUP}"
@@ -671,18 +662,30 @@ runMain() {
 
   exec tail -F /opt/sonar/logs/es.log & # this tail on the elasticsearch logs is a temporary workaround, see https://github.com/docker-library/official-images/pull/6361#issuecomment-516184762
 
+  # sonarcarp will start the sonarqube process avoiding concurrent main processes inside the container
+  local carpExitCode=0
+  echo "sonarcarp exited with ${carpExitCode}"
   if [[ "$(doguctl config "container_config/memory_limit" -d "empty")" == "empty" ]]; then
     echo "Starting SonarQube without memory limits..."
-    exec java -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+    export carpExecCommand="java -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar"
   else
     # Retrieve configurable java limits from etcd, valid default values exist
     MEMORY_LIMIT_MAX_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_max_ram_percentage")
     MEMORY_LIMIT_MIN_PERCENTAGE=$(doguctl config "container_config/java_sonar_main_min_ram_percentage")
 
     echo "Starting SonarQube with memory limits MaxRAMPercentage: ${MEMORY_LIMIT_MAX_PERCENTAGE} and MinRAMPercentage: ${MEMORY_LIMIT_MIN_PERCENTAGE}..."
-    exec java -XX:MaxRAMPercentage="${MEMORY_LIMIT_MAX_PERCENTAGE}" \
-      -XX:MinRAMPercentage="${MEMORY_LIMIT_MIN_PERCENTAGE}" \
-      -jar /opt/sonar/lib/sonar-application-"${SONAR_VERSION}".jar
+    export carpExecCommand="java -XX:MaxRAMPercentage=${MEMORY_LIMIT_MAX_PERCENTAGE} -XX:MinRAMPercentage=${MEMORY_LIMIT_MIN_PERCENTAGE} -jar /opt/sonar/lib/sonar-application-${SONAR_VERSION}.jar"
+  fi
+
+  echo "Rendering CAS Authentication Reverse Proxy configuration..."
+  doguctl template carp.yml.tpl "${STARTUP_DIR}"carp/carp.yml
+  echo "Starting carp with delve and sonar..."
+  cd "${STARTUP_DIR}"carp/
+
+  if [ "${STAGE:-}" = "DEBUG" ]; then
+    ./dlv --listen=:2345 --headless=true --log=true --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc --accept-multiclient --api-version=2 exec ./sonarcarp || carpExitCode=$?;
+  else
+    ./sonarcarp || carpExitCode=$?;
   fi
 }
 

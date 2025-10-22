@@ -14,7 +14,7 @@ set -o pipefail
 # shellcheck disable=SC1091
 source "${STARTUP_DIR}/util.sh"
 
-function reinstall_plugins() {
+reinstall_plugins() {
   if doguctl config install_plugins >/dev/null; then
         TEMPORARY_ADMIN_GROUP=$(doguctl random)
         TEMPORARY_ADMIN_USER=$(doguctl random)
@@ -63,7 +63,14 @@ function reinstall_plugins() {
       fi
 }
 
-function run_post_upgrade() {
+# Variables:
+# - SONARQUBE_HOME is a global variable being set from the Dockerfile.
+removeCasPlugin() {
+  echo "Deleting obsolete SonarQube CAS plugins..."
+  rm -f "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
+}
+
+run_post_upgrade() {
   # init variables from util.sh
   setDbVars
 
@@ -100,6 +107,14 @@ function run_post_upgrade() {
   else
     echo "No db migration is needed"
   fi
+
+  if [[ ${FROM_VERSION} =~ ^[6789|25.0].* ]] && [[ ${TO_VERSION} =~ ^25.[1-9]* ]]; then
+    # use sonarcarp instead of the CAS plugin
+    removeCasPlugin
+  else
+    echo "skipping upgrade from ${FROM_VERSION} to ${TO_VERSION}"
+  fi
+
 
   if [[ ${FROM_VERSION} == "8"* ]] && [[ ${TO_VERSION} == "9.9"* ]]; then
     # reinstall missing plugins if there are any

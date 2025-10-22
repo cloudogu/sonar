@@ -136,7 +136,7 @@ sonar.web.context=/sonar
 # period of time, the user is logged out.
 # The default value is set to 3 days (4320 minutes)
 # and cannot be greater than 3 months. Value must be strictly positive.
-#sonar.web.sessionTimeoutInMinutes=4320
+sonar.web.sessionTimeoutInMinutes={{ .Config.GetOrDefault "sonar.web.sessionTimeoutInMinutes" "1440"}}
 
 # A passcode can be defined to access some web services from monitoring
 # tools without having to use the credentials of a system administrator.
@@ -149,27 +149,27 @@ sonar.web.context=/sonar
 # SSO AUTHENTICATION
 
 # Enable authentication using HTTP headers
-#sonar.web.sso.enable=false
+sonar.web.sso.enable=true
 
 # Name of the header to get the user login.
 # Only alphanumeric, '.' and '@' characters are allowed
-#sonar.web.sso.loginHeader=X-Forwarded-Login
+sonar.web.sso.loginHeader=X-Forwarded-Login
 
 # Name of the header to get the user name
-#sonar.web.sso.nameHeader=X-Forwarded-Name
+sonar.web.sso.nameHeader=X-Forwarded-Name
 
 # Name of the header to get the user email (optional)
-#sonar.web.sso.emailHeader=X-Forwarded-Email
+sonar.web.sso.emailHeader=X-Forwarded-Email
 
 # Name of the header to get the list of user groups, separated by comma (optional).
 # If the sonar.sso.groupsHeader is set, the user will belong to those groups if groups exist in SonarQube.
 # If none of the provided groups exists in SonarQube, the user will only belong to the default group.
 # Note that the default group will always be set.
-#sonar.web.sso.groupsHeader=X-Forwarded-Groups
+sonar.web.sso.groupsHeader=X-Forwarded-Groups
 
 # Interval used to know when to refresh name, email and groups.
 # During this interval, if for instance the name of the user is changed in the header, it will only be updated after X minutes.
-#sonar.web.sso.refreshIntervalInMinutes=5
+sonar.web.sso.refreshIntervalInMinutes={{ .Config.GetOrDefault "sonar.web.sso.refreshIntervalInMinutes" "5"}}
 
 
 #--------------------------------------------------------------------------------------------------
@@ -299,8 +299,8 @@ sonar.log.level={{ .Env.Get "SONAR_LOGLEVEL" }}
 # Level of logs of each process can be controlled individually with their respective properties.
 # When specified, they overwrite the level defined at global level.
 # Supported values are INFO, DEBUG and TRACE
-#sonar.log.level.app=INFO
-#sonar.log.level.web=INFO
+#sonar.log.level.app=TRACE
+#sonar.log.level.web=TRACE
 #sonar.log.level.ce=INFO
 #sonar.log.level.es=INFO
 
@@ -364,7 +364,7 @@ sonar.log.level={{ .Env.Get "SONAR_LOGLEVEL" }}
 # Elasticsearch HTTP connector
 #sonar.search.httpPort=-1
 
-# ces properties
+# Properties for better Cloudogu EcoSystem integration
 sonar.plugins.risk.consent=ACCEPTED
 sonar.jdbc.username={{ .Config.GetAndDecrypt "sa-postgresql/username" }}
 sonar.jdbc.password={{ .Config.GetAndDecrypt "sa-postgresql/password" }}
@@ -376,35 +376,7 @@ sonar.jdbc.maxWait=5000
 sonar.jdbc.minEvictableIdleTimeMillis=600000
 sonar.jdbc.timeBetweenEvictionRunsMillis=30000
 sonar.notifications.delay=60
-sonar.security.realm=cas
 sonar.authenticator.createUsers=true
-sonar.cas.forceCasLogin=true
-sonar.cas.protocol=cas3
-sonar.cas.casServerLoginUrl=https://{{ .GlobalConfig.Get "fqdn" }}/cas/login
-sonar.cas.casServerUrlPrefix=https://{{ .GlobalConfig.Get "fqdn" }}/cas
-sonar.cas.sonarServerUrl=https://{{ .GlobalConfig.Get "fqdn" }}/sonar
-sonar.cas.casServerLogoutUrl=https://{{ .GlobalConfig.Get "fqdn" }}/cas/logout
-sonar.cas.rolesAttributes=groups,roles
-sonar.cas.eMailAttribute=mail
-sonar.cas.disableCertValidation=false
-sonar.cas.fullNameAttribute=displayName
-sonar.cas.proxyTicketing.services=^https://{{ .GlobalConfig.Get "fqdn" }}/.*$
-# Sets the expiration time for the cookie. An integer specifying the maximum age of the cookie in seconds
-# # if negative, means the cookie is only stored until the browser exits; if zero, deletes the cookie
-sonar.cas.urlAfterCasRedirectCookieMaxAgeSeconds=300
-# Stores the path to the volume where session blacklists/whitelists are persistently stored. This store must be
-# persistent across server or container restarts or even container recreations in order to properly handle issued
-# authentications. Administrators may want to mount this as its own volume in order to scale with number of unexpired
-# sessions.
-# This path should not be in the sonar-home-directory ("/opt/sonar/..."), because sonar blocks write-access to this directory
-sonar.cas.sessionStorePath = /tmp/cas/sessionstore
-# The CAS session store stores JWT tokens which have an expiration date. These are kept for black- and whitelisting JWTs
-# from a user in order to prohibit attackers which gained access to a user's old JWT tokens. Once these JWTs are expired
-# they need to be removed from the store in a background ob. This property defines the interval in seconds between each
-# clean up run. Do not set the interval too short (this could lead to unnecessary CPU load) or too long (this could
-# lead to unnecessary filesystem load).
-# Default is 30 minutes, 0 disables the cleanup (this SHOULD NOT be done in a production environment)
-#sonar.cas.sessionStore.cleanUpIntervalInSeconds = 1800
 
 # log to console
 sonar.log.console=true

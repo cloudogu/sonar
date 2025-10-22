@@ -85,6 +85,18 @@
       "Optional": true
     },
     {
+      "Name": "sonar.web.sso.refreshIntervalInMinutes",
+      "Description": "The interval used to know when to refresh name, email, and groups. During this interval, if for instance the name of the user is changed in the header, it will only be updated after X minutes.",
+      "Optional": true,
+      "Default": "5"
+    },
+    {
+      "Name": "sonar.web.sessionTimeoutInMinutes",
+      "Description": "Inactive session timeout (in minutes). The maximum time a user can remain idle (no activity) before the session ends. The minimum value is 6, the maximum value 129600 (90 days).",
+      "Optional": true,
+      "Default": "1440"
+    },
+    {
       "Name": "container_config/swap_limit",
       "Description": "Limits the container's swap memory usage. Use zero or a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte). 0 will disable swapping.",
       "Optional": true,
@@ -153,8 +165,7 @@
           "WARN",
           "DEBUG",
           "INFO",
-          "ERROR",
-          "TRACE"
+          "ERROR"
         ]
       }
     },
@@ -241,7 +252,7 @@
   "HealthChecks": [
     {
       "Type": "tcp",
-      "Port": 9000
+      "Port": 8080
     },
     {
       "Type": "state"
