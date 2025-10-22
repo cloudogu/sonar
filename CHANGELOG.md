@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#136] Use reverse proxy for authentication against CAS-Dogu
     - Implement sonar carp that uses HTTP header authentication
     - Remove Sonar-CAS-Plugin from Sonar
+- [#143] disable on-by-default sharing of analysis telemetry data
 
 ### Fixed
 - Remove stale elasticsearch lockfiles after container start
