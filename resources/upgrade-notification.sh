@@ -17,7 +17,7 @@ function run_upgrade_notification() {
     exit 1
   fi
 
-  if [[ ${FROM_MAJOR_VERSION} == ${TO_MAJOR_VERSION} ]]; then
+  if [[ ${FROM_MAJOR_VERSION} -eq ${TO_MAJOR_VERSION} ]]; then
     exit 0
   fi
 
