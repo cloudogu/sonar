@@ -170,6 +170,66 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
 
 	})
+	t.Run("Unauthenticated api request should return code 401", func(t *testing.T) {
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t.Fatalf("unexpected sonar call to %s", r.URL.Path)
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
+
+		casClientMock := newMockCasClient(t)
+		casClientMock.EXPECT().IsAuthenticated(mock.Anything).Return(false)
+
+		sut, err := CreateProxyHandler(testHeaders, cfg)
+		require.NoError(t, err)
+		sut.casClient = casClientMock
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
+
+		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+"/api/test", nil)
+		req.Header.Add("User-Agent", browserUserAgent)
+
+		// when
+		actualResp, err := http.DefaultClient.Do(req)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusUnauthorized, actualResp.StatusCode)
+
+	})
+	t.Run("request to sessions that are no logout should be redirected to appContextPath", func(t *testing.T) {
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t.Fatalf("unexpected sonar call to %s", r.URL.Path)
+		}))
+		defer sonarMock.Close()
+		cfg.ServiceUrl = sonarMock.URL
+
+		casClientMock := newMockCasClient(t)
+
+		sut, err := CreateProxyHandler(testHeaders, cfg)
+		require.NoError(t, err)
+		sut.casClient = casClientMock
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
+
+		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+"/sessions/new", nil)
+		req.Header.Add("User-Agent", browserUserAgent)
+
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
+
+		// when
+		actualResp, err := client.Do(req)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusFound, actualResp.StatusCode)
+		assert.Equal(t, testAppContextPath, actualResp.Header.Get("Location"))
+
+	})
 }
 
 func Test_isInAdminGroup(t *testing.T) {
