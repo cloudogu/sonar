@@ -5,6 +5,7 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+* Bugfix für die Navigation im Browser obwohl der User bereits abgemeldet ist.
 
 ## [v25.1.0-6] - 2025-10-22
 * Eine Validierung wurde hinzugefügt, mit der nur Upgrades von Version 9 zu 25 möglich sind.
