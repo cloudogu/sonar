@@ -5,6 +5,8 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+* The Dogu now offers SonarQube version 2025.1 (LTS). The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes#latest-release-25.10.0.114319).
+
 
 ## [v25.1.0-6] - 2025-10-22
 * Validation has been added to allow only upgrades from version 9 to 25.
