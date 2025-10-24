@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - [#146] Update SonarQube to v25.10.0.114319
+- [#146] Update base image to v21.0.5-1
 
 ## [v25.1.0-6] - 2025-10-22
 ### Added
