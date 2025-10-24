@@ -1,8 +1,8 @@
 ARG STAGE=prod
-ARG BASE_IMAGE=registry.cloudogu.com/official/java:17.0.13-1
+ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.5-1
 
-ARG SONAR_VERSION=25.1.0.102122
-ARG SONARQUBE_ZIP_SHA256=1b37a6d6f882e32208620597706ee336e9a3495acff826421475618dc747feba
+ARG SONAR_VERSION=25.10.0.114319
+ARG SONARQUBE_ZIP_SHA256=ac702cbc7acea345ad91a5e67f51d9c1dc8c191d57691851ab832d2db30d7326
 
 FROM golang:1.24.5 AS compiler-prod
 WORKDIR /app
@@ -38,7 +38,7 @@ RUN rm sonarqube-${SONAR_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="25.1.0-6" \
+    VERSION="25.10.0-0" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
@@ -51,7 +51,7 @@ ENV SONARQUBE_HOME=/opt/sonar \
 RUN set -eux \
     && apk update \
     && apk upgrade \
-    && apk add --no-cache procps postgresql14-client curl uuidgen \
+    && apk add --no-cache procps postgresql14-client curl uuidgen libstdc++ \
     && mkdir -p /opt \
     && mkdir -p /carp \
     && rm -rf /var/cache/apk/* \
