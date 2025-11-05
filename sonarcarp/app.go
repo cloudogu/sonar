@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"io"
 	"os"
 	"os/exec"
@@ -58,14 +57,6 @@ func startPayloadInBackground(configuration config.Configuration) {
 }
 
 func main() {
-	flag.Set("logtostderr", "true")
-	flag.Set("stderrthreshold", "INFO")
-	flag.Set("v", "2")
-	flag.Set("-v", "2")
-	flag.Set("-vmodule", "client*")
-	flag.Set("-vmodule", "cas*")
-	flag.Parse()
-
 	configuration, err := config.InitializeAndReadConfiguration()
 	if err != nil {
 		panic(err)
