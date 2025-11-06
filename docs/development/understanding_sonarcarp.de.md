@@ -62,8 +62,6 @@ Client
 ⬇️     ⬆️
 logHandler (loggt ggf.)
 ⬇️     ⬆️
-backchannelLogoutHandler (erkennt und behandelt Backchannel-Logout (s. o.))
-⬇️     ⬆️
 throttlingHandler (erkennt HTTP401 und behandelt Client-Requests durch Throttling) 
 ⬇️     ⬆️
 casHandler (unterscheidet Rest- von Browser-Requests, prüft Anfragen ggü. CAS)

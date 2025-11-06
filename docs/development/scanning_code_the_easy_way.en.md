@@ -14,6 +14,7 @@ To avoid installing a whole stack of SCM Manager, Jenkins, etc., it is easier to
    1. Start Sonar scanner,
    2. Import the certificate, and
    3. Scan
+   4. Scan a second time for good measure, because SonarQube is weird and hates first scans
 
 ```shell
 docker run \                         
@@ -28,5 +29,39 @@ cd /usr/lib/jvm/java-17-openjdk/lib/security
 keytool -import -trustcacerts -noprompt -alias sonarqube -file /usr/src/ces.pem -keystore cacerts -storepass changeit
 cd -
 sonar-scanner
-exit
+exit # This leaves the container, which is now being deleted. Everything must be repeated for the next scan
+```
+
+## Minimal example of a codebase
+
+To find out if and how SonarQube and Sonarcarp work, two or three files are sufficient:
+
+- `go.mod`
+```shell
+mkdir test
+cd test
+go mod init test
+```
+- `main.go`
+```go
+package main
+
+import (
+	"fmt"
+	"path/filepath"
+)
+
+func main() {
+	a, err := filepath.Abs("asdf") // error here
+	fmt.Println("hello world", a)
+}
+```
+- sonar-project.properties
+```
+sonar.projectKey=test
+sonar.sources=.
+sonar.exclusions=**/*_test.go,**/vendor/**,**/target/**,**/mocks/**,**/*_mock.go,resources/test/**/index.html,**/mock_**,**/build/make/**
+sonar.tests=.
+sonar.test.inclusions=**/*_test.go
+sonar.test.exclusions=**/vendor/**,**/target/**
 ```

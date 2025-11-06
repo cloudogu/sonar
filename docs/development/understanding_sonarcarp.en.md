@@ -43,7 +43,7 @@ Backchannel logout currently works as follows:
 2. This triggers a POST request from CAS to `/sonar/`
 3. Sonarcarp receives this call:
    - Sonarcarp performs an artificial front channel logout via request (including session and XSRF tokens) to SonarQube
-   - SonarcarprRedirects to the CAS logout, which performs a backchannel logout to all other services
+   - Sonarcarp redirects to the CAS logout, which performs a backchannel logout to all other services
       - No recursion is achieved here, as CAS knows from the CAS session that it does not need to perform any further logouts
 4. Sonarcarp cleans up the session map from the current account-to-cookie mapping.
 
@@ -60,8 +60,6 @@ sequence for successful processing (the carp server part is responsible for the 
 Client
 ⬇️     ⬆️
 logHandler (logs if necessary)
-⬇️     ⬆️
-backchannelLogoutHandler (detects and handles backchannel logout)
 ⬇️     ⬆️
 throttlingHandler (detects HTTP401 and handles client requests through throttling) 
 ⬇️     ⬆️
