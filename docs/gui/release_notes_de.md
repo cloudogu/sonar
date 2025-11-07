@@ -7,6 +7,7 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 ## [Unreleased]
 ### Geändert
 * Das Dogu bietet nun die SonarQube 25.7 an. Die Release Notes finden Sie [hier](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
+* Bugfix für die Navigation im Browser obwohl der User bereits abgemeldet ist.
 
 ## [v25.1.0-6] - 2025-10-22
 * Eine Validierung wurde hinzugefügt, mit der nur Upgrades von Version 9 zu 25 möglich sind.
