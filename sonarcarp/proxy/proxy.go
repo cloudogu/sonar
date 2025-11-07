@@ -19,6 +19,7 @@ var log = logging.MustGetLogger("proxy")
 
 type proxyHandler struct {
 	targetURL         *url.URL
+	appContextPath    string
 	forwarder         http.Handler
 	headers           AuthorizationHeaders
 	logoutPathUi      string
@@ -39,6 +40,7 @@ func CreateProxyHandler(headers AuthorizationHeaders, cfg config.Configuration) 
 
 	pHandler := &proxyHandler{
 		targetURL:         targetURL,
+		appContextPath:    cfg.AppContextPath,
 		logoutPathUi:      cfg.LogoutPathFrontchannelEndpoint,
 		logoutApiEndpoint: cfg.LogoutPathBackchannelEndpoint,
 		forwarder:         fwd,
@@ -76,8 +78,21 @@ func (p *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// any request to sessions that is not logout request should be redirected to sonar home
+	if isSessionsRequest(r.URL.Path) {
+		log.Debug("Proxy: Intercept request to sessions: redirect to home")
+		http.Redirect(w, r, p.appContextPath, http.StatusFound)
+		return
+	}
+
 	if !p.casClient.IsAuthenticated(r) && r.URL.Path != "/sonar/api/authentication/logout" {
 		log.Debugf("Proxy: Found non-authenticated %s request to %s", r.Method, r.URL.String())
+		// handle unauthenticated api requests
+		if isApiRequest(r.URL.Path) {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
 		p.casClient.RedirectToLogin(w, r)
 		return
 	}
@@ -159,4 +174,14 @@ func (cca *casClientAbstracter) Attributes(r *http.Request) cas.UserAttributes {
 // IsAuthenticated returns whether a request indicates if the request's user is CAS authenticated.
 func (cca *casClientAbstracter) IsAuthenticated(r *http.Request) bool {
 	return cas.IsAuthenticated(r)
+}
+
+// isApiRequest checks whether the request is targeting the api.
+func isApiRequest(path string) bool {
+	return strings.Contains(path, "/api/")
+}
+
+// isSessionsRequest checks whether the request is targeting the sessions endpoint.
+func isSessionsRequest(path string) bool {
+	return strings.Contains(path, "/sessions/")
 }

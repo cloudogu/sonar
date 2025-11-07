@@ -6,14 +6,14 @@ import (
 )
 
 func TestPreparesLoggerSuccessfully(t *testing.T) {
-	err := initLogger(Configuration{
+	_, err := initLogger(Configuration{
 		LoggingFormat: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}",
 		LogLevel:      "DEBUG",
 	})
 	assert.Nil(t, err)
 }
 func TestCanHandleWarn(t *testing.T) {
-	err := initLogger(Configuration{
+	_, err := initLogger(Configuration{
 		LoggingFormat: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}",
 		LogLevel:      "WARN",
 	})
@@ -21,7 +21,7 @@ func TestCanHandleWarn(t *testing.T) {
 }
 
 func TestFailOnInvalidLogLevel(t *testing.T) {
-	err := initLogger(Configuration{
+	_, err := initLogger(Configuration{
 		LoggingFormat: "%{time:2006-01-02 15:04:05.000-0700} %{level:.4s} [%{module}:%{shortfile}] %{message}",
 		LogLevel:      "WARNING",
 	})
