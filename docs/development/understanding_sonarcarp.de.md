@@ -34,20 +34,19 @@ Die folgende Grafik visualisiert Beteiligte und deren allgemeine Kommunikation:
 
 Auf spezifische Kommunikationsfälle gehen die folgenden Abschnitte genauer ein.
 
-#### CAS-Redirect
+#### CAS-Redirect und Session-Cookie
 
-![CAS-Redirects wird im Browser-Szenario unterstützt. Dabei ermittelt go-cas anhand von Session-Cookies und CAS-Abfragen den Sitzungszustand. Existiert keine gültige SSO-Sitzung im CAS für das verwendete Konto, weist Sonarcarp die Abfrage mit einem Redirect auf die CAS-Seite um](images/sonarcarp_and_sonarqube-cas-redirect.png "Ein:e Anwender:in wird bei unbekannter Session auf die CAS-Login-Seite umgeleitet, um sich dort für Single-Sign-On anzumelden.")
+Dieser Abschnitt bezieht sich auf die Authentifizierungsmethode mit Session-Cookies in Webbrowsern.
 
 CAS-Redirects wird im Browser-Szenario unterstützt. Dabei ermittelt go-cas anhand von Session-Cookies und CAS-Abfragen den Sitzungszustand. Existiert keine gültige SSO-Sitzung im CAS für das verwendete Konto, weist Sonarcarp die Abfrage mit einem Redirect auf die CAS-Seite um. An dieser Stelle kann sich eine Person mit den eigenen Zugangsdaten anmelden. CAS erzeugt bei Anmeldeerfolg im Browser einen `TGC`-Cookie an und leitet auf die ursprüngliche URL weiter.
 
-#### Session-Cookie
+Nach einem frischen Log-in existiert also lediglich ein TGC-Cookie auf dem `/cas`-Pfad. Um die Session zu überprüfen, prüft die verwendete `go-cas`-Bibliothek, ob ein CAS-Service-Ticket für das verwendete Anmeldekonto vorhanden ist. Spätestens jetzt sollte ein so ein Service-Ticket angelegt werden. Dadurch entsteht ein Cookie `_cas_session`, der das Anmeldekonto in allen folgenden Browserrequests der gleichen Session identifiziert. Bei erfolgreicher Antwort übermittelt `go-cas` auf Anfrage Nutzerattribute des verwendeten Anmeldekontos und speichert sich sowohl den Session-Bezeichner als auch das Service-Ticket ab. In nachfolgenden Requests wird dann bei erfolgreicher Prüfung der Session das Service-Ticket wiederverwendet.
 
-In dem Augenblick, in dem XYZ TODO
-
+![CAS-Redirects wird im Browser-Szenario unterstützt. Dabei ermittelt go-cas anhand von Session-Cookies und CAS-Abfragen den Sitzungszustand. Existiert keine gültige SSO-Sitzung im CAS für das verwendete Konto, weist Sonarcarp die Abfrage mit einem Redirect auf die CAS-Seite um](images/sonarcarp_and_sonarqube-cas-redirect.png "Ein:e Anwender:in wird bei unbekannter Session auf die CAS-Login-Seite umgeleitet, um sich dort für Single-Sign-On anzumelden.")
 
 #### Authorization-Header
 
-Dieser Abschnitt bezieht sich auf die Authentifizierungsmethoden `Authorization: Basic {Username und Passwort Base64 enkodiert}` bzw. `Authorization: Bearer {SonarQube-Token}`. Da eine Browsersession nach dem Login auf der CAS-Login-Seite durch einen Cookie `_cas_session` identifiziert, werden alle Anfragen mit einem `Authorization`-Header
+Dieser Abschnitt bezieht sich auf die Authentifizierungsmethoden `Authorization: Basic {Username und Passwort Base64 enkodiert}` bzw. `Authorization: Bearer {SonarQube-Token}`. Während die oben beschriebene Anmeldeart mit Session-Cookies eine Browsersession identifiziert, beschreibt diese Anmeldeart Requests die ohne Browser und gegen die REST-Schnittstelle verwendet wird.
 
 #### Throttling
 
