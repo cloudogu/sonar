@@ -84,15 +84,17 @@ Frontchannel Log-out funktioniert aktuell wiefolgt:
 #### Backchannel Log-out 
 
 Backchannel Log-out funktioniert aktuell wiefolgt:
-
+**TODO:**
 1. Benutzer:in loggt sich in einem anderen Service (oder durch Betätigung des Abmelden-Links im Warp-Menü) ab
 2. Dies führt zu einem POST-Request von CAS gegen `/sonar/`
+   - `Content-Type: application/x-www-form-urlencoded`
 3. Sonarcarp nimmt diesen Aufruf entgegen:
-   - Sonarcarp führt künstliches Frontchannel-Log-out mittels Request (inkl. Session- und XSRF-Token) gegen SonarQube aus
+   - **TODO:** Sonarcarp führt künstliches Frontchannel-Log-out mittels Request (inkl. Session- und XSRF-Token) gegen SonarQube aus
    - Sonarcarp macht einen Redirect zum CAS-Logout, das einen Backchannel-Logout gegenüber allen anderen Services durchführt
      - hierbei wird keine Rekursion erreicht, da CAS anhand der CAS-Session weiß, dass es keinen weiteren Logout durchführen muss.
 4. Sonarcarp bereinigt die Session-Map von der aktuellen Konto-Cookie-Zuordnung
-
+![sonarcarp_and_sonarqube_backchannel_logout.png](images/sonarcarp_and_sonarqube_backchannel_logout.png "Diagramm darüber, wie ein Backchannel-Logout in Sonarcarp funktioniert")
+ 
 ## Filter
 
 Prozesse rund um das Thema Authentifizierung ist häufig komplex. Um die Verarbeitung unterschiedlicher Aspekte zu 
