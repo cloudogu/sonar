@@ -16,10 +16,48 @@ throttling. If the request has not yet been authenticated to an internal/externa
 by SonarQube with HTTP401. Sonarcarp's own configurable throttling mechanism ensures a temporary reduction in the attack
 surface (when a threshold value is exceeded). Sonarcarp recognizes the HTTP401 result and redirects to the CAS login. 
 After a successful login, a CAS cookie is first issued. However, this is recognized in a new run (see above) and the 
-request is copied to SonarQube and provided with special authentication headers that indicate external authentication to
+request is copied to SonarQube and provided with special authentication headers `X-Forwarded-*` that indicate external authentication to
 SonarQube. SonarQube's response is then reflected back to the original request (the one after the CAS login).
 
-### Frontchannel logout
+The following aspects are considered for incoming requests:- Which client is being used?- Browser: Does a session cookie exist?- If so, does the session cookie refer to a valid CAS service ticket?- REST: Does an `Authorization` header exist?- Is a client currently subject to throttling?
+
+As expected, HTTP status and response content are included in the context of consideration for request responses from CAS or SonarQube (more on this later).
+
+The following graphic visualizes the participants and their general communication:![Diagram between four main participants: browser and REST clients, Sonar and CAS Dogu. Within Sonar Dogu, Sonarcarp intercepts incoming requests on port 8080. It interacts with the CAS Dogu using go-cas. Otherwise, it forwards requests to SonarQube on port 9000](images/sonarcarp_and_sonarqube.png "General communication paths and their participants in the Sonar Dogu").The following sections discuss specific communication cases in more detail.
+
+#### CAS Redirect
+
+![CAS redirects are supported in the browser scenario. Go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the account used, Sonarcarp redirects the query to the CAS page](images/sonarcarp_and_sonarqube-cas-redirect.png "If the session is unknown, the user is redirected to the CAS login page to log in for single sign-on.")
+
+CAS redirects are supported in the browser scenario. Go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the account used, Sonarcarp redirects the query to the CAS page. At this point, a person can log in with their own access data. If the login is successful, CAS generates a `TGC` cookie in the browser and redirects to the original URL.
+
+#### Session cookie
+
+The moment XYZ TODO
+
+
+#### Authorization header
+
+This section refers to the authentication methods `Authorization: Basic {username and password encoded in Base64}` and `Authorization: Bearer {SonarQube token}`. Since a browser session is identified by a `_cas_session` cookie after logging in on the CAS login page, all requests with an `Authorization` header
+
+#### Throttling
+
+The structure of subordinate filters (see below) enables throttling regardless of whether requests were made by browsers or REST clients and whether they were answered by SonarQube itself or by CAS. This is achieved by the `ThrottlingHandler`, which uses a [token bucket](https://de.wikipedia.org/wiki/Token-Bucket-Algorithmus) implementation.
+
+This checks the HTTP response status to see if there is an HTTP 401 Unauthorized value. If so, the throttling handler counts down a predefined token value (see limiter-burst-size value in carp.yaml.tpl) for each throttling client. The throttling client consists of a login and an IP address to avoid false positive blocks.
+
+| Throttling client part | Value                            | Example value                       | Missing value                    |
+|------------------------|----------------------------------|-------------------------------------|----------------------------------|
+| Account                | Account login                    | your.cas.user@example.invalid       | sonarcarp.throttling@ces.invalid |
+| IP address             | IP address before nginx proxying | Content of header `X-Forwarded-For` | "" (for requests from Dogus)     |
+
+From the moment that no more tokens can be generated, requests for such a throttling client are no longer permitted. All subsequent requests are acknowledged early with `HTTP 429 Too many requests` for the throttling client and are not processed further. It is necessary to wait until tokens have accumulated again over time.
+
+Sonarcarp relies heavily on the `X-Forwarded-*` headers from SonarQube for authentication in order to display accounts as "authenticated". Unlike the `Authorization` headers described above, these headers should **never** appear in regular browser operation. Therefore, Sonarcarp considers it an authentication attack if a client already uses these headers. In this case, all remaining tokens are immediately used up, leading to the consequences mentioned above. This event is also logged to enable immediate or subsequent reporting and tracking (depending on the security solution).
+
+### Log-out
+
+#### Frontchannel logout
 
 It is worth noting that logout calls must not be subject to session inspection. This means that even unauthenticated users should be able to call the logout endpoints listed below.
 
@@ -35,7 +73,7 @@ Front channel logout currently works as follows:
    - Redirects to the CAS logout, which performs a backchannel logout for all registered services (including SonarQube).
 5. This is followed by a backchannel logout, which Sonarcarp receives and cleans up its own state (see below)
 
-### Backchannel Log-out 
+#### Backchannel Log-out 
 
 Backchannel logout currently works as follows:
 

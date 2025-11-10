@@ -1,0 +1,176 @@
+<mxfile host="ecosystem.cloudogu.com" agent="Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0" version="24.7.17">
+  <diagram name="Page-1" id="LadaY-FId709H9tVoBtg">
+    <mxGraphModel dx="1024" dy="549" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="RuPts7quF4x_M79NCTxF-1" value="Sonar Dogu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=5;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="434" y="280" width="406" height="450" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-25" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fillColor=#e51400;strokeColor=#B20000;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-2" target="RuPts7quF4x_M79NCTxF-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="634" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-41" value="*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-25">
+          <mxGeometry x="-0.3492" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-2" value="Sonarcarp port 8080" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="434" y="340" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;dashed=1;strokeWidth=2;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-4" target="RuPts7quF4x_M79NCTxF-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-4" value="SonarQube port is not exposed, access only via Sonarcarp" style="shape=note;strokeWidth=2;fontSize=14;size=20;whiteSpace=wrap;html=1;fillColor=#ffff88;strokeColor=#36393d;spacingLeft=5;spacingRight=5;spacingTop=7;" vertex="1" parent="1">
+          <mxGeometry x="880" y="536.25" width="130" height="107.5" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-21" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;fillColor=#e51400;strokeColor=#B20000;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-6" target="RuPts7quF4x_M79NCTxF-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-40" value="*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-21">
+          <mxGeometry x="-0.0582" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-6" value="&lt;div&gt;SonarQube port 9000&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="444" y="460" width="386" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-19" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=classic;endFill=1;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-7" target="RuPts7quF4x_M79NCTxF-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-34" value="validate authentication status" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-19">
+          <mxGeometry x="-0.0833" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-7" value="go-cas" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="734" y="340" width="106" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-8" value="CAS Dogu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=5;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1074" y="312.5" width="200" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-24" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-1" target="RuPts7quF4x_M79NCTxF-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-31" value="intercepts" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-24">
+          <mxGeometry x="0.033" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-33" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=1;entryDx=0;entryDy=0;endArrow=classic;endFill=1;fillColor=#e51400;strokeColor=#B20000;exitX=0;exitY=0.5;exitDx=0;exitDy=0;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-8" target="RuPts7quF4x_M79NCTxF-7">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="844" y="380" as="sourcePoint" />
+            <mxPoint x="1084" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-35" value="user attributes or error" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-33">
+          <mxGeometry x="0.0781" y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;dashed=1;strokeWidth=2;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-36" target="RuPts7quF4x_M79NCTxF-38">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-36" value="&lt;div&gt;&lt;div align=&quot;center&quot;&gt;request forwarding&amp;nbsp;&lt;br&gt;depends either on:&lt;/div&gt;&lt;ul&gt;&lt;li&gt;CAS authentication&lt;/li&gt;&lt;li&gt;throttling status (requests without CAS authentication)&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;" style="shape=note;strokeWidth=2;fontSize=14;size=20;whiteSpace=wrap;html=1;fillColor=#ffff88;strokeColor=#36393d;spacingLeft=5;spacingRight=5;spacingTop=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="415" width="250" height="127.5" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-39" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="530" y="415" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-20" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=0.458;exitY=1.035;exitDx=0;exitDy=0;exitPerimeter=0;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" edge="1" parent="RuPts7quF4x_M79NCTxF-39" source="RuPts7quF4x_M79NCTxF-2" target="RuPts7quF4x_M79NCTxF-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-38" value="&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;forwards&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="RuPts7quF4x_M79NCTxF-39">
+          <mxGeometry width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-42" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#e51400;strokeColor=#B20000;strokeWidth=2;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="60" as="targetPoint" />
+            <mxPoint x="762" y="250" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="780" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-43" value="*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-42">
+          <mxGeometry x="-0.3492" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-16" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" edge="1" source="RuPts7quF4x_M79NCTxF-15" parent="1" target="RuPts7quF4x_M79NCTxF-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1074" y="50" as="sourcePoint" />
+            <mxPoint x="1084" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-18" value="&lt;div&gt;Authentication by&lt;br&gt;basic authentication /&lt;/div&gt;&lt;div&gt;bearer token&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-16">
+          <mxGeometry x="-0.1709" y="2" relative="1" as="geometry">
+            <mxPoint x="-31" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-44" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;fillColor=#e51400;strokeColor=#B20000;strokeWidth=2;entryX=1;entryY=0.3333333333333333;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-1" target="RuPts7quF4x_M79NCTxF-10">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="70" as="targetPoint" />
+            <mxPoint x="546.0539999999999" y="290" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="500" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-45" value="*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-44">
+          <mxGeometry x="-0.3492" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-10" value="&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;Browser&lt;/span&gt;" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="414" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-5" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-10" target="RuPts7quF4x_M79NCTxF-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="624" y="90" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-17" value="&lt;div&gt;Authentication by&amp;nbsp;&lt;/div&gt;&lt;div&gt;CAS&amp;nbsp;session cookie&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-5">
+          <mxGeometry x="-0.3749" y="-2" relative="1" as="geometry">
+            <mxPoint x="38" y="20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-46" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="40" y="40" width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-26" value="&lt;div align=&quot;left&quot;&gt;Legend&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=3;" vertex="1" parent="RuPts7quF4x_M79NCTxF-46">
+          <mxGeometry width="100" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-27" value="" style="endArrow=classic;html=1;rounded=0;fontColor=none;noLabel=1;fillColor=#0050ef;strokeColor=#001DBC;" edge="1" parent="RuPts7quF4x_M79NCTxF-46">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="10" y="29.67" as="sourcePoint" />
+            <mxPoint x="80" y="29.67" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-29" value="request" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-27">
+          <mxGeometry x="-0.3333" relative="1" as="geometry">
+            <mxPoint x="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-28" value="" style="endArrow=classic;html=1;rounded=0;fillColor=#e51400;strokeColor=#B20000;" edge="1" parent="RuPts7quF4x_M79NCTxF-46">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="10" y="50" as="sourcePoint" />
+            <mxPoint x="80" y="50" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-30" value="response" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-28">
+          <mxGeometry x="-0.6381" y="-1" relative="1" as="geometry">
+            <mxPoint x="17" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RuPts7quF4x_M79NCTxF-15" value="&lt;div&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;Dogus /&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;line-height: 140%;&quot;&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;REST clients&lt;/span&gt;&lt;/div&gt;" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="814" y="40" width="30" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
