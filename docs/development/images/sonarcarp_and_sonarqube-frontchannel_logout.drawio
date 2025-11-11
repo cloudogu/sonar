@@ -1,6 +1,6 @@
 <mxfile host="ecosystem.cloudogu.com" agent="Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0" version="24.7.17">
   <diagram name="Page-1" id="LadaY-FId709H9tVoBtg">
-    <mxGraphModel dx="1195" dy="640" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1434" dy="768" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -17,8 +17,24 @@
             <mxPoint x="18" as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="yg1WbKSCikADuKPF2CQG-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-2" target="RuPts7quF4x_M79NCTxF-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="yg1WbKSCikADuKPF2CQG-3" value="&lt;div&gt;2 logout&amp;nbsp;&lt;/div&gt;&lt;div&gt;in SonarQube endpoint&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="yg1WbKSCikADuKPF2CQG-1">
+          <mxGeometry x="0.0911" y="-1" relative="1" as="geometry">
+            <mxPoint x="-14" y="-6" as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="RuPts7quF4x_M79NCTxF-2" value="&lt;div&gt;Sonarcarp&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
           <mxGeometry x="40" y="320" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="yg1WbKSCikADuKPF2CQG-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;fillColor=#e51400;strokeColor=#B20000;strokeWidth=2;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-6" target="RuPts7quF4x_M79NCTxF-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="yg1WbKSCikADuKPF2CQG-4" value="*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="yg1WbKSCikADuKPF2CQG-2">
+          <mxGeometry x="-0.3636" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="RuPts7quF4x_M79NCTxF-6" value="&lt;div&gt;SonarQube&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
           <mxGeometry x="50" y="440" width="386" height="260" as="geometry" />
@@ -26,7 +42,7 @@
         <mxCell id="RuPts7quF4x_M79NCTxF-19" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=classic;endFill=1;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" parent="1" source="RuPts7quF4x_M79NCTxF-7" target="RuPts7quF4x_M79NCTxF-8" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="RuPts7quF4x_M79NCTxF-34" value="2 validate authentication status" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="RuPts7quF4x_M79NCTxF-19" vertex="1" connectable="0">
+        <mxCell id="RuPts7quF4x_M79NCTxF-34" value="3 logout in CAS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="RuPts7quF4x_M79NCTxF-19" vertex="1" connectable="0">
           <mxGeometry x="-0.0833" y="-1" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -34,8 +50,18 @@
         <mxCell id="RuPts7quF4x_M79NCTxF-7" value="go-cas" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
           <mxGeometry x="340" y="320" width="106" height="60" as="geometry" />
         </mxCell>
+        <mxCell id="yg1WbKSCikADuKPF2CQG-5" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-8" target="yg1WbKSCikADuKPF2CQG-7">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="679.9999999999998" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="yg1WbKSCikADuKPF2CQG-6" value="&lt;div&gt;logout&lt;/div&gt;&lt;div&gt;other dogus&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="yg1WbKSCikADuKPF2CQG-5">
+          <mxGeometry x="0.2601" relative="1" as="geometry">
+            <mxPoint y="-13" as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="RuPts7quF4x_M79NCTxF-8" value="CAS Dogu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=5;fontStyle=1" parent="1" vertex="1">
-          <mxGeometry x="680" y="292.5" width="200" height="230" as="geometry" />
+          <mxGeometry x="580" y="292.5" width="200" height="230" as="geometry" />
         </mxCell>
         <mxCell id="RuPts7quF4x_M79NCTxF-24" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;fillColor=#0050ef;strokeColor=#001DBC;strokeWidth=2;" parent="1" source="RuPts7quF4x_M79NCTxF-1" target="RuPts7quF4x_M79NCTxF-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -51,7 +77,7 @@
             <mxPoint x="690" y="360" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="RuPts7quF4x_M79NCTxF-35" value="3 no session or&amp;nbsp;&lt;br&gt;session invalid" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="RuPts7quF4x_M79NCTxF-33" vertex="1" connectable="0">
+        <mxCell id="RuPts7quF4x_M79NCTxF-35" value="*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="RuPts7quF4x_M79NCTxF-33" vertex="1" connectable="0">
           <mxGeometry x="0.0781" y="-2" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -67,16 +93,6 @@
         </mxCell>
         <mxCell id="RuPts7quF4x_M79NCTxF-45" value="4 redirect to CAS&amp;nbsp;&lt;br&gt;login page" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="RuPts7quF4x_M79NCTxF-44" vertex="1" connectable="0">
           <mxGeometry x="-0.3492" relative="1" as="geometry">
-            <mxPoint x="9" y="-24" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="Rra03rBs3cw03rSONp3M-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;exitX=1;exitY=0.3333333333333333;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-10" target="Rra03rBs3cw03rSONp3M-2">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="56" y="50" as="sourcePoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="Rra03rBs3cw03rSONp3M-16" value="&lt;div&gt;5 redirect to CAS login page&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="Rra03rBs3cw03rSONp3M-3">
-          <mxGeometry x="-0.5237" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
@@ -85,7 +101,7 @@
             <mxPoint x="230" y="70" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="Rra03rBs3cw03rSONp3M-17" value="1 get SonarQube page" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="RuPts7quF4x_M79NCTxF-5">
+        <mxCell id="Rra03rBs3cw03rSONp3M-17" value="&lt;div&gt;1 logout in&lt;/div&gt;&lt;div&gt;SonarQube&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="RuPts7quF4x_M79NCTxF-5" vertex="1" connectable="0">
           <mxGeometry x="-0.0282" y="3" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -118,17 +134,14 @@
             <mxPoint x="17" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="Rra03rBs3cw03rSONp3M-2" value="SSO login page" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="716" y="360" width="120" height="60" as="geometry" />
+        <mxCell id="Rra03rBs3cw03rSONp3M-2" value="SSO login page" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="616" y="360" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="RuPts7quF4x_M79NCTxF-10" value="&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;Browser&lt;/span&gt;" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
           <mxGeometry x="220" y="40" width="30" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="Rra03rBs3cw03rSONp3M-19" value="delete session cookie &lt;font face=&quot;Courier New&quot; style=&quot;font-size: 11px;&quot;&gt;_cas_session&lt;/font&gt;" style="shape=note;size=20;whiteSpace=wrap;html=1;fillColor=#ffff88;strokeColor=#36393d;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="390" y="120" width="90" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="Rra03rBs3cw03rSONp3M-21" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;endArrow=none;endFill=0;dashed=1;" edge="1" parent="1" source="RuPts7quF4x_M79NCTxF-7" target="Rra03rBs3cw03rSONp3M-19">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="yg1WbKSCikADuKPF2CQG-7" value="other dogus" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=5;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="580" y="620" width="200" height="80" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

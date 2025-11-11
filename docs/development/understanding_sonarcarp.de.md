@@ -81,6 +81,8 @@ Frontchannel Log-out funktioniert aktuell wiefolgt:
    - macht einen Redirect zum CAS-Logout, das einen Backchannel-Logout gegenüber allen registrierten Services (inkl. SonarQube) durchführt
 5. Es folgt ein Backchannel-Logout, den Sonarcarp entgegennimmt und den eigenen Zustand aufräumt (siehe unten).
 
+![](images/sonarcarp_and_sonarqube-frontchannel_logout.png "Diagramm, wie ein Logout in SonarQube zu Single-Logout aller anderen Dogus führt")
+
 #### Backchannel Log-out 
 
 Backchannel Log-out funktioniert aktuell wiefolgt:
