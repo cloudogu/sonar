@@ -67,6 +67,7 @@ Then(/^the user's externalIdentity attribute matches the username attribute in t
 });
 
 Then(/^the user can access the \/users\/groups Web API endpoint$/, function () {
+    cy.wait(30000)
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.task("getAPIToken").then((token) => {
             cy.requestSonarAPI("/system/health", token)

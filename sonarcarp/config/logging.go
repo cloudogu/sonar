@@ -8,7 +8,7 @@ import (
 	"github.com/op/go-logging"
 )
 
-func initLogger(configuration Configuration) error {
+func initLogger(configuration Configuration) (logging.Level, error) {
 	backend := logging.NewLogBackend(os.Stderr, "", 0)
 
 	var format = logging.MustStringFormatter(configuration.LoggingFormat)
@@ -16,7 +16,7 @@ func initLogger(configuration Configuration) error {
 
 	level, err := convertLogLevel(configuration.LogLevel)
 	if err != nil {
-		return fmt.Errorf("unable to convert level: %s, to loglevel: %w", configuration.LogLevel, err)
+		return 0, fmt.Errorf("unable to convert level: %s, to loglevel: %w", configuration.LogLevel, err)
 	}
 
 	backendLeveled := logging.AddModuleLevel(formatter)
@@ -26,7 +26,7 @@ func initLogger(configuration Configuration) error {
 
 	log.Infof("Initialized logger with log-level: %s", level)
 
-	return nil
+	return level, nil
 }
 
 func convertLogLevel(logLevel string) (logging.Level, error) {

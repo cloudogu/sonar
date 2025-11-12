@@ -1,10 +1,12 @@
 package config
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/op/go-logging"
 	"gopkg.in/yaml.v3"
 )
 
@@ -43,12 +45,26 @@ func InitializeAndReadConfiguration() (Configuration, error) {
 		return Configuration{}, fmt.Errorf("could not read configuration: %w", err)
 	}
 
-	err = initLogger(configuration)
+	loglevel, err := initLogger(configuration)
 	if err != nil {
 		return Configuration{}, fmt.Errorf("could not configure logger: %w", err)
 	}
 
+	if loglevel >= logging.DEBUG {
+		activateGoCasDebugLogging()
+	}
+
 	return configuration, nil
+}
+
+func activateGoCasDebugLogging() {
+	flag.Set("logtostderr", "true")
+	flag.Set("stderrthreshold", "INFO")
+	flag.Set("v", "2")
+	flag.Set("-v", "2")
+	flag.Set("-vmodule", "client*")
+	flag.Set("-vmodule", "cas*")
+	flag.Parse()
 }
 
 func readConfiguration() (Configuration, error) {

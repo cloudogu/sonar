@@ -6,6 +6,7 @@ const env = require("@cloudogu/dogu-integration-test-library/lib/environment_var
  */
 const deleteUserFromDoguViaAPI = (username, exitOnFail = false) => {
     cy.clearCookies()
+    cy.wait(2000)
     cy.request({
         method: "POST",
         url: Cypress.config().baseUrl + "/" + env.GetDoguName() + "/api/users/deactivate?login=" + username,

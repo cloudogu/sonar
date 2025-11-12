@@ -7,6 +7,7 @@ const env = require('@cloudogu/dogu-integration-test-library/lib/environment_var
 When(/^the user creates a User Token via the Web API$/, function () {
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.clearCookies()
+        cy.wait(2000)
         cy.task("getAPIToken").then((token) => {
             cy.requestSonarAPI("/user_tokens/generate?name=" + Math.random().toString(), token, true, 200, "POST").then(function (response) {
                 cy.task("setUserAPIToken", response.body["token"])
@@ -25,6 +26,7 @@ When(/^the user requests his\/her attributes via the \/users API endpoint$/, fun
     cy.fixture("testuser_data").then(function (testuserdata) {
         cy.task("getAPIToken").then((token) => {
             cy.clearCookies()
+            cy.wait(2000)
             cy.requestSonarAPI("/users/search?q=" + testuserdata.username, token).then(function (response) {
                 cy.setCookie("userattributes", JSON.stringify(response.body))
             })
