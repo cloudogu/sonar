@@ -6,7 +6,7 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 ### Changed
-* The Dogu now offers SonarQube 25.7. The release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
+* The Dogu now offers SonarQube version 25.7.0.110598. The release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
 * Bug fix for navigation in the browser even though the user is already logged out.
 
 ## [v25.1.0-6] - 2025-10-22
