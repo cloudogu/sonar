@@ -79,6 +79,7 @@ Frontchannel Log-out funktioniert aktuell wiefolgt:
 4. Sonarcarp nimmt diesen Aufruf entgegen:
    - führt diesen Request zunächst NICHT gegen SonarQube aus
    - macht einen Redirect zum CAS-Logout, das einen Backchannel-Logout gegenüber allen registrierten Services (inkl. SonarQube) durchführt
+   - der `_cas_session`-Cookie wird gelöscht
 5. Es folgt ein Backchannel-Logout, den Sonarcarp entgegennimmt und den eigenen Zustand aufräumt (siehe unten).
 
 ![](images/sonarcarp_and_sonarqube-frontchannel_logout.png "Diagramm, wie ein Logout in SonarQube zu Single-Logout aller anderen Dogus führt")
@@ -86,17 +87,19 @@ Frontchannel Log-out funktioniert aktuell wiefolgt:
 #### Backchannel Log-out 
 
 Backchannel Log-out funktioniert aktuell wiefolgt:
-**TODO:**
+
 1. Benutzer:in loggt sich in einem anderen Service (oder durch Betätigung des Abmelden-Links im Warp-Menü) ab
 2. Dies führt zu einem POST-Request von CAS gegen `/sonar/`
    - `Content-Type: application/x-www-form-urlencoded`
 3. Sonarcarp nimmt diesen Aufruf entgegen:
-   - **TODO:** Sonarcarp führt künstliches Frontchannel-Log-out mittels Request (inkl. Session- und XSRF-Token) gegen SonarQube aus
-   - Sonarcarp macht einen Redirect zum CAS-Logout, das einen Backchannel-Logout gegenüber allen anderen Services durchführt
-     - hierbei wird keine Rekursion erreicht, da CAS anhand der CAS-Session weiß, dass es keinen weiteren Logout durchführen muss.
-4. Sonarcarp bereinigt die Session-Map von der aktuellen Konto-Cookie-Zuordnung
+   - erkennt diesen Vorgang und löscht Sessioninformationen aus den Memory-Maps im `go-cas`-Anteil von Sonarcarp
+   - Sonarcarp hat keine Verbindung zum Browser, da der Request vom CAS kommt, daher werden auch keine Cookies gelöscht
 ![sonarcarp_and_sonarqube_backchannel_logout.png](images/sonarcarp_and_sonarqube_backchannel_logout.png "Diagramm darüber, wie ein Backchannel-Logout in Sonarcarp funktioniert")
  
+#### SonarQube-Tokens
+
+SonarQube stellt eigene Cookies aus, wenn eine erfolgreiche Anmeldung erkannt wurde. Dies sind `JWT-SESSION` und `XSRF-TOKEN`. Diese haben eine vordefinierte Gültigkeitsdauer, die durch den Konfigurationswert `sonar.web.sessionTimeoutInMinutes` in `dogu.json` verändert werden können. Die genannten Cookies können über Logout-Aktionen hinweg bestehen bleiben. Dies ist akzeptiertes Verhalten, da Sonarcarp sich um das eigentliche Sitzungsverhalten kümmert.
+
 ## Filter
 
 Prozesse rund um das Thema Authentifizierung ist häufig komplex. Um die Verarbeitung unterschiedlicher Aspekte zu 
