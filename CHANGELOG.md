@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - [#146] Update SonarQube to v25.10.0.114319
 - [#146] Update base image to v21.0.5-1
+
+> **Important Notice:** Version **v25.10.0-1** was depublished because it was released prematurely.  
 
 ### Fixed
 - [#144] Handle unauthenticated API request properly
