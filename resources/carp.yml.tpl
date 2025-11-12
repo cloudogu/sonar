@@ -58,7 +58,7 @@ log-level: "{{ .Config.GetOrDefault "logging/root" "WARN" }}"
 application-exec-command: "{{ .Env.Get "carpExecCommand" }}"
 
 # carp-resource-paths accepts a list of regular expressions of SonarQube routes that do not need authorization.
-# For security reasons, here usually appear static resources like CSS files etc.
+# For security reasons, here usually appear static resources like CSS files etc., anything that will appear WITHOUT authentication.
 # example: /sonar/css/ matches all requests that start with this path
 # Note: A misconfiguration could lead to undesirable exposing of authenticated
 # information.
@@ -68,6 +68,7 @@ carp-resource-paths:
   - /sonar/fonts/
   - /sonar/images/
   - /sonar/js/
+  - /sonar/batch/
 
 # Throttling
 #

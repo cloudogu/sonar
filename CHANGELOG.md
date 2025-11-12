@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#146] Update base image to v21.0.5-1
 
 ### Fixed
-- [#144] Handle unauthenticated api request properly
+- [#144] Handle unauthenticated API request properly
+- [#151] Make remove the need for authentication for the API endpoint `/sonar/batch`
+  - default maven sonar goals must use the property `-Dsonar.token` to avoid `HTTP 401 Unauthenticated` results as `-Dsonar.login` is deprecated
 
 ## [v25.1.0-6] - 2025-10-22
 ### Added
