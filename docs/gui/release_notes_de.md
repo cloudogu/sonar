@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v25.10.0-1] - 2025-11-12
 ### Geändert
 * Das Dogu bietet nun die SonarQube Version 25.7.0.110598 an. Die Release Notes finden Sie [hier](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
 
