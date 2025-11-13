@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v25.10.0-1] - 2025-11-12
 ### Changed
-- [#146] Update SonarQube to v25.10.0.114319
-- [#146] Update base image to v21.0.5-1
+- [#149] Update SonarQube to v25.7.0.110598
+- [#149] Update base image to v21.0.5-1
 
 > **Important Notice:** Version **v25.10.0-1** was depublished because it was released prematurely.  
 
