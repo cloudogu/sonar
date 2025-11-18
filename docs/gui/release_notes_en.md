@@ -6,10 +6,15 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.7.0-1] - 2025-11-18
+### Changed
+* The Dogu now offers SonarQube version 25.7.0.110598. The release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
+
 ## [v25.10.0-1] - 2025-11-12
-* The Dogu now offers SonarQube version 2025.1 (LTS). The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes#latest-release-25.10.0.114319).
+* The Dogu now offers SonarQube version 2025.10 (LTS). The SonarQube release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes#latest-release-25.10.0.114319).
 * Bug fix for navigation in the browser even though the user is already logged out.
 * This release removes a defect while executing SonarQube scans with Maven (without Community Branch plugin).
+> **Notice:** Version **v25.10.0-1** was depublished and is not available anymore.
 
 ## [v25.1.0-6] - 2025-10-22
 * Validation has been added to allow only upgrades from version 9 to 25.
