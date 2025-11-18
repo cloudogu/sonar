@@ -115,8 +115,17 @@ Es muss sichergestellt werden, dass die Variablen in der Produktions- (z. B. `Do
 
 Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Entwicklungs-CES-Instanz bietet es sich an, den SonarScanner per Jenkins in der gleichen Instanz zu betreiben. Folgendes Vorgehen hat sich bewährt:
 
-1. SCM-Manager und Jenkins im CES installieren
-   - `cesapp install official/jenkins; cesapp install official/scm; cesapp start scm; cesapp start jenkins`
+1. SCM-Manager, Jenkins und Nexus im CES installieren:
+   ```   
+   cesapp install official/scm
+   cesapp start scm
+
+   cesapp install official/jenkins
+   cesapp start jenkins
+   
+   cesapp install official/nexus
+   cesapp start nexus 
+   ```
 2. SCMM:
    - Spring Petclinic im SCM-Manager durch SCMM-Repo-Import in ein neues Repository einspielen 
    - Import: https://github.com/cloudogu/spring-petclinic/
