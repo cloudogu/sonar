@@ -145,26 +145,28 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
          - URL: `https://192.168.56.2/jenkins/sonarqube-webhook` <!-- markdown-link-check-disable-line -->
          - Secret: leer lassen
 4. Jenkins
-   1. ggf. Sonar-Scanner anlegen
+   1. ggf. Sonar-Plugin installieren
+      - zu [Dashboard/Jenkins verwalten/Plugins/Available Plugins](https://ecosystem.cloudogu.com/jenkins/manage/pluginManager/available) navigieren <!-- markdown-link-check-disable-line -->
+      - *SonarQube Scanner for Jenkins* installieren
+   2. ggf. Sonar-Scanner anlegen
       - zu [Dashboard/Jenkins verwalten/Tools](https://192.168.56.2/jenkins/manage/configureTools/) navigieren <!-- markdown-link-check-disable-line -->
       - Im Abschnitt "SonarQube Scanner Installationen" einen Eintrag über Maven Central anlegen
       - name: `sonar-scanner` 
-      - als Version kann die aktuellste Version genutzt werden
-   2. ggf. SonarServer konfigurieren
+      - Es kann die aktuellste Version genutzt werden
+   3. ggf. SonarServer konfigurieren
       - zu [Dashboard/Jenkins verwalten/System](https://192.168.56.2/jenkins/manage/configure) navigieren <!-- markdown-link-check-disable-line -->
       - Im Abschnitt "SonarQube servers" folgendes konfigurieren
         - Environment variables: ja/check
         - Name: `sonar`
         - Server URL: `http://sonar:9000/sonar`
         - Server authentication token: `add` drücken
-          - Credential fom Typ "Secret Text" mit dem im SonarQube generierten Token anlegen
-        - darauf achten, dass diese Settings auch übernommen werden (F5), vor allem Credential Type "Secret Text"
-   2. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
+            - Credential unter der ID `sonarAnalyzeToken` vom Typ "Secret Text" mit dem im SonarQube generierten Token anlegen
+   4. Credentials für SCMM und SonarQube im [Jenkins Credential Manager](https://192.168.56.2/jenkins/manage/credentials/store/system/domain/_/newCredentials) einfügen <!-- markdown-link-check-disable-line -->
       - Admin-Credentials unter der ID `scmCredentials` ablegen
-        - SCMM und SonarQube teilen sich Admin-Credentials (SCMM in der Build-Konfiguration, SonarQube im Jenkinsfile)
+          - SCMM und SonarQube teilen sich Admin-Credentials (SCMM in der Build-Konfiguration, SonarQube im Jenkinsfile)
       - für SonarQube auf Credentialtyp achten!
-         - `Username/Password` für Basic Authentication
-   2. Build-Job anlegen
+           - `Username/Password` für Basic Authentication
+   5. Build-Job anlegen
       1. Element anlegen -> `Multibranch Pipeline` auswählen -> Job konfigurieren
          - Branch Sources/Add source: "SCM-Manager (git, hg)" auswählen 
          - Server URL: https://192.168.56.2/scm/ <!-- markdown-link-check-disable-line -->
@@ -173,4 +175,3 @@ Wegen Kommunikationsprobleme durch selbst-signierte SSL-Zertifikate in einer Ent
          - das Jenkinsfile wird automatisch gefunden
       3. ggf. überzählige/nicht funktionierende Jobs abbrechen
       4. master-Branch hinsichtlich geänderter Credentials oder unerwünschter Job-Stages anpassen und bauen
-
