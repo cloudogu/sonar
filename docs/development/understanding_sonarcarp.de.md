@@ -1,11 +1,10 @@
-# Die Wirkweise von sonarcarp verstehen
+# Die Wirkweise von Sonarcarp verstehen
 
 ## Allgemeine Workflows im Sonarcarp
 
 ### Log-in
 
-Mit SonarQube 2025 musste wegen einer mangelhaften Unterstützung das Sonar-CAS-Plugin durch einen CAS (Central Authentication Service) Authentication
-Reverse Proxy (CARP) abgelöst werden.
+Mit SonarQube 2025 musste wegen einer mangelhaften Unterstützung das Sonar-CAS-Plugin durch einen CAS (Central Authentication Service) Authentication Reverse Proxy (CARP) abgelöst werden.
 
 Beim Dogu-Start werden zunächst SonarQube-Startparameter in die CARP-Konfigurationsdatei gerendert. Sonarcarp führt mit diesem Befehl dann SonarQube aus, um mehrere Hauptprozesse im Container (und damit z. B. Container-Stopp-Probleme) zu vermeiden. 
 
@@ -47,6 +46,8 @@ Nach einem frischen Log-in existiert also lediglich ein TGC-Cookie auf dem `/cas
 #### Authorization-Header
 
 Dieser Abschnitt bezieht sich auf die Authentifizierungsmethoden `Authorization: Basic {Username und Passwort Base64 enkodiert}` bzw. `Authorization: Bearer {SonarQube-Token}`. Während die oben beschriebene Anmeldeart mit Session-Cookies eine Browsersession identifiziert, beschreibt diese Anmeldeart Requests die ohne Browser und gegen die REST-Schnittstelle verwendet wird.
+
+Dies beeinflusst die Art und Weise, welcher konkrete `go-cas`-Client verwendet wird. In der Regel werden nicht-/falsch-authentifizierte REST-Requests abgelehnt, anstatt mit dem Wert `HTTP 302 Found` auf die CAS-Anmeldeseite weiterzuleiten. Das liegt daran, dass REST-Clients das CAS-Login-Webformular nicht ausfüllen. 
 
 #### Throttling
 
@@ -107,15 +108,14 @@ trennen und zu vereinfachen, wurden ähnliche Vorgehensverfahren in unterschiedl
 so möglichst sich immer nur um die Abwicklung eines Teils kümmern.
 
 Diese Filter werden ineinander gesteckt, sodass eine Filterkette entsteht. Requests müssen für die erfolgreiche 
-Verarbeitung alle diese Filter nacheinander passieren (für die Verkettung ist der carp-Serverteil verantwortlich, in 
-umgekehrter Reihenfolge):
+Verarbeitung alle diese Filter nacheinander passieren (für die Verkettung ist der carp-Serverteil verantwortlich, in umgekehrter Reihenfolge). Allerdings kann jederzeit aus der Filterkette ausgestiegen werden. Bei Fehlerzuständen, die Sonarcarp oder CAS zu verantworten haben, wird dann ein Wert `HTTP 500 Internal server error` zurückgeliefert. Bei Fehlern, die der Client zu verantworten hat, können die Antworten auch aus der HTTP-4xx-Range stammen. Dies können z. B. fehlende Daten oder wiederholte Falschanmeldungen sein:
 
 ```
-Client
+HTTP-Client (Browser oder REST)
 ⬇️     ⬆️
 logHandler (loggt ggf.)
 ⬇️     ⬆️
-throttlingHandler (erkennt HTTP401 und behandelt Client-Requests durch Throttling) 
+throttlingHandler (erkennt HTTP 401 und behandelt Client-Requests durch Throttling) 
 ⬇️     ⬆️
 casHandler (unterscheidet Rest- von Browser-Requests, prüft Anfragen ggü. CAS)
 ⬇️     ⬆️

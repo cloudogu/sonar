@@ -4,22 +4,20 @@
 
 ### Log in
 
-With SonarQube 2025, the Sonar CAS plugin had to be replaced by a CAS Authentication Reverse Proxy (CARP) due to 
-inadequate support.
+With SonarQube 2025, the Sonar CAS plugin had to be replaced by a CAS (Central Authentication Service) Authentication
+Reverse Proxy (CARP) due to inadequate support on the SonarQube side.
 
-When Dogu starts, SonarQube startup parameters are first rendered into the CARP configuration file. Sonarcarp then uses this command to run SonarQube in order to avoid multiple main processes in the container (and thus, for example, problems arising when stopping containers).
+When the Dogu starts, SonarQube startup parameters are first rendered into the CARP configuration file. Sonarcarp then executes SonarQube with this command to avoid multiple main processes in the container (and thus, for example, container stop problems).
 
-This Sonarcarp is located at the exposed port of the SonarQube container and, like a machine-in-the-middle, intercepts 
-all requests and first compares them with the started SonarQube server. This is done because SonarQube allows internal 
-user accounts (as opposed to external accounts, i.e., from CAS/LDAP), whose query in CAS could lead to unnecessary 
-throttling. If the request has not yet been authenticated to an internal/external user account, the request is rejected 
-by SonarQube with HTTP401. Sonarcarp's own configurable throttling mechanism ensures a temporary reduction in the attack
-surface (when a threshold value is exceeded). Sonarcarp recognizes the HTTP401 result and redirects to the CAS login. 
-After a successful login, a CAS cookie is first issued. However, this is recognized in a new run (see above) and the 
-request is copied to SonarQube and provided with special authentication headers `X-Forwarded-*` that indicate external authentication to
-SonarQube. SonarQube's response is then reflected back to the original request (the one after the CAS login).
+This Sonarcarp is located at the exposed port of the SonarQube container and, like a machine-in-the-middle, intercepts all requests and first compares them with the started SonarQube server. This is done because SonarQube allows internal user accounts (as opposed to external accounts, i.e., from CAS/LDAP), whose query in CAS could unnecessarily lead to throttling. If the request has not yet been authenticated to an internal/external user account, the request is rejected by SonarQube with HTTP401. Sonarcarp's own configurable throttling mechanism ensures a temporary reduction in the attack surface (if a threshold value is exceeded). Sonarcarp recognizes the
+HTTP401 result and redirects to the CAS login. After successful login, a CAS cookie is first issued. However, this is recognized in a new run (see above) and the request is copied to SonarQube and provided with special authentication headers `X-Forwarded-*`, which allow SonarQube to perform external authentication.
 
-The following aspects are considered for incoming requests:- Which client is being used?- Browser: Does a session cookie exist?- If so, does the session cookie refer to a valid CAS service ticket?- REST: Does an `Authorization` header exist?- Is a client currently subject to throttling?
+The following aspects are considered for incoming requests:
+- Which client is being used?
+  - Browser: Does a session cookie exist?
+    - If so, does the session cookie refer to a valid CAS service ticket?
+  - REST: Does an `Authorization` header exist?
+- Is a client currently subject to throttling?
 
 As expected, HTTP status and response content are included in the context of consideration for request responses from CAS or SonarQube (more on this later).
 
@@ -33,11 +31,15 @@ CAS redirects are supported in the browser scenario. Go-cas determines the sessi
 
 After a fresh login, only a TGC cookie exists on the `/cas` path. To verify the session, the `go-cas` library used checks whether a CAS service ticket exists for the login account used. At this point at the latest, such a service ticket should be created. This creates a `_cas_session` cookie that identifies the login account in all subsequent browser requests for the same session. If the response is successful, `go-cas` transmits the user attributes of the login account used upon request and stores both the session identifier and the service ticket. In subsequent requests, the service ticket is then reused if the session is successfully verified.
 
+CAS redirects are supported in the browser scenario. go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the used
+
 ![CAS redirects are supported in the browser scenario. Go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the account used, Sonarcarp redirects the query to the CAS page](images/sonarcarp_and_sonarqube-cas-redirect.png "If the session is unknown, the user is redirected to the CAS login page to log in for single sign-on.")
 
 #### Authorization header
 
-This section refers to the authentication methods `Authorization: Basic {username and password encoded in Base64}` and `Authorization: Bearer {SonarQube token}`. While the login method described above uses session cookies to identify a browser session, this login method describes requests that are used without a browser and against the REST interface.
+This section refers to the authentication methods `Authorization: Basic {username and password encoded in Base64}` and `Authorization: Bearer {SonarQube token}`. While the login type described above uses session cookies to identify a browser session, this login type describes requests that are used without a browser and against the REST interface.
+
+This affects the type of `go-cas` client used. As a rule, unauthenticated/incorrectly authenticated REST requests are rejected instead of being redirected to the CAS login page with the value `HTTP 302 Found`. This is because REST clients do not fill out the CAS login web form.
 
 #### Throttling
 
@@ -74,17 +76,17 @@ Front channel logout currently works as follows:
 
 #### Backchannel Log-out 
 
-Backchannel logout currently works as follows:
-**TODO:**
-1. The user logs out of another service (or by clicking the logout link in the Warp menu)
-2. This triggers a POST request from CAS to `/sonar/`
+1. User logs out of another service (or by clicking the logout link in the Warp menu)
+2. This results in a POST request from CAS to `/sonar/`
+   - `Content-Type: application/x-www-form-urlencoded`
 3. Sonarcarp receives this call:
-   - Sonarcarp performs an artificial front channel logout via request (including session and XSRF tokens) to SonarQube
-   - Sonarcarp redirects to the CAS logout, which performs a backchannel logout to all other services
-      - No recursion is achieved here, as CAS knows from the CAS session that it does not need to perform any further logouts
-4. Sonarcarp cleans up the session map from the current account-to-cookie mapping.
-
+   - recognizes this process and deletes session information from the memory maps in the `go-cas` part of Sonarcarp
+   - Sonarcarp has no connection to the browser because the request comes from CAS, so no cookies are deleted
 ![sonarcarp_and_sonarqube_backchannel_logout.png](images/sonarcarp_and_sonarqube_backchannel_logout.png "Diagramm how a Backchannel logout in Sonarcarp works")
+
+#### SonarQube tokens
+
+SonarQube issues its own cookies when a successful login is detected. These are `JWT-SESSION` and `XSRF-TOKEN`. These have a predefined validity period, which can be changed by the configuration value `sonar.web.sessionTimeoutInMinutes` in `dogu.json`. The cookies mentioned above can remain active even after logout actions. This is accepted behavior, as Sonarcarp takes care of the actual session behavior.
 
 ## Filters
 
@@ -92,11 +94,11 @@ Processes related to authentication are often complex. In order to separate and 
 aspects, similar procedures have been outsourced to different filters. A filter should ideally only handle one part of 
 the process.
 
-These filters are nested within each other to form a filter chain. Requests must pass through all of these filters in 
-sequence for successful processing (the carp server part is responsible for the chaining, in reverse order):
+These filters are inserted into each other to form a filter chain. Requests must pass through all of these filters in sequence for successful processing
+(the carp server part is responsible for the chaining, in reverse order). However, it is possible to exit the filter chain at any time. In the event of errors caused by Sonarcarp or CAS, a value `HTTP 500 Internal server error` is returned. In the event of errors caused by the client, the responses may also come from the HTTP 4xx range. These can be, for example, missing data or repeated incorrect logins:
 
 ```
-Client
+Client (Browser oder REST)
 ⬇️     ⬆️
 logHandler (logs if necessary)
 ⬇️     ⬆️
