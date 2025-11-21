@@ -6,6 +6,7 @@ Wegen üblicher Zertifikatsfehler ist es nicht so ganz einfach, in einem lokalen
 
 Um weiterhin nicht einen ganzen Stack von SCM-Manager, Jenkins usw. zu installieren, lässt sich leichter Abhilfe schaffen, wenn man einen Sonar-Scanner mit einem eigenen Zertifikat modifiziert:
 
+<!-- markdown-link-check-disable-next-line -->
 1. SonarQube-Token erzeugen, z. B. unter https://example.invalid/sonar/account/security
    - in diesem Beispiel: `sqa_3ffb7e36dee85c27ab1b3cca58e0dea400068f70`
 2. Codebase auswählen, die gescannt werden soll
