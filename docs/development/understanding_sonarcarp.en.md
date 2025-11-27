@@ -10,7 +10,7 @@ Reverse Proxy (CARP) due to inadequate support on the SonarQube side.
 When the Dogu starts, SonarQube startup parameters are first rendered into the CARP configuration file. Sonarcarp then executes SonarQube with this command to avoid multiple main processes in the container (and thus, for example, container stop problems).
 
 This Sonarcarp is located at the exposed port of the SonarQube container and, like a machine-in-the-middle, intercepts all requests and first compares them with the started SonarQube server. This is done because SonarQube allows internal user accounts (as opposed to external accounts, i.e., from CAS/LDAP), whose query in CAS could unnecessarily lead to throttling. If the request has not yet been authenticated to an internal/external user account, the request is rejected by SonarQube with HTTP401. Sonarcarp's own configurable throttling mechanism ensures a temporary reduction in the attack surface (if a threshold value is exceeded). Sonarcarp recognizes the
-HTTP401 result and redirects to the CAS login. After successful login, a CAS cookie is first issued. However, this is recognized in a new run (see above) and the request is copied to SonarQube and provided with special authentication headers `X-Forwarded-*`, which allow SonarQube to perform external authentication.
+HTTP401 result and redirects to the CAS login. After successful login, a CAS cookie is first issued. However, this is recognized in a new run (see above) and the request is copied to SonarQube and provided with special authentication headers `X-Forwarded-*` (see below), which allow SonarQube to perform external authentication.
 
 The following aspects are considered for incoming requests:
 - Which client is being used?
@@ -18,6 +18,19 @@ The following aspects are considered for incoming requests:
     - If so, does the session cookie refer to a valid CAS service ticket?
   - REST: Does an `Authorization` header exist?
 - Is a client currently subject to throttling?
+
+The above-mentioned authentication with SonarQube takes place through request enrichment of `X-Forwarded-*` headers, as SonarQube is configured for this purpose. The mere presence of these headers indicates to SonarQube that access is permitted. It is therefore of utmost importance that SonarQube is only accessible indirectly through Sonarcarp, as otherwise any access with these headers poses a security risk.
+
+Currently, these headers and properties are used for this purpose:
+
+| Property    | Sonarcarp Header     | SonarQube Property         | Comments                                                                    |
+|-------------|----------------------|----------------------------|-----------------------------------------------------------------------------|
+| Login       | `X-Forwarded-Login`  | sonar.web.sso.loginHeader  |                                                                             |
+| Anzeigename | `X-Forwarded-Name`   | sonar.web.sso.nameHeader   |                                                                             |
+| Email       | `X-Forwarded-Email`  | sonar.web.sso.emailHeader  |                                                                             |
+| User groups | `X-Forwarded-Groups` | sonar.web.sso.groupsHeader | User groups plus SonarQube admin group (if applicable), separated by commas |
+
+The header values actually used come from the CAS response. Groups are separated by commas. There is a special, fundamentally fixed group called `sonar-administrators`. As of now, this group does not have any configurable SonarQube properties. It is used when the CES administrator group is detected in the set of CAS groups and added to the corresponding header so that CES administrators can also administer SonarQube.
 
 As expected, HTTP status and response content are included in the context of consideration for request responses from CAS or SonarQube (more on this later).
 

@@ -16,7 +16,7 @@ Request von SonarQube mit HTTP401 abgelehnt. Ein eigener konfigurierbarer Thrott
 eine zeitliche Verminderung der Angriffsoberfläche (wenn ein Schwellwert überschritten wird). Sonarcarp erkennt das 
 HTTP401-Ergebnis und führt ein Redirect zum CAS-Login durch. Nach einer erfolgreichen Anmeldung wird zuerst ein 
 CAS-Cookie ausgestellt. Dieser wird in einem erneuten Durchlauf (s. o.) aber erkannt und der Request wird zu SonarQube
-hin kopiert und mit speziellen Authentifizierungsheadern `X-Forwarded-*` versehen, die SonarQube die externe Authentifizierung anzeigen.
+hin kopiert und mit speziellen Authentifizierungsheadern `X-Forwarded-*` (s.u.) versehen, die SonarQube die externe Authentifizierung anzeigen.
 SonarQubes Antwort wird dann auf den ursprünglichen Request (den nach dem CAS-Login) zurückgespiegelt.
 
 Die folgenden Aspekte werden bei eingehenden Requests betrachtet:
@@ -25,6 +25,19 @@ Die folgenden Aspekte werden bei eingehenden Requests betrachtet:
     - wenn ja, verweist der Session-Cookie auf ein gültiges CAS-Service-Ticket?  
   - REST: existiert ein `Authorization`-Header?
 - unterliegt ein Client gerade einem Throttling?
+
+Die o. g. Authentifizierung gegenüber SonarQube findet durch Request-Anreicherung von `X-Forwarded-*`-Headern statt, da SonarQube diesbzgl. konfiguriert wird. Die bloße Anwesenheit dieser Headers zeigen SonarQube, dass der Zugriff zulässig sind. Deswegen ist es von höchster Dringlichkeit, dass SonarQube nur mittelbar durch den Sonarcarp zugänglich ist, da sonst beliebige Zugriffe mit diesen Headern ein Sicherheitsproblem darstellen.
+
+Aktuell werden diese Header und Properties dafür verwendet:
+
+| Eigenschaft   | Sonarcarp Header     | SonarQube Property          | Bemerkungen                                                 |
+|---------------|----------------------|-----------------------------|-------------------------------------------------------------|
+| Login         | `X-Forwarded-Login`  | sonar.web.sso.loginHeader   |                                                             |
+| Anzeigename   | `X-Forwarded-Name`   | sonar.web.sso.nameHeader    |                                                             |
+| Email         | `X-Forwarded-Email`  | sonar.web.sso.emailHeader   |                                                             |
+| Nutzergruppen | `X-Forwarded-Groups` | sonar.web.sso.groupsHeader  | User-Gruppen plus ggf. SonarQube-Admingruppe, kommagetrennt |
+
+Die tatsächlich verwendeten Header-Werte entstammen dem CAS-Response. Gruppen werden durch Kommata getrennt. Es gibt eine spezielle, grundsätzlich fixe Gruppe `sonar-administrators`. Diese hat nach aktuellem Kenntnisstand keine konfigurierbare SonarQube-Property. Diese wird verwendet, wenn in der Menge der CAS-Gruppen ein die CES-Administratorgruppe entdeckt wird und dem entsprechenden Header hinzugefügt wird, damit CES-Administratoren auch SonarQube administrieren können.
 
 Bezüglich Requestantworten von CAS oder SonarQube werden erwartungsgemäß HTTP-Status und Antwortinhalt mit in den Betrachtungskontext gesetzt (hierzu später mehr).
 
