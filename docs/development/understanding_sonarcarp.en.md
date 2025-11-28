@@ -25,7 +25,7 @@ Currently, these headers and properties are used for this purpose:
 
 | Property    | Sonarcarp Header     | SonarQube Property         | Comments                                                                    |
 |-------------|----------------------|----------------------------|-----------------------------------------------------------------------------|
-| Login       | `X-Forwarded-Login`  | sonar.web.sso.loginHeader  |                                                                             |
+| Login       | `X-Forwarded-Login`  | sonar.web.sso.loginHeader  | This will be the user's ID within SonarQube                                 |
 | Anzeigename | `X-Forwarded-Name`   | sonar.web.sso.nameHeader   |                                                                             |
 | Email       | `X-Forwarded-Email`  | sonar.web.sso.emailHeader  |                                                                             |
 | User groups | `X-Forwarded-Groups` | sonar.web.sso.groupsHeader | User groups plus SonarQube admin group (if applicable), separated by commas |
@@ -42,11 +42,13 @@ This section refers to the authentication method using session cookies in web br
 
 CAS redirects are supported in the browser scenario. Go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the account used, Sonarcarp redirects the query to the CAS page. At this point, a person can log in with their own access data. If the login is successful, CAS generates a `TGC` cookie in the browser and redirects to the original URL.
 
-After a fresh login, only a TGC cookie exists on the `/cas` path. To verify the session, the `go-cas` library used checks whether a CAS service ticket exists for the login account used. At this point at the latest, such a service ticket should be created. This creates a `_cas_session` cookie that identifies the login account in all subsequent browser requests for the same session. If the response is successful, `go-cas` transmits the user attributes of the login account used upon request and stores both the session identifier and the service ticket. In subsequent requests, the service ticket is then reused if the session is successfully verified.
-
-CAS redirects are supported in the browser scenario. go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the used
+After a fresh login, only a TGC cookie exists on the `/cas` path. To verify the session, the `go-cas` library checks whether a CAS service ticket exists for the login account used. At this point, at the latest, such a service ticket should be created. This creates a `_cas_session` cookie that identifies the login account in all subsequent browser requests of the same session. If the response is successful, `go-cas` transmits user attributes of the login account used upon request and stores both the session identifier and the service ticket.
 
 ![CAS redirects are supported in the browser scenario. Go-cas determines the session status based on session cookies and CAS queries. If there is no valid SSO session in CAS for the account used, Sonarcarp redirects the query to the CAS page](images/sonarcarp_and_sonarqube-cas-redirect.png "If the session is unknown, the user is redirected to the CAS login page to log in for single sign-on.")
+
+In subsequent requests, the service ticket is reused if the session is successfully verified.
+
+![After logging in to CAS with SSO, session cookies assist with logging in to SonarQube. X headers are added to the request copies sent to SonarQube for authentication purposes](images/sonarcarp_and_sonarqube-cas-redirect_after_SSO.png "A user sends an authenticated request through Sonarcarp to SonarQube.")
 
 #### Authorization header
 

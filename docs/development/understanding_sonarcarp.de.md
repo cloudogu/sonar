@@ -32,7 +32,7 @@ Aktuell werden diese Header und Properties dafür verwendet:
 
 | Eigenschaft   | Sonarcarp Header     | SonarQube Property          | Bemerkungen                                                 |
 |---------------|----------------------|-----------------------------|-------------------------------------------------------------|
-| Login         | `X-Forwarded-Login`  | sonar.web.sso.loginHeader   |                                                             |
+| Login         | `X-Forwarded-Login`  | sonar.web.sso.loginHeader   | Dies wird die ID innerhalb von SonarQube                    |
 | Anzeigename   | `X-Forwarded-Name`   | sonar.web.sso.nameHeader    |                                                             |
 | Email         | `X-Forwarded-Email`  | sonar.web.sso.emailHeader   |                                                             |
 | Nutzergruppen | `X-Forwarded-Groups` | sonar.web.sso.groupsHeader  | User-Gruppen plus ggf. SonarQube-Admingruppe, kommagetrennt |
@@ -52,9 +52,14 @@ Dieser Abschnitt bezieht sich auf die Authentifizierungsmethode mit Session-Cook
 
 CAS-Redirects wird im Browser-Szenario unterstützt. Dabei ermittelt go-cas anhand von Session-Cookies und CAS-Abfragen den Sitzungszustand. Existiert keine gültige SSO-Sitzung im CAS für das verwendete Konto, weist Sonarcarp die Abfrage mit einem Redirect auf die CAS-Seite um. An dieser Stelle kann sich eine Person mit den eigenen Zugangsdaten anmelden. CAS erzeugt bei Anmeldeerfolg im Browser einen `TGC`-Cookie an und leitet auf die ursprüngliche URL weiter.
 
-Nach einem frischen Log-in existiert also lediglich ein TGC-Cookie auf dem `/cas`-Pfad. Um die Session zu überprüfen, prüft die verwendete `go-cas`-Bibliothek, ob ein CAS-Service-Ticket für das verwendete Anmeldekonto vorhanden ist. Spätestens jetzt sollte ein so ein Service-Ticket angelegt werden. Dadurch entsteht ein Cookie `_cas_session`, der das Anmeldekonto in allen folgenden Browserrequests der gleichen Session identifiziert. Bei erfolgreicher Antwort übermittelt `go-cas` auf Anfrage Nutzerattribute des verwendeten Anmeldekontos und speichert sich sowohl den Session-Bezeichner als auch das Service-Ticket ab. In nachfolgenden Requests wird dann bei erfolgreicher Prüfung der Session das Service-Ticket wiederverwendet.
+Nach einem frischen Log-in existiert also lediglich ein TGC-Cookie auf dem `/cas`-Pfad. Um die Session zu überprüfen, prüft die verwendete `go-cas`-Bibliothek, ob ein CAS-Service-Ticket für das verwendete Anmeldekonto vorhanden ist. Spätestens jetzt sollte ein so ein Service-Ticket angelegt werden. Dadurch entsteht ein Cookie `_cas_session`, der das Anmeldekonto in allen folgenden Browserrequests der gleichen Session identifiziert. Bei erfolgreicher Antwort übermittelt `go-cas` auf Anfrage Nutzerattribute des verwendeten Anmeldekontos und speichert sich sowohl den Session-Bezeichner als auch das Service-Ticket ab. 
 
-![CAS-Redirects wird im Browser-Szenario unterstützt. Dabei ermittelt go-cas anhand von Session-Cookies und CAS-Abfragen den Sitzungszustand. Existiert keine gültige SSO-Sitzung im CAS für das verwendete Konto, weist Sonarcarp die Abfrage mit einem Redirect auf die CAS-Seite um](images/sonarcarp_and_sonarqube-cas-redirect.png "Ein:e Anwender:in wird bei unbekannter Session auf die CAS-Login-Seite umgeleitet, um sich dort für Single-Sign-On anzumelden.")
+![CAS-Redirects werden im Browser-Szenario unterstützt. Dabei ermittelt go-cas anhand von Session-Cookies und CAS-Abfragen den Sitzungszustand. Existiert keine gültige SSO-Sitzung im CAS für das verwendete Konto, weist Sonarcarp die Abfrage mit einem Redirect auf die CAS-Seite um](images/sonarcarp_and_sonarqube-cas-redirect.png "Ein:e Anwender:in wird bei unbekannter Session auf die CAS-Login-Seite umgeleitet, um sich dort für Single-Sign-On anzumelden.")
+
+In nachfolgenden Requests wird dann bei erfolgreicher Prüfung der Session das Service-Ticket wiederverwendet.
+
+![Nach einem SSO-Login bei CAS helfen Session Cookies bei der Anmeldung gegenüber SonarQube. Hierbei werden X-Header zum Zwecke der Authentifizierung in den Request-Kopien an SonarQube angereichert](images/sonarcarp_and_sonarqube-cas-redirect_after_SSO.png "Ein:e Anwender:in führt einen authentifizierten Request durch Sonarcarp bis zu SonarQube durch.")
+
 
 #### Authorization-Header
 
