@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - [#148] Update documentation to aid understanding sonarcarp request handling
+- [#154] Update SonarQube to v25.12.0.117093
 
 ## [v25.7.0-1] - 2025-11-18
 ### Changed
