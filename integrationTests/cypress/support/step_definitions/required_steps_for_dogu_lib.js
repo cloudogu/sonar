@@ -8,7 +8,7 @@ doguTestLibrary.registerSteps()
 
 When(/^the user clicks the dogu logout button$/, function () {
   const dogu = env.GetDoguName();
-  const triggerSel = '#dropdown-menu-trigger[aria-haspopup="menu"]';
+  const triggerSel = 'button[data-component="global-nav-user"]';
   const menuSel = '#dropdown-menu-dropdown';
 
   // Go to the dogu root (CAS plugin injects logout handler there)
