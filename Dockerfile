@@ -1,8 +1,8 @@
 ARG STAGE=prod
 ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.5-1
 
-ARG SONAR_VERSION=25.7.0.110598
-ARG SONARQUBE_ZIP_SHA256=b6d2699f69de8830132175f7fdd14615d2c43d7ff195252eb17d3ce5080ab55f
+ARG SONAR_VERSION=25.12.0.117093
+ARG SONARQUBE_ZIP_SHA256=09215f6f6a56db484946e4355c9801fa357eb92eedc99a2bebedf1d7ae21a341
 
 FROM golang:1.24.5 AS compiler-prod
 WORKDIR /app
@@ -38,7 +38,7 @@ RUN rm sonarqube-${SONAR_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="25.7.0-1" \
+    VERSION="25.12.0-1" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
