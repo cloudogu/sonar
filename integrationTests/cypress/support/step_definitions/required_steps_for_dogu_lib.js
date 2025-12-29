@@ -9,7 +9,7 @@ doguTestLibrary.registerSteps()
 When(/^the user clicks the dogu logout button$/, function () {
   const dogu = env.GetDoguName();
   const triggerSel = 'button[data-component="global-nav-user"]';
-  const menuSel = '#dropdown-menu-dropdown';
+  const menuSel = '[role="menu"][data-state="open"]';
 
   // Go to the dogu root (CAS plugin injects logout handler there)
   cy.visit(`/${dogu}`, { failOnStatusCode: false });
