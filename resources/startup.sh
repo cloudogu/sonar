@@ -409,14 +409,6 @@ function stopSonarQube() {
   echo "SonarQube was stopped."
 }
 
-function create_temporary_admin() {
-  # Create temporary admin only in database
-  echo "Creating a temporary admin user..."
-  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-  add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
-}
-
 function first_sonar_start() {
   echo "First start of SonarQube dogu"
 
@@ -655,8 +647,6 @@ runMain() {
     remove_user "${TEMPORARY_PROFILE_ADMIN_USER}"
     remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
   fi
-  # copy the cas logout script into Sonar container
-  cp casLogoutUrl.js /opt/sonar/web/js/
 
   doguctl state "ready"
 
