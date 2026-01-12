@@ -23,6 +23,8 @@ function setAdminVars() {
   TEMPORARY_ADMIN_GROUP="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
   TEMPORARY_ADMIN_USER="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
   TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+
+  TEMPORARY_PROFILE_ADMIN_GROUP="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
 }
 
 # Executes the given statement on the sonar database.
@@ -324,22 +326,6 @@ function update_last_admin_group_in_registry() {
     doguctl config admin_group_last "${newAdminGroup}"
 }
 
-function update_last_temp_admin_in_registry() {
-  ADMIN_USERNAME=${1}
-  ADMIN_GROUP=${2}
-  doguctl config "last_tmp_admin_name" "${ADMIN_USERNAME}"
-  doguctl config "last_tmp_admin_group" "${ADMIN_GROUP}"
-}
-
-function remove_last_temp_admin() {
-  echo "Removing last tmp admin..."
-  ADMIN_USERNAME=$(doguctl config "last_tmp_admin_name" --default " ")
-  ADMIN_GROUP=$(doguctl config "last_tmp_admin_group" --default " ")
-
-  remove_user "${ADMIN_USERNAME}"
-  remove_group "${ADMIN_GROUP}"
-}
-
 function add_user() {
   echo "Adding temporary admin user..."
   local username=${1} password=${2} password_hashed salt salt_base64
@@ -430,4 +416,8 @@ function create_temporary_admin() {
   add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
   add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+
+  # Create admin group for importing quality profiles
+  add_temporary_admin_group "${TEMPORARY_PROFILE_ADMIN_GROUP}" "profileadmin"
+  assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_GROUP}"
 }

@@ -63,12 +63,6 @@ function setVariables() {
   FQDN=$(doguctl config --global fqdn)
   DOMAIN=$(doguctl config --global domain)
   MAIL_ADDRESS=$(doguctl config --default "sonar@${DOMAIN}" --global mail_address)
-  TEMPORARY_ADMIN_GROUP=$(doguctl random)
-  TEMPORARY_ADMIN_USER=$(doguctl random)
-  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
-  TEMPORARY_PROFILE_ADMIN_GROUP=$(doguctl random)
-  TEMPORARY_PROFILE_ADMIN_USER=$(doguctl random)
-  TEMPORARY_PROFILE_ADMIN_PASSWORD=$(doguctl random)
 }
 
 function areQualityProfilesPresentToImport() {
@@ -211,7 +205,7 @@ function importQualityProfiles() {
     fi
   done
 
-  if [[ "${hadAtLeastOneImportFailure}" == "false" ]]; then
+  if [[ "${hadAtLeastOneImportFailure}" == "false" && -n "${QUALITY_PROFILE_ZIP_SHA_SUM:-}" ]]; then
       echo "Save quality profile sum"
       doguctl config profiles/archive_sum "${QUALITY_PROFILE_ZIP_SHA_SUM}"
   fi
@@ -335,6 +329,8 @@ function set_updatecenter_url_if_configured_in_registry() {
   AUTH_USER=$1
   AUTH_PASSWORD=$2
   if doguctl config sonar.updatecenter.url >/dev/null; then
+    echo "Updating sonar's updatecenter url..."
+
     UPDATECENTER_URL=$(doguctl config sonar.updatecenter.url)
     echo "Setting sonar.updatecenter.url to ${UPDATECENTER_URL}"
     set_property_via_rest_api "sonar.updatecenter.url" "${UPDATECENTER_URL}" "${AUTH_USER}" "${AUTH_PASSWORD}"
@@ -583,9 +579,8 @@ runMain() {
     sleep 3
   done
 
-  # add temporary admin to configuration
-  remove_last_temp_admin
-  update_last_temp_admin_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+  # remove previous temporary admins
+  remove_all_temporary_admins_users_and_groups
 
   create_temporary_admin
 
@@ -625,28 +620,14 @@ runMain() {
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
 
-  echo "Removing temporary admin..."
-  remove_user "${TEMPORARY_ADMIN_USER}"
-  remove_group "${TEMPORARY_ADMIN_GROUP}"
-
   # in order to import quality profiles the plugin installation must be finished along with a sonar restart
   if areQualityProfilesPresentToImport; then
-    # the temporary admin has different permissions during first start and subsequent start
-    # only the subsequent temporary admin has sufficient privileges to import quality profiles
     startSonarQubeInBackground "importing quality profiles"
-
-    echo "Creating Temporary admin user for profile import..."
-    # Create temporary admin only in database
-    add_temporary_admin_group "${TEMPORARY_PROFILE_ADMIN_GROUP}" "profileadmin"
-    add_user "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
-    assign_group "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_GROUP}"
-
-    importQualityProfiles "${TEMPORARY_PROFILE_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_PASSWORD}"
-
+    importQualityProfiles "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
     stopSonarQube "${SONAR_PROCESS_ID}"
-    remove_user "${TEMPORARY_PROFILE_ADMIN_USER}"
-    remove_group "${TEMPORARY_PROFILE_ADMIN_GROUP}"
   fi
+
+  remove_all_temporary_admins_users_and_groups
 
   doguctl state "ready"
 
