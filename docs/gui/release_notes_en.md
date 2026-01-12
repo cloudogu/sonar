@@ -5,6 +5,8 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Changed
+* Bugfix for the creation of multiple temporary admin users that has not been deleted
 
 ## [v25.12.0-1] - 2025-12-29
 ### Changed
