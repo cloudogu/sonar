@@ -3,16 +3,26 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+TEMPORARY_ADMIN_PREFIX="TMP_CES_ADMIN"
+TEMPORARY_ADMIN_GROUP=""
+TEMPORARY_ADMIN_USER=""
+TEMPORARY_ADMIN_PASSWORD=""
 
 DATABASE_IP=postgresql
 DATABASE_USER=""
 DATABASE_USER_PASSWORD=""
 DATABASE_DB=""
 
-setDbVars() {
+function setDbVars() {
   DATABASE_USER=$(doguctl config -e sa-postgresql/username)
   DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
   DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+}
+
+function setAdminVars() {
+  TEMPORARY_ADMIN_GROUP="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
+  TEMPORARY_ADMIN_USER="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
+  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
 }
 
 # Executes the given statement on the sonar database.
@@ -374,4 +384,50 @@ function remove_group() {
   execute_sql_statement_on_database "DELETE FROM group_roles WHERE group_uuid=(SELECT uuid from groups WHERE name='${GROUP_NAME}');"
   # Remove group from "groups" table
   execute_sql_statement_on_database "DELETE FROM groups WHERE name='${GROUP_NAME}';"
+}
+
+function remove_all_temporary_admins_users_and_groups() {
+  if [[ -z "${TEMPORARY_ADMIN_PREFIX:-}" ]]; then
+    echo "WARN: TEMPORARY_ADMIN_PREFIX is empty; refusing to delete users and groups." >&2
+    return 0
+  fi
+
+  echo "INFO: Removing all temporary users and groups with prefix '${TEMPORARY_ADMIN_PREFIX}'..."
+
+  execute_sql_statement_on_database "
+DELETE FROM groups_users gu
+USING users u
+WHERE gu.user_uuid = u.uuid
+  AND starts_with(u.login, '${TEMPORARY_ADMIN_PREFIX}');
+
+DELETE FROM users
+WHERE starts_with(login, '${TEMPORARY_ADMIN_PREFIX}');
+
+DELETE FROM group_roles gr
+USING groups g
+WHERE gr.group_uuid = g.uuid
+  AND starts_with(g.name, '${TEMPORARY_ADMIN_PREFIX}');
+
+DELETE FROM groups
+WHERE starts_with(name, '${TEMPORARY_ADMIN_PREFIX}');
+"
+
+  local rc=$?
+
+  if [[ $rc -eq 0 ]]; then
+    echo "INFO: Successfully removed temporary users and groups (prefix='${TEMPORARY_ADMIN_PREFIX}')."
+  else
+    echo "ERROR: Failed to remove temporary users and groups (prefix='${TEMPORARY_ADMIN_PREFIX}'). psql exit code: $rc" >&2
+  fi
+
+  return $rc
+}
+
+function create_temporary_admin() {
+  # Create temporary admin only in database
+  echo "Creating a temporary admin user..."
+  setAdminVars
+  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
+  add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
 }
