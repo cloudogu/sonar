@@ -3,23 +3,17 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# import util functions:
-# remove_temporary_admin_user()
-# remove_temporary_admin_group()
-# add_temporary_admin_group()
-# create_temporary_admin_user_with_temporary_admin_group()
-# shellcheck disable=SC1091
-source "${STARTUP_DIR}/util.sh"
+sourcingExitCode=0
+# shellcheck disable=SC1090,SC1091
+source "${STARTUP_DIR}"util.sh || sourcingExitCode=$?
+if [[ ${sourcingExitCode} -ne 0 ]]; then
+  echo "ERROR: An error occurred while sourcing ${STARTUP_DIR}util.sh."
+fi
 
 function run_pre_upgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
   FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
-
-  DATABASE_IP=postgresql
-  DATABASE_USER=$(doguctl config -e sa-postgresql/username)
-  DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
-  DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 
   echo "Running pre-upgrade script..."
   echo "  FROM_VERSION: ${FROM_VERSION}"
@@ -43,24 +37,8 @@ function run_pre_upgrade() {
   doguctl config post_upgrade_running true
 }
 
-function sql() {
-  PGPASSWORD="${DATABASE_USER_PASSWORD}" psql --host "${DATABASE_IP}" --username "${DATABASE_USER}" --dbname "${DATABASE_DB}" -1 -c "${1}"
-  return $?
-}
-
 function collectInstalledPlugins() {
-  TEMPORARY_ADMIN_GROUP=$(doguctl random)
-  TEMPORARY_ADMIN_USER=$(doguctl random)
-  TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
-
-  # remove user in case it already exists
-  remove_user "${TEMPORARY_ADMIN_USER}"
-  remove_group "${TEMPORARY_ADMIN_GROUP}"
-
-  echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
-  add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-  add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+  create_temporary_admin
 
   echo "Getting all installed plugins..."
   INSTALLED_PLUGINS=$(curl --silent --fail -u "${TEMPORARY_ADMIN_USER}":"${TEMPORARY_ADMIN_PASSWORD}" -X GET localhost:9000/sonar/api/plugins/installed | jq '.plugins' | jq '.[]' | jq -r '.key')
@@ -71,13 +49,15 @@ function collectInstalledPlugins() {
     SAVED_PLUGIN_NAMES+=${PLUGIN},
   done <<<"${INSTALLED_PLUGINS}"
 
-  echo "Saving plugin names to registry..."
-  doguctl config install_plugins "${SAVED_PLUGIN_NAMES}"
-  echo "Remove temporary admin user"
-  remove_user "${TEMPORARY_ADMIN_USER}"
-  remove_group "${TEMPORARY_ADMIN_GROUP}"
+
+  if [[ -n "${SAVED_PLUGIN_NAMES:-}" ]]; then
+    echo "Saving plugin names to registry..."
+    doguctl config install_plugins "${SAVED_PLUGIN_NAMES}"
+  fi
 
   mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
+
+  remove_all_temporary_admins_users_and_groups
 }
 
 # make the script only run when executed, not when sourced from bats tests)
