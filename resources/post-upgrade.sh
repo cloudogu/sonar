@@ -3,38 +3,26 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# import util functions:
-# functions()
-# wait_for_sonar_status_endpoint()
-# wait_for_sonar_to_get_up()
-# wait_for_sonar_to_get_healthy()
-# remove_user()
-# remove_group()
-# add_temporary_admin_group()
-# shellcheck disable=SC1091
-source "${STARTUP_DIR}/util.sh"
+sourcingExitCode=0
+# shellcheck disable=SC1090,SC1091
+source "${STARTUP_DIR}"util.sh || sourcingExitCode=$?
+if [[ ${sourcingExitCode} -ne 0 ]]; then
+  echo "ERROR: An error occurred while sourcing ${STARTUP_DIR}util.sh."
+fi
 
 reinstall_plugins() {
   if doguctl config install_plugins >/dev/null; then
-        TEMPORARY_ADMIN_GROUP=$(doguctl random)
-        TEMPORARY_ADMIN_USER=$(doguctl random)
-        TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
-
-        # remove user in case it already exists
-        remove_user "${TEMPORARY_ADMIN_USER}"
-        remove_group "${TEMPORARY_ADMIN_GROUP}"
+        echo "found installed plugins in config, try to reinstall them..."
 
         echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
         wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
 
-        echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
-        add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
-        add_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-        assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_GROUP}"
+        create_temporary_admin
 
         echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
-        # default admin credentials (admin, admin) are used
         wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+
+        echo "SonarQube is healthy, start reinstalling plugins..."
 
         while IFS=',' read -ra ADDR; do
             for PLUGIN in "${ADDR[@]}"; do
@@ -47,20 +35,18 @@ reinstall_plugins() {
                 install_plugin_via_api "${PLUGIN}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
               fi
             done
-          done <<< "$(doguctl config install_plugins)"
+        done <<< "$(doguctl config install_plugins)"
 
-          if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
-            echo "### SUMMARY ###"
-            echo "The following plugins could not be re-installed: ${FAILED_PLUGIN_NAMES}"
-            echo ""
-          fi
+        if [[ -n ${FAILED_PLUGIN_NAMES} ]]; then
+          echo "### BEGIN SUMMARY ###"
+          echo "The following plugins could not be re-installed: ${FAILED_PLUGIN_NAMES}"
+          echo "### END SUMMARY ###"
+        fi
 
-        echo "Remove temporary admin user"
-        remove_user "${TEMPORARY_ADMIN_USER}"
-        remove_group "${TEMPORARY_ADMIN_GROUP}"
+        remove_all_temporary_admins_users_and_groups
 
         doguctl config --remove install_plugins
-      fi
+  fi
 }
 
 # Variables:
