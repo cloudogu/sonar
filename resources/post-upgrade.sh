@@ -66,6 +66,9 @@ run_post_upgrade() {
   CURL_LOG_LEVEL="--silent"
   FAILED_PLUGIN_NAMES=""
 
+  FROM_MAJOR_VERSION=${FROM_VERSION%%.*}
+  TO_MAJOR_VERSION=${TO_VERSION%%.*}
+
   echo "Running post-upgrade script..."
 
   echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
@@ -112,7 +115,50 @@ run_post_upgrade() {
     reinstall_plugins
   fi
 
+  if (( FROM_MAJOR_VERSION > 9 && TO_MAJOR_VERSION < 26 )); then
+    cleanUpLegacyTemporaryAdmins
+  fi
+
   doguctl config post_upgrade_running false
+}
+
+function cleanUpLegacyTemporaryAdmins() {
+  local user_name="Temporary System Administrator"
+  local group_description="Temporary admin group"
+
+  create_temporary_admin
+
+  echo "INFO: Removing all temporary users and groups from previous versions..."
+
+  execute_sql_statement_on_database "
+DELETE FROM groups_users gu
+USING users u
+WHERE gu.user_uuid = u.uuid
+  AND u.name = '${user_name}';
+
+DELETE FROM users
+WHERE name = '${user_name}';
+
+DELETE FROM group_roles gr
+USING groups g
+WHERE gr.group_uuid = g.uuid
+  AND g.description = '${group_description}';
+
+DELETE FROM groups
+WHERE description = '${group_description}';
+"
+
+  local rc=$?
+
+  if [[ $rc -eq 0 ]]; then
+      echo "INFO: Successfully removed temporary users and groups from previous versions."
+  else
+      echo "ERROR: Failed to remove temporary users and groups from previous versions. psql exit code: $rc" >&2
+  fi
+
+  remove_all_temporary_admins_users_and_groups
+
+  return $rc
 }
 
 # make the script only run when executed, not when sourced from bats tests)
