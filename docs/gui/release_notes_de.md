@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v25.12.0-2] - 2026-01-15
 ### Behoben
 * Bugfix für die Erzeugung mehrere temporärer Admin-User, die nicht gelöscht werden
 
