@@ -6,6 +6,10 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-2] - 2026-01-15
+### Behoben
+* Bugfix für die Erzeugung mehrere temporärer Admin-User, die nicht gelöscht werden
+
 ## [v25.12.0-1] - 2025-12-29
 ### Geändert
 * Das Dogu bietet nun die SonarQube Version 25.12.0.117093 an. Die Release Notes finden Sie [hier](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).

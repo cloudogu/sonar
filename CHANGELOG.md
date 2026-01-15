@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-2] - 2026-01-15
+### Fixed
+- [#156] Import quality profiles in CES-MN
+  - Due to an error while importing quality profiles in CES-VM multiple temporary admin accounts have been created
+
 ## [v25.12.0-1] - 2025-12-29
 ### Changed
 - [#148] Update documentation to aid understanding sonarcarp request handling

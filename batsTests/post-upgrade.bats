@@ -82,12 +82,12 @@ teardown() {
 
   # then
   assert_success
-  assert_equal "$(mock_get_call_num "${doguctl}")" "5"
+  assert_equal "$(mock_get_call_num "${doguctl}")" "14"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" 'config -e sa-postgresql/username'
   assert_equal "$(mock_get_call_args "${doguctl}" "2")" 'config -e sa-postgresql/password'
   assert_equal "$(mock_get_call_args "${doguctl}" "3")" 'config -e sa-postgresql/database'
   assert_equal "$(mock_get_call_args "${doguctl}" "4")" 'wait-for-http --timeout 600 --method GET http://localhost:9000/sonar/api/system/status'
-  assert_equal "$(mock_get_call_args "${doguctl}" "5")" 'config post_upgrade_running false'
+  assert_equal "$(mock_get_call_args "${doguctl}" "14")" 'config post_upgrade_running false'
   assert_equal "$(mock_get_call_num "${curl}")" "1"
   assert_equal "$(mock_get_call_args "${curl}" "1")" '--silent --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status'
 
