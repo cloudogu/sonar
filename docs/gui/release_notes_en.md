@@ -6,6 +6,11 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-3] - 2026-01-29
+
+### Security
+- [#159] fixed [cve-2025-15467](https://avd.aquasec.com/nvd/2025/cve-2025-15467/)
+
 ## [v25.12.0-2] - 2026-01-15
 ### Fixed
 * Bugfix for the creation of multiple temporary admin users that has not been deleted
