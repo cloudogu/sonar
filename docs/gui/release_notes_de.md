@@ -6,6 +6,9 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+### Security
+- [#159] Sicherheitslücke geschlossen [cve-2025-15467](https://avd.aquasec.com/nvd/2025/cve-2025-15467/)
+
 ## [v25.12.0-2] - 2026-01-15
 ### Behoben
 * Bugfix für die Erzeugung mehrere temporärer Admin-User, die nicht gelöscht werden
