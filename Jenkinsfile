@@ -77,6 +77,12 @@ node('vagrant') {
                     enableVideo: params.EnableVideoRecording,
                     enableScreenshots: params.EnableScreenshotRecording
                 ])
+
+                String releaseVersion = 'v9.9.7-2'
+
+
+                ecoSystem.push("/dogu")
+                github.createReleaseWithChangelog(releaseVersion, changelog)
             }
 
             if (params.TestDoguUpgrade != null && params.TestDoguUpgrade){
