@@ -7,6 +7,8 @@ ENV SONARQUBE_HOME=/opt/sonar \
     CAS_PLUGIN_VERSION=5.0.2 \
     STARTUP_DIR="/"
 
+RUN apk update && apk upgrade
+
 FROM base as builder
 
 ENV SONARQUBE_ZIP_SHA256=82eb93a1380dac4725ad24fd94a11917fb2e0ac6b9a9c98b20e436ed2a50f351 \
