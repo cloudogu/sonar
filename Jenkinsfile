@@ -29,8 +29,9 @@ pipe.setBuildProperties()
 pipe.addDefaultStages()
 
 pipe.insertStageBefore("MN-Build", "Image Prune") {
-    sh "docker image prune -a -f"
     sh "docker system df"
+    sh "docker image prune -a -f"
+    sh "docker builder prune -a -f"
 }
 
 pipe.overrideStage('Setup') {
