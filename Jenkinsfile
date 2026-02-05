@@ -28,7 +28,7 @@ com.cloudogu.ces.dogubuildlib.EcoSystem ecoSystem = pipe.ecoSystem
 pipe.setBuildProperties()
 pipe.addDefaultStages()
 
-pipe.insertStageAfter("Checkout", "Image Prune") {
+pipe.insertStageBefore("MN-Build", "Image Prune") {
     sh "docker image prune -a -f"
 }
 
