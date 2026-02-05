@@ -28,6 +28,10 @@ com.cloudogu.ces.dogubuildlib.EcoSystem ecoSystem = pipe.ecoSystem
 pipe.setBuildProperties()
 pipe.addDefaultStages()
 
+pipe.insertStageAfter("Checkout", "Image Prune") {
+    sh "docker image prune -a -f"
+}
+
 pipe.overrideStage('Setup') {
     ecoSystem.loginBackend('cesmarvin-setup')
     // set refreshIntervalInMinutes to 0 to have integration tests running properly, esp. privilege modification tests.
