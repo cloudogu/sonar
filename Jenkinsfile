@@ -16,7 +16,7 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
                             resources/util.sh
                           '''],
         dependedDogus      : ['cas', 'usermgt', 'postgresql'],
-        additionalDogus    : ['postgresql'],
+        additionalDogus    : ['official/postgresql'],
         doBatsTests        : true,
         doSonarTests       : true,
         checkMarkdown      : true,
