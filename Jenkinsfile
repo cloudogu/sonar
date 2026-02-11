@@ -38,6 +38,12 @@ pipe.overrideStage('Setup') {
     """, additionalDependencies: ['official/postgresql']])
 }
 
+com.cloudogu.ces.dogubuildlib.MultiNodeEcoSystem multiNodeEcoSystem = pipe.multiNodeEcoSystem
+
+pipe.insertStageAfter('MN-Wait for Dogu', 'MN-Wait a bit longer for Dogu') {
+  multiNodeEcoSystem.waitForDogu("sonar")
+}
+
 pipe.insertStageAfter("Bats Tests", "Build sonarcarp") {
     def ctx = pipe.script
     new com.cloudogu.ces.cesbuildlib.Docker(ctx)
