@@ -20,8 +20,8 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
         doSonarTests       : true,
         checkMarkdown      : true,
         runIntegrationTests: true,
-        cypressImage       : 'cypress/included:13.14.2'
-
+        cypressImage       : 'cypress/included:13.14.2',
+        defaultBranch      : "master"
 ])
 com.cloudogu.ces.dogubuildlib.EcoSystem ecoSystem = pipe.ecoSystem
 
