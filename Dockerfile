@@ -4,7 +4,7 @@ ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.5-1
 ARG SONAR_VERSION=25.12.0.117093
 ARG SONARQUBE_ZIP_SHA256=09215f6f6a56db484946e4355c9801fa357eb92eedc99a2bebedf1d7ae21a341
 
-FROM golang:1.24.5 AS compiler-prod
+FROM golang:1.26.0 AS compiler-prod
 WORKDIR /app
 COPY sonarcarp /app
 COPY build /app/build
@@ -12,7 +12,7 @@ COPY build /app/build
 
 RUN make vendor compile-generic
 
-FROM golang:1.24.5-alpine3.21 AS compiler-debug
+FROM golang:1.26.0-alpine3.21 AS compiler-debug
 WORKDIR /app
 COPY sonarcarp /app
 
