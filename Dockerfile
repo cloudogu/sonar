@@ -1,10 +1,10 @@
 ARG STAGE=prod
-ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.5-1
+ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.10-3
 
 ARG SONAR_VERSION=25.12.0.117093
 ARG SONARQUBE_ZIP_SHA256=09215f6f6a56db484946e4355c9801fa357eb92eedc99a2bebedf1d7ae21a341
 
-FROM golang:1.24.5 AS compiler-prod
+FROM golang:1.26.0 AS compiler-prod
 WORKDIR /app
 COPY sonarcarp /app
 COPY build /app/build
@@ -12,7 +12,7 @@ COPY build /app/build
 
 RUN make vendor compile-generic
 
-FROM golang:1.24.5-alpine3.21 AS compiler-debug
+FROM golang:1.26.0-alpine3.23 AS compiler-debug
 WORKDIR /app
 COPY sonarcarp /app
 
@@ -38,7 +38,7 @@ RUN rm sonarqube-${SONAR_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="25.12.0-3" \
+    VERSION="25.12.0-4" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
@@ -51,6 +51,14 @@ ENV SONARQUBE_HOME=/opt/sonar \
 RUN set -eux \
     && apk update \
     && apk upgrade \
+    # temporarily add old repo
+    && echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" > /tmp/old-repos \
+    && echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /tmp/old-repos \
+    \
+    && apk add --no-cache --repositories-file=/tmp/old-repos postgresql14-client \
+    \
+    # cleanup
+    && rm -f /tmp/old-repos \
     && apk add --no-cache procps postgresql14-client curl uuidgen libstdc++ \
     && mkdir -p /opt \
     && mkdir -p /carp \

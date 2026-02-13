@@ -5,7 +5,7 @@
         'dogu-build-lib'
 ]) _
 
-def goVersion = "1.24.5-bullseye"
+def goVersion = "1.26.0-bookworm"
 def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
         doguName           : 'sonar',
         shellScripts       : ['''
@@ -20,8 +20,8 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
         doSonarTests       : true,
         checkMarkdown      : true,
         runIntegrationTests: true,
-        cypressImage       : 'cypress/included:13.14.2'
-
+        cypressImage       : 'cypress/included:13.14.2',
+        defaultBranch      : "master"
 ])
 com.cloudogu.ces.dogubuildlib.EcoSystem ecoSystem = pipe.ecoSystem
 
