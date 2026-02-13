@@ -51,6 +51,14 @@ ENV SONARQUBE_HOME=/opt/sonar \
 RUN set -eux \
     && apk update \
     && apk upgrade \
+    # temporarily add old repo
+    && echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" > /tmp/old-repos \
+    && echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /tmp/old-repos \
+    \
+    && apk add --no-cache --repositories-file=/tmp/old-repos postgresql14-client \
+    \
+    # cleanup
+    && rm -f /tmp/old-repos \
     && apk add --no-cache procps postgresql14-client curl uuidgen libstdc++ \
     && mkdir -p /opt \
     && mkdir -p /carp \
