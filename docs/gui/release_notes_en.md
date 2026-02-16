@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-4] - 2026-02-13
+### Security
+- This Release closes a critical security vulnerability in the Go compiler standard library [CVE-2025-68121](https://avd.aquasec.com/nvd/2025/cve-2025-68121/)
+
 ## [v25.12.0-3] - 2026-01-29
 
 ### Security

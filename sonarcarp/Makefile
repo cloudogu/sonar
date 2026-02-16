@@ -4,7 +4,7 @@ VERSION=25.1.0-5
 
 TARGET_DIR=../target
 BINARY=${TARGET_DIR}/${ARTIFACT_ID}
-GOTAG="1.24.5"
+GOTAG="1.26.0"
 GO_ENV_VARS=CGO_ENABLED=0 GOOS=linux
 
 include build/make/variables.mk
