@@ -1,5 +1,5 @@
 ARG STAGE=prod
-ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.10-3
+ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.10-4
 
 ARG SONAR_VERSION=25.12.0.117093
 ARG SONARQUBE_ZIP_SHA256=09215f6f6a56db484946e4355c9801fa357eb92eedc99a2bebedf1d7ae21a341
