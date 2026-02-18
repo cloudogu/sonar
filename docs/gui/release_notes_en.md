@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-5] - 2026-02-18
+### Fixed
+* this release fixes a potential issue when using doguctl in a multi-node environment.
+
 ## [v25.12.0-4] - 2026-02-13
 ### Security
 - This Release closes a critical security vulnerability in the Go compiler standard library [CVE-2025-68121](https://avd.aquasec.com/nvd/2025/cve-2025-68121/)
