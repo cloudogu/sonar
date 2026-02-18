@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v25.12.0-5] - 2026-02-18
 ### Behoben
 - Dieses Releast behebt einen potentiellen Fehler bei der Verwendung von doguctl im Multinode-Umfeld
 
