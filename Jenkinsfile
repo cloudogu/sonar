@@ -2,7 +2,7 @@
 @Library([
         'pipe-build-lib',
         'ces-build-lib',
-        'dogu-build-lib@bug/fix_verify_error'
+        'dogu-build-lib'
 ]) _
 
 def goVersion = "1.26.0-bookworm"
@@ -40,10 +40,6 @@ pipe.overrideStage('Setup') {
 }
 
 com.cloudogu.ces.dogubuildlib.MultiNodeEcoSystem multiNodeEcoSystem = pipe.multiNodeEcoSystem
-
-pipe.insertStageAfter('MN-Wait for Dogu', 'MN-Wait a bit longer for Dogu') {
-  multiNodeEcoSystem.waitForDogu("sonar")
-}
 
 pipe.insertStageAfter("Bats Tests", "Build sonarcarp") {
     def ctx = pipe.script
