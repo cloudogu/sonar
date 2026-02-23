@@ -6,6 +6,10 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-5] - 2026-02-18
+### Behoben
+- Dieses Releast behebt einen potentiellen Fehler bei der Verwendung von doguctl im Multinode-Umfeld
+
 ## [v25.12.0-4] - 2026-02-13
 ### Security
 - Dieses Release schließt eine kritische Sicherheitslücke in der Go-Compiler-Standardbibliothek [CVE-2025-68121](https://avd.aquasec.com/nvd/2025/cve-2025-68121/)
