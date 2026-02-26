@@ -44,13 +44,16 @@ Feature: API-based CAS login and logout functionality
     Then the user can access the /users/groups Web API endpoint
 
   @requires_testuser
+  @classic
   Scenario: user loses admin permissions if removed from admin group
     Given the user is member of the admin user group
     And the user is logged into the CES
     And wait for sonar load
+    And check if API token is set
     When the user logs out by visiting the cas logout page
     When the user is removed as a member from the CES admin group
     Given the user is logged into the CES
     And wait for sonar load
+    And check if API token is set
     And the user logs out by visiting the cas logout page
     Then the user can not access the /users/groups Web API endpoint

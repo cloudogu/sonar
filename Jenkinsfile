@@ -16,6 +16,7 @@ def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
                             resources/util.sh
                           '''],
         dependedDogus      : ['cas', 'usermgt', 'postgresql'],
+        additionalDogus    : ['official/postgresql'],
         doBatsTests        : true,
         doSonarTests       : true,
         checkMarkdown      : true,
@@ -37,6 +38,8 @@ pipe.overrideStage('Setup') {
         }
     """, additionalDependencies: ['official/postgresql']])
 }
+
+com.cloudogu.ces.dogubuildlib.MultiNodeEcoSystem multiNodeEcoSystem = pipe.multiNodeEcoSystem
 
 pipe.insertStageAfter("Bats Tests", "Build sonarcarp") {
     def ctx = pipe.script
