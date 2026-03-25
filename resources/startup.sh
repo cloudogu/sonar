@@ -504,6 +504,7 @@ function ensure_correct_branch_plugin_state() {
   BRANCH_PLUGIN_WEB_OPTS=""
   BRANCH_PLUGIN_CE_OPTS=""
 
+  # find the newest version of community-branch-plugin in either one of the folders: extensions/plugins or extensions/downloads
   newest_file=""
   newest_version=""
 
@@ -522,6 +523,7 @@ function ensure_correct_branch_plugin_state() {
       -name 'sonarqube-community-branch-plugin-*.jar' 2>/dev/null
   )
 
+  # copy newest jar to common folder to remove path differences and set env vars to template sonar.properties.tpl
   if [[ -n "$newest_file" ]]; then
     echo "Using newest community branch plugin: $newest_file"
     echo "Copy community branch plugin ${newest_file} to ${COMMON_FOLDER}"
