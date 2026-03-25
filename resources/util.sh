@@ -125,7 +125,7 @@ function update_plugin_via_api() {
 
   UPDATE_RESPONSE=$(curl "${CURL_LOG_LEVEL}" -u "${USER}":"${PASSWORD}" -X POST http://localhost:9000/sonar/api/plugins/update?key="${PLUGIN}")
   # check response for error messages
-  if [[ -n ${UPDATE_RESPONSE} ]]; then
+  if [[ -n "${UPDATE_RESPONSE}" ]]; then
     ERROR_MESSAGE=$(echo "${UPDATE_RESPONSE}"|jq '.errors[0]'|jq '.msg')
     if [[ -n "${ERROR_MESSAGE}" ]]; then
       echo "Failed to update plugin ${PLUGIN}: ${ERROR_MESSAGE}"
