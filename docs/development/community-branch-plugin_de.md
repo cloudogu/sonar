@@ -65,7 +65,7 @@ Das "Community Branch Plugin" kann auch über das Updatecenter installiert werde
 2. Die Update-Center `.properties`-Datei auf einem ohne Authentifizierung verfügbaren Web-Server hosten
 3. Die Dogu-Config für SonarQube anpassen:
     * Update-Center-URL: `etcdctl set /config/sonar/sonar.updatecenter.url https://domain.de/update-center.properties`
-    * Default-Plugins, die beim Start installiert werden: `etcdctl set sonar.plugins.default communityBranchPlugin`
+    * Default-Plugins, die beim Start installiert werden: `etcdctl set /config/sonar/sonar.plugins.default communityBranchPlugin`
 4. SonarQube neustarten
 
 > Bei der ersten Installation des "Community Branch Plugin" über das UpdateCenter, muss Sonar nocheinmal neugestarte werden, damit das Plugin, wie oben beschrieben, an die richtige Stelle kopiert wird.

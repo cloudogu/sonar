@@ -482,6 +482,8 @@ function install_default_plugins() {
       install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
     done
 
+    check_for_updates "$USER" "$PASSWORD"
+
     IFS="${storedIFS}"
     echo "finished installation of default plugins"
   else
@@ -501,16 +503,34 @@ function ensure_correct_branch_plugin_state() {
 
   BRANCH_PLUGIN_WEB_OPTS=""
   BRANCH_PLUGIN_CE_OPTS=""
-  # the branch plugin could be in the plugins dir or in the downloads dir if it is new
-  for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar; do
-    if [[ -e "$f" ]]; then
-      echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
-      cp "$f" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
-      BRANCH_PLUGIN_FILENAME="-javaagent:./extensions/plugins/$(basename "${f}")"
-      BRANCH_PLUGIN_WEB_OPTS="${BRANCH_PLUGIN_FILENAME}=web \\"
-      BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
+
+  newest_file=""
+  newest_version=""
+
+  while IFS= read -r file; do
+    base="$(basename "$file")"
+    version="${base#sonarqube-community-branch-plugin-}"
+    version="${version%.jar}"
+
+    if [[ -z "$newest_version" ]] || [[ "$(printf '%s\n%s\n' "$newest_version" "$version" | sort -V | tail -n1)" == "$version" ]]; then
+      newest_version="$version"
+      newest_file="$file"
     fi
-  done
+  done < <(
+    find "${EXTENSIONS_FOLDER}/plugins" "${EXTENSIONS_FOLDER}/downloads" \
+      -maxdepth 1 -type f \
+      -name 'sonarqube-community-branch-plugin-*.jar' 2>/dev/null
+  )
+
+  if [[ -n "$newest_file" ]]; then
+    echo "Using newest community branch plugin: $newest_file"
+    echo "Copy community branch plugin ${newest_file} to ${COMMON_FOLDER}"
+    cp "$newest_file" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+    BRANCH_PLUGIN_FILENAME="-javaagent:${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+    BRANCH_PLUGIN_WEB_OPTS="${BRANCH_PLUGIN_FILENAME}=web \\"
+    BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
+  fi
+
   export BRANCH_PLUGIN_WEB_OPTS
   export BRANCH_PLUGIN_CE_OPTS
 }
@@ -616,6 +636,12 @@ runMain() {
   set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
   install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+
+  echo "Ensure correct branch plugin state"
+  ensure_correct_branch_plugin_state
+
+  echo "Rendering sonar properties template..."
+  render_properties_template
 
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
