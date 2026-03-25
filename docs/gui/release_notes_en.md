@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-6] - 2026-03-25
+### Fixed
+* this release fixes plugin upgrades and startup problems when a new version of the CommunityBranch-plugin is installed.
+
 ## [v25.12.0-5] - 2026-02-18
 ### Fixed
 * this release fixes a potential issue when using doguctl in a multi-node environment.

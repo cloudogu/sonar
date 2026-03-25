@@ -27,6 +27,7 @@ Feature: Automatic grant of privileges when logging into a dogu
     Then the user has no administrator privileges in the dogu
 
   @requires_testuser
+  @classic
   Scenario: internal dogu default account is promoted after login of admin
     Given the user has an internal default dogu account
     And the user is member of the admin user group

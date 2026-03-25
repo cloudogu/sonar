@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-6] - 2026-03-25
+### Fixed
+- [#166] Fix update and startup problems in the plugin process
+- enable automatic integration tests in multinode pipeline
+
 ## [v25.12.0-5] - 2026-02-18
 - [#163] Update Java-Base-Image to 21.0.10.4
 

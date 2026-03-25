@@ -466,7 +466,7 @@ function has_admin_group_changed() {
   fi
 }
 
-function install_default_plugins() {
+function install_and_update_default_plugins() {
   echo "Installing preconfigured plugins..."
   local PLUGINS
 
@@ -481,6 +481,8 @@ function install_default_plugins() {
     for plugin in $PLUGINS; do
       install_plugin_via_api "$plugin" "$USER" "$PASSWORD"
     done
+
+    check_for_updates "$USER" "$PASSWORD"
 
     IFS="${storedIFS}"
     echo "finished installation of default plugins"
@@ -501,16 +503,36 @@ function ensure_correct_branch_plugin_state() {
 
   BRANCH_PLUGIN_WEB_OPTS=""
   BRANCH_PLUGIN_CE_OPTS=""
-  # the branch plugin could be in the plugins dir or in the downloads dir if it is new
-  for f in "${EXTENSIONS_FOLDER}"/{plugins,downloads}/sonarqube-community-branch-plugin*.jar; do
-    if [[ -e "$f" ]]; then
-      echo "Copy community branch plugin ${f} to ${COMMON_FOLDER}"
-      cp "$f" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
-      BRANCH_PLUGIN_FILENAME="-javaagent:./extensions/plugins/$(basename "${f}")"
-      BRANCH_PLUGIN_WEB_OPTS="${BRANCH_PLUGIN_FILENAME}=web \\"
-      BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
+
+  # find the newest version of community-branch-plugin in either one of the folders: extensions/plugins or extensions/downloads
+  newest_file=""
+  newest_version=""
+
+  while IFS= read -r file; do
+    base="$(basename "$file")"
+    version="${base#sonarqube-community-branch-plugin-}"
+    version="${version%.jar}"
+
+    if [[ -z "$newest_version" ]] || [[ "$(printf '%s\n%s\n' "$newest_version" "$version" | sort -V | tail -n1)" == "$version" ]]; then
+      newest_version="$version"
+      newest_file="$file"
     fi
-  done
+  done < <(
+    find "${EXTENSIONS_FOLDER}/plugins" "${EXTENSIONS_FOLDER}/downloads" \
+      -maxdepth 1 -type f \
+      -name 'sonarqube-community-branch-plugin-*.jar' 2>/dev/null
+  )
+
+  # copy newest jar to common folder to remove path differences and set env vars to template sonar.properties.tpl
+  if [[ -n "$newest_file" ]]; then
+    echo "Using newest community branch plugin: $newest_file"
+    echo "Copy community branch plugin ${newest_file} to ${COMMON_FOLDER}"
+    cp "$newest_file" "${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+    BRANCH_PLUGIN_FILENAME="-javaagent:${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
+    BRANCH_PLUGIN_WEB_OPTS="${BRANCH_PLUGIN_FILENAME}=web \\"
+    BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
+  fi
+
   export BRANCH_PLUGIN_WEB_OPTS
   export BRANCH_PLUGIN_CE_OPTS
 }
@@ -568,7 +590,7 @@ runMain() {
   echo "Configuring log level..."
   setDoguLogLevel
 
-  echo "Rendering sonar properties template..."
+  echo "Rendering sonar properties template for first sonar start..."
   render_properties_template
 
   startSonarQubeInBackground "configuration api"
@@ -615,7 +637,13 @@ runMain() {
   echo "Setting email.from configuration..."
   set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  install_and_update_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+
+  echo "Ensure correct branch plugin state again, to incorporate potential new plugin installations"
+  ensure_correct_branch_plugin_state
+
+  echo "Rendering sonar properties template again, to incorporate potential new plugin installations..."
+  render_properties_template
 
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
