@@ -5,7 +5,8 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
-* We have only made technical changes. You can find more details in the changelogs.
+### Fixed
+* this release fixes plugin upgrades and startup problems when a new version of the CommunityBranch-plugin is installed.
 
 ## [v25.12.0-5] - 2026-02-18
 ### Fixed
