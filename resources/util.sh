@@ -127,9 +127,8 @@ function update_plugin_via_api() {
   # check response for error messages
   if [[ -n ${UPDATE_RESPONSE} ]]; then
     ERROR_MESSAGE=$(echo "${UPDATE_RESPONSE}"|jq '.errors[0]'|jq '.msg')
-    if [[ ${ERROR_MESSAGE} == *"No plugin with key '${PLUGIN}' or plugin '${PLUGIN}' is already installed in latest version"* ]]; then
-      echo "Plugin ${PLUGIN} is not available at all or already installed in latest version."
-      FAILED_PLUGIN_NAMES+=${PLUGIN},
+    if [[ -n "${ERROR_MESSAGE}" ]]; then
+      echo "Failed to update plugin ${PLUGIN}: ${ERROR_MESSAGE}"
     fi
   else
     echo "Plugin ${PLUGIN} updated."
