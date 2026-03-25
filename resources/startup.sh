@@ -466,7 +466,7 @@ function has_admin_group_changed() {
   fi
 }
 
-function install_default_plugins() {
+function install_and_update_default_plugins() {
   echo "Installing preconfigured plugins..."
   local PLUGINS
 
@@ -588,7 +588,7 @@ runMain() {
   echo "Configuring log level..."
   setDoguLogLevel
 
-  echo "Rendering sonar properties template..."
+  echo "Rendering sonar properties template for first sonar start..."
   render_properties_template
 
   startSonarQubeInBackground "configuration api"
@@ -635,12 +635,12 @@ runMain() {
   echo "Setting email.from configuration..."
   set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  install_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  install_and_update_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  echo "Ensure correct branch plugin state"
+  echo "Ensure correct branch plugin state again, to incorporate potential new plugin installations"
   ensure_correct_branch_plugin_state
 
-  echo "Rendering sonar properties template..."
+  echo "Rendering sonar properties template again, to incorporate potential new plugin installations..."
   render_properties_template
 
   echo "Configuration done, stopping SonarQube..."

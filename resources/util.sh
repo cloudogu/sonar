@@ -106,13 +106,14 @@ function install_plugin_via_api() {
 function check_for_updates() {
   USER=${1}
   PASSWORD=${2}
+  # parse updates-endpoint to select only compatible or required upgrades
   curl -s -u "${USER}":"${PASSWORD}" "http://localhost:9000/sonar/api/plugins/updates" | jq -r '
     .plugins[]
     | .key as $plugin
     | .updates[]
     | select(.status == "COMPATIBLE" or .status == "REQUIRES_UPGRADE")
     | "\($plugin)"
-  ' | while read -r plugin; do   update_plugin_via_api "$plugin" "$USER" "$PASSWORD"; done
+  ' | while read -r plugin; do update_plugin_via_api "$plugin" "$USER" "$PASSWORD"; done
 }
 
 function update_plugin_via_api() {
