@@ -584,6 +584,14 @@ runMain() {
 
   doguctl state "configuring..."
 
+  if [[ "$(doguctl config remove_product_news)" == "true" ]]; then
+    echo "Removing product news..."
+    removeGetBeamerCalls
+    disableProductNewsIcon
+ # else
+    # restoreGetBeamerCalls?
+  fi
+
   echo "Ensure correct branch plugin state"
   ensure_correct_branch_plugin_state
 
