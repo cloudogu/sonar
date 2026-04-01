@@ -453,3 +453,48 @@ function create_temporary_admin() {
   add_temporary_admin_group "${TEMPORARY_PROFILE_ADMIN_GROUP}" "profileadmin"
   assign_group "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_PROFILE_ADMIN_GROUP}"
 }
+
+function removeGetBeamerCalls() {
+  # Disable Beamer calls in the shipped frontend bundles.
+  local js_root="/opt/sonar/web/js"
+  local -a files
+
+  mapfile -t files < <(
+    grep -RIlE 'api\.getbeamer\.com|app\.getbeamer\.com|getbeamer' "$js_root"
+  )
+
+  if (( ${#files[@]} == 0 )); then
+    echo "No GetBeamer references found under $js_root"
+  else
+    printf 'Patching getbeamer.com calls in %d file(s):\n' "${#files[@]}"
+    printf '  %s\n' "${files[@]}"
+
+    local file
+    for file in "${files[@]}"; do
+      sed -i \
+        -e 's#https://api.getbeamer.com/v0/unread/count#about:blank#g' \
+        -e 's#https://api.getbeamer.com/v0/posts#about:blank#g' \
+        -e 's#https://api.getbeamer.com/v0/unread#about:blank#g' \
+        -e 's#https://app.getbeamer.com/js/beamer-embed.js#about:blank#g' \
+        "$file"
+    done
+  fi
+}
+
+function disableProductNewsIcon() {
+  # Disable product news icon in the shipped frontend bundles.
+  css_file=$(find /opt/sonar/web/css -type f -name 'main-*.css' | head -n 1)
+
+  if [[ -z "${css_file}" ]]; then
+    echo "No matching CSS file found."
+    exit 1
+  fi
+
+
+  minified_css='[data-component="beamer-widget-custom"]{display:none;}'
+  # Check if already present
+  if ! grep -Fq "${minified_css}" "${css_file}"; then
+    echo "Disabling product news icon in css file: ${css_file}"
+    echo "${minified_css}" >> "${css_file}"
+  fi
+}

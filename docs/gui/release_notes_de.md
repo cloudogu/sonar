@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Hinzugefügt
+- Konfiguration `remove_product_news`, um das Produktneuigkeiten-Widget auszublenden und die damit einhergehenden Internetaufrufe zu entfernen.
 
 ## [v25.12.0-6] - 2026-03-25
 ### Behoben
