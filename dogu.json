@@ -1,6 +1,6 @@
 {
   "Name": "official/sonar",
-  "Version": "25.12.0-6",
+  "Version": "25.12.0-7",
   "DisplayName": "SonarQube",
   "Description": "SonarQube is an open source quality management platform, dedicated to continuously analyze and measure source code quality",
   "Category": "Development Apps",
@@ -245,6 +245,12 @@
     {
       "Name": "profiles/force_upload",
       "Description": "A flag to indicate that the profile archive should always be uploaded. Use this only if profiles got deleted manually in the dogu. Don't forget to turn this option to false after using it.",
+      "Optional": true,
+      "Default": "false"
+    },
+    {
+      "Name": "remove_product_news",
+      "Description": "A flag to indicate to remove the product news widget and the outgoing getbeamer.com call that comes with it. This flag will lead to changes on container files that will only recover on container recreation.",
       "Optional": true,
       "Default": "false"
     }

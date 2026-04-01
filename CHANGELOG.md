@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-7] - 2026-04-01
+### Added
+- [#168] Remove outgoing getbeamer.com-calls (and the then breaking product news widget) via the configuration flag: `remove_product_news`
+
 ## [v25.12.0-6] - 2026-03-25
 ### Fixed
 - [#166] Fix update and startup problems in the plugin process

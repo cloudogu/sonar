@@ -6,6 +6,10 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-7] - 2026-04-01
+### Hinzugefügt
+- Konfiguration `remove_product_news`, um das Produktneuigkeiten-Widget auszublenden und die damit einhergehenden Internetaufrufe zu entfernen.
+
 ## [v25.12.0-6] - 2026-03-25
 ### Behoben
 * this release fixes plugin upgrades and startup problems when a new version of the CommunityBranch-plugin is installed.

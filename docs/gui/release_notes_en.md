@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-7] - 2026-04-01
+### Added
+- Configuration `remove_product_news` to remove the product news widget and its outgoing internet calls.
+
 ## [v25.12.0-6] - 2026-03-25
 ### Fixed
 * this release fixes plugin upgrades and startup problems when a new version of the CommunityBranch-plugin is installed.
