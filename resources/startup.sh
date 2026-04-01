@@ -588,8 +588,6 @@ runMain() {
     echo "Removing product news..."
     removeGetBeamerCalls
     disableProductNewsIcon
- # else
-    # restoreGetBeamerCalls?
   fi
 
   echo "Ensure correct branch plugin state"
