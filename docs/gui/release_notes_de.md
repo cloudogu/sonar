@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Behoben
+* Dieses Release repariert die initiale Konfiguration des Mail-Servers.
 
 ## [v25.12.0-7] - 2026-04-01
 ### Hinzugefügt
