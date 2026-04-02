@@ -36,6 +36,10 @@ setup() {
   export rm
   ln -s "${rm}" "${BATS_TMPDIR}/rm"
 
+  psql="$(mock_create)"
+  export psql
+  ln -s "${psql}" "${BATS_TMPDIR}/psql"
+
   export PATH="${BATS_TMPDIR}:${PATH}"
 }
 
@@ -47,6 +51,7 @@ teardown() {
   /bin/rm "${BATS_TMPDIR}/awk"
   /bin/rm "${BATS_TMPDIR}/unzip"
   /bin/rm "${BATS_TMPDIR}/rm"
+  /bin/rm "${BATS_TMPDIR}/psql"
 }
 
 @test "should return 0 when admin groups should be amended" {
@@ -443,4 +448,46 @@ teardown() {
   assert_line "Download URL: cloudogu.com/nexus/profiles.zip"
   assert_line "Retry limit: 5"
   assert_line "Returned http code 400 on getting profiles archive. Return"
+}
+
+@test "should set mail configuration" {
+
+  mock_set_status "${psql}" 0
+  mock_set_output "${psql}" "0" 1
+
+  export MAIL_ADDRESS="test@cloudogu.invalid"
+
+  source /workspace/resources/startup.sh
+
+  run upsertMailConfiguration
+
+  assert_success
+  assert_line "Setting email configuration..."
+  local actual_args
+  actual_args=$(mock_get_call_args "${psql}" "1")
+
+  assert_equal "$(contains "$actual_args" "INSERT INTO internal_properties (kee, is_empty, text_value, created_at)")" "0"
+  assert_equal "$(contains "$actual_args" "VALUES")" "0"
+  assert_equal "$(contains "$actual_args" "('email.smtp_host.secured', 'f', 'postfix', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.smtp_port.secured', 'f', '25', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.smtp_username.secured', 't', '', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.smtp_password.secured', 't', '', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.smtp_secure_connection.secured', 'f', 'NONE', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.smtp.auth.method', 'f', 'BASIC', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.prefix', 'f', '[SONARQUBE]', (extract(epoch from now()) * 1000)::bigint),")" "0"
+  assert_equal "$(contains "$actual_args" "('email.from', 'f', 'test@cloudogu.invalid', (extract(epoch from now()) * 1000)::bigint)")" "0"
+  assert_equal "$(contains "$actual_args" "ON CONFLICT (kee)")" "0"
+  assert_equal "$(contains "$actual_args" "DO UPDATE SET")" "0"
+  assert_equal "$(contains "$actual_args" "text_value = EXCLUDED.text_value,")" "0"
+  assert_equal "$(contains "$actual_args" "is_empty = EXCLUDED.is_empty,")" "0"
+  assert_equal "$(contains "$actual_args" "created_at = EXCLUDED.created_at;")" "0"
+}
+
+function contains {
+  if [[ $1 == *"$2"* ]]; then
+    echo "0"
+    return
+  fi
+
+  return "1"
 }

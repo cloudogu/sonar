@@ -342,10 +342,7 @@ function run_first_start_tasks() {
   create_user_group_via_rest_api "${CES_ADMIN_GROUP}" "CESAdministratorGroup" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   grant_admin_group_permissions "${CES_ADMIN_GROUP}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  echo "Setting email configuration..."
-  set_property_via_rest_api "email.smtp_host.secured" "postfix" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.smtp_port.secured" "25" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
-  set_property_via_rest_api "email.prefix" "\[SONARQUBE\]" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+
   echo "Getting out-of-date plugins..."
   get_out_of_date_plugins_via_rest_api "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
   if [[ -n "${OUT_OF_DATE_PLUGINS}" ]]; then
@@ -561,6 +558,30 @@ function setDoguLogLevel() {
   echo "Log level is now: ${SONAR_LOGLEVEL}"
 }
 
+function upsertMailConfiguration() {
+  # Since v25 the mail configuration is no longer in the properties table.
+  # We have to set values in internal_properties now.
+  # Unfortunately, there is no REST API to set internal properties, so we have to use plain SQL statements.
+  # This command "upserts" the mail configuration.
+  echo "Setting email configuration..."
+  execute_sql_statement_on_database "
+INSERT INTO internal_properties (kee, is_empty, text_value, created_at)
+VALUES
+  ('email.smtp_host.secured', 'f', 'postfix', (extract(epoch from now()) * 1000)::bigint),
+  ('email.smtp_port.secured', 'f', '25', (extract(epoch from now()) * 1000)::bigint),
+  ('email.smtp_username.secured', 't', '', (extract(epoch from now()) * 1000)::bigint),
+  ('email.smtp_password.secured', 't', '', (extract(epoch from now()) * 1000)::bigint),
+  ('email.smtp_secure_connection.secured', 'f', 'NONE', (extract(epoch from now()) * 1000)::bigint),
+  ('email.smtp.auth.method', 'f', 'BASIC', (extract(epoch from now()) * 1000)::bigint),
+  ('email.prefix', 'f', '[SONARQUBE]', (extract(epoch from now()) * 1000)::bigint),
+  ('email.from', 'f', '${MAIL_ADDRESS}', (extract(epoch from now()) * 1000)::bigint)
+ON CONFLICT (kee)
+DO UPDATE SET
+  text_value = EXCLUDED.text_value,
+  is_empty = EXCLUDED.is_empty,
+  created_at = EXCLUDED.created_at;"
+}
+
 ### End of function declarations, work is done now
 runMain() {
   printCloudoguLogo
@@ -634,8 +655,9 @@ runMain() {
   echo "Setting sonar.core.serverBaseURL..."
   set_property_via_rest_api "sonar.core.serverBaseURL" "https://${FQDN}/sonar" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
-  echo "Setting email.from configuration..."
-  set_property_via_rest_api "email.from" "${MAIL_ADDRESS}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
+  # We have to update the whole mail configuration on every dogu start.
+  # This fixes v25 instances where no configuration was set.
+  upsertMailConfiguration
 
   install_and_update_default_plugins "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 

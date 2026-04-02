@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#170] Fix mail configuration because the location switched in sonar v25 from the `properties` to the `internal_properties` table.
+  - Always update the mail configuration on every dogu start to fix v25 instances where no configuration was set.
 
 ## [v25.12.0-6] - 2026-03-25
 ### Fixed
