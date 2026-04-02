@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-8] - 2026-04-02
+### Fixed
+- [#170] Fix mail configuration because the location switched in sonar v25 from the `properties` to the `internal_properties` table.
+  - Always update the mail configuration on every dogu start to fix v25 instances where no configuration was set.
+
 ## [v25.12.0-7] - 2026-04-01
 ### Added
 - [#168] Remove outgoing getbeamer.com-calls (and the then breaking product news widget) via the configuration flag: `remove_product_news`

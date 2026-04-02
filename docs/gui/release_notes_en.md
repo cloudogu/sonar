@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-8] - 2026-04-02
+### Fixed
+* This release fixes the initial mail configuration.
+
 ## [v25.12.0-7] - 2026-04-01
 ### Added
 - Configuration `remove_product_news` to remove the product news widget and its outgoing internet calls.
