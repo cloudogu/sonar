@@ -82,3 +82,12 @@ Then(/^the user can not access the \/users\/groups Web API endpoint$/, function 
         })
     })
 });
+
+Then("the interception count for {string} should be {int} after {int} seconds", function(name, count, seconds) {
+    cy.wait(seconds * 1000)
+    cy.get('@' + name + '.all').should('have.length', count)
+});
+
+Then("the data-component {string} should not be visible", function (component) {
+    cy.get('[data-component="' + component + '"]').should('not.be.visible')
+});
