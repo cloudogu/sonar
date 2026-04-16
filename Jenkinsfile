@@ -44,10 +44,10 @@ pipe.overrideStage('Setup') {
 String sonarConfigOverride = """
 {
   "sonar.web.sso.refreshIntervalInMinutes": "0",
-  "remove_product_news": "true",
+  "remove_product_news": "true"
 }
 """
-}
+
 
 def mergeConfigMapYaml = { String configMapName, String overrideConfig ->
     sh """
