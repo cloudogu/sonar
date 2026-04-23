@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Behoben
+* Die Willkommen-Tour wurde deaktiviert, da sie Probleme mit dem Warp-Menü verursacht hat.
 
 ## [v25.12.0-8] - 2026-04-02
 ### Behoben
