@@ -82,3 +82,7 @@ Then(/^the user can not access the \/users\/groups Web API endpoint$/, function 
         })
     })
 });
+
+Then("the headline {string} should not exist", function (name) {
+    cy.contains('h2', name, { timeout: 2000 }).should('not.exist');
+});
