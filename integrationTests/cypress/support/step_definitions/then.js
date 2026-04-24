@@ -91,3 +91,7 @@ Then("the interception count for {string} should be {int} after {int} seconds", 
 Then("the data-component {string} should not be visible", function (component) {
     cy.get('[data-component="' + component + '"]').should('not.be.visible')
 });
+
+Then("the headline {string} should not exist", function (name) {
+    cy.contains('h2', name, { timeout: 2000 }).should('not.exist');
+});

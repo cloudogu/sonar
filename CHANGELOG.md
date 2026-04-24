@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - [#175] integration tests for intercepting getbeamer calls
 
+## [v25.12.0-9] - 2026-04-23
+### Fixed
+ - [#172] Hide New-Mode-Tour to prevent interaction with warp menu
+
 ## [v25.12.0-8] - 2026-04-02
 ### Fixed
 - [#170] Fix mail configuration because the location switched in sonar v25 from the `properties` to the `internal_properties` table.

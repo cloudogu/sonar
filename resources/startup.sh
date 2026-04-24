@@ -582,6 +582,58 @@ DO UPDATE SET
   created_at = EXCLUDED.created_at;"
 }
 
+function disableTourDialogs() {
+  # This marks the newModesTour as already read.
+  # Extend: notice_keys for further notices to dismiss
+  execute_sql_statement_on_database "
+  CREATE OR REPLACE FUNCTION set_dismissed_notices()
+  RETURNS trigger AS \$\$
+  DECLARE
+    notice_key TEXT;
+    notice_keys TEXT[] := ARRAY[
+      'user.dismissedNotices.showNewModesTour'
+    ];
+  BEGIN
+    IF NEW.uuid IS NOT NULL THEN
+      FOREACH notice_key IN ARRAY notice_keys
+      LOOP
+        INSERT INTO properties (
+          uuid,
+          prop_key,
+          is_empty,
+          text_value,
+          user_uuid,
+          created_at
+        )
+        SELECT
+          gen_random_uuid(),
+          notice_key,
+          false,
+          '',
+          NEW.uuid,
+          (EXTRACT(EPOCH FROM NOW()) * 1000)::bigint
+        WHERE NOT EXISTS (
+          SELECT 1 FROM properties p
+          WHERE p.user_uuid = NEW.uuid
+            AND p.prop_key = notice_key
+        );
+      END LOOP;
+
+    END IF;
+
+    RETURN NEW;
+  END;
+  \$\$ LANGUAGE plpgsql;
+  "
+  execute_sql_statement_on_database "
+  DROP TRIGGER IF EXISTS trg_dismissed_notices ON users;
+  CREATE TRIGGER trg_dismissed_notices
+  AFTER INSERT ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION set_dismissed_notices();
+  "
+}
+
 ### End of function declarations, work is done now
 runMain() {
   printCloudoguLogo
@@ -684,6 +736,8 @@ runMain() {
   fi
 
   remove_all_temporary_admins_users_and_groups
+
+  disableTourDialogs
 
   doguctl state "ready"
 
