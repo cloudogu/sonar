@@ -86,3 +86,12 @@ Then(/^the user can not access the \/users\/groups Web API endpoint$/, function 
 Then("the headline {string} should not exist", function (name) {
     cy.contains('h2', name, { timeout: 2000 }).should('not.exist');
 });
+
+Then("the interception count for {string} should be {int} after {int} seconds", function(name, count, seconds) {
+    cy.wait(seconds * 1000)
+    cy.get('@' + name + '.all').should('have.length', count)
+});
+
+Then("the data-component {string} should not be visible", function (component) {
+    cy.get('[data-component="' + component + '"]').should('not.be.visible')
+});
