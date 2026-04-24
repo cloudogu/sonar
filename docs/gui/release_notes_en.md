@@ -10,6 +10,9 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 ### Fixed
 * Deactivated the Welcome Tour, which caused issues with the Warp Menu.
 
+### Changed
+* We have only made technical changes. You can find more details in the changelogs.
+
 ## [v25.12.0-8] - 2026-04-02
 ### Fixed
 * This release fixes the initial mail configuration.

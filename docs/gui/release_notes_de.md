@@ -10,6 +10,9 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 ### Behoben
 * Die Willkommen-Tour wurde deaktiviert, da sie Probleme mit dem Warp-Menü verursacht hat.
 
+### Geändert 
+* Wir haben nur technische Änderungen vorgenommen. Näheres finden Sie in den Changelogs.
+
 ## [v25.12.0-8] - 2026-04-02
 ### Behoben
 * Dieses Release repariert die initiale Konfiguration des Mail-Servers.
