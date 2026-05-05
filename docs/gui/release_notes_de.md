@@ -6,7 +6,7 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 ### Verändert
-- Sonar jetzt verwendet den konfigurierten CES-Proxy für Update-Center-Aufrufe
+- Sonar verwendet jetzt den konfigurierten CES-Proxy für Update-Center-Aufrufe
 
 ## [v25.12.0-9] - 2026-04-23
 ### Behoben
