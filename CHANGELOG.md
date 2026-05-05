@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - [#175] integration tests for intercepting getbeamer calls
+- [#176] use configured ces proxy for update center
 
 ## [v25.12.0-9] - 2026-04-23
 ### Fixed

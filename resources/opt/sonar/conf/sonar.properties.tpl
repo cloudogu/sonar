@@ -236,9 +236,12 @@ sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
 # It is enabled by default.
 #sonar.updatecenter.activate=true
 
+{{ if eq (.GlobalConfig.GetOrDefault "proxy/enabled" "false") "true" }}
+
 # HTTP proxy (default none)
-#http.proxyHost=
-#http.proxyPort=
+http.proxyHost={{ .GlobalConfig.GetOrDefault "proxy/server" "" }}
+http.proxyPort={{ .GlobalConfig.GetOrDefault "proxy/port" "" }}
+
 # HTTPS proxy (defaults are values of http.proxyHost and http.proxyPort)
 #https.proxyHost=
 #https.proxyPort=
@@ -250,11 +253,14 @@ sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
 #socksProxyHost=
 #socksProxyPort=
 
+{{ if ne (.GlobalConfig.GetOrDefault "proxy/username" "false") "false" }}
 # Proxy authentication (used for HTTP, HTTPS and SOCKS proxies)
-#http.proxyUser=
-#http.proxyPassword=
+http.proxyUser={{ .GlobalConfig.GetOrDefault "proxy/username" "" }}
+http.proxyPassword={{ .GlobalConfig.GetOrDefault "proxy/password" "" }}
+{{ end }}
 
-
+http.nonProxyHosts={{ .GlobalConfig.GetOrDefault "proxy/no_proxy" "" }}
+{{ end }}
 #--------------------------------------------------------------------------------------------------
 # LOGGING
 
