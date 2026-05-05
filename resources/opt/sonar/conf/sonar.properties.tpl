@@ -236,7 +236,7 @@ sonar.search.javaAdditionalOpts=-Dlog4j2.formatMsgNoLookups=true
 # It is enabled by default.
 #sonar.updatecenter.activate=true
 
-{{ if ne (.GlobalConfig.GetOrDefault "proxy/enabled" "false") "false" }}
+{{ if eq (.GlobalConfig.GetOrDefault "proxy/enabled" "false") "true" }}
 
 # HTTP proxy (default none)
 http.proxyHost={{ .GlobalConfig.GetOrDefault "proxy/server" "" }}
