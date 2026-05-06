@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v25.12.0-10] - 2026-05-06
 ### Verändert
 - Sonar verwendet jetzt den konfigurierten CES-Proxy für Update-Center-Aufrufe
 
