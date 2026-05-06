@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-10] - 2026-05-06
+### Added
+- [#175] integration tests for intercepting getbeamer calls
+- [#176] use configured ces proxy for update center
+
 ## [v25.12.0-9] - 2026-04-23
 ### Fixed
  - [#172] Hide New-Mode-Tour to prevent interaction with warp menu

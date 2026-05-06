@@ -6,9 +6,16 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-10] - 2026-05-06
+### Changed
+- Sonar now uses the configured ces proxy for update center calls
+
 ## [v25.12.0-9] - 2026-04-23
 ### Fixed
 * Deactivated the Welcome Tour, which caused issues with the Warp Menu.
+
+### Changed
+* We have only made technical changes. You can find more details in the changelogs.
 
 ## [v25.12.0-8] - 2026-04-02
 ### Fixed

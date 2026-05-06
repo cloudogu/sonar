@@ -37,3 +37,7 @@ When(/^the user requests his\/her attributes via the \/users API endpoint$/, fun
 When("the user navigates to {string} page", function (name) {
     cy.visit("/" + env.GetDoguName() + name, {failOnStatusCode: false})
 });
+
+When("the {string} call to {string} is intercepted as {string}", function(method, call, name) {
+    cy.intercept(method, call).as(name)
+});

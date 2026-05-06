@@ -34,9 +34,30 @@ pipe.overrideStage('Setup') {
     // set refreshIntervalInMinutes to 0 to have integration tests running properly, esp. privilege modification tests.
     ecoSystem.setup([registryConfig:"""
     	"sonar": {
-        	"sonar.web.sso.refreshIntervalInMinutes": "0"
+        	"sonar.web.sso.refreshIntervalInMinutes": "0",
+        	"remove_product_news": "true"
         }
     """, additionalDependencies: ['official/postgresql']])
+}
+
+
+String sonarConfigOverride = """
+{
+  "sonar.web.sso.refreshIntervalInMinutes": "0",
+  "remove_product_news": "true"
+}
+"""
+
+
+def mergeConfigMapYaml = { String configMapName, String overrideConfig ->
+    sh """
+       kubectl get configmap ${configMapName} -n ecosystem -o yaml | .bin/yq '
+         .data."config.yaml" |= (
+           (from_yaml) * ${overrideConfig}
+           | to_yaml
+         )
+       ' | tee ${configMapName}-output.yml | kubectl apply -f -
+       """
 }
 
 com.cloudogu.ces.dogubuildlib.MultiNodeEcoSystem multiNodeEcoSystem = pipe.multiNodeEcoSystem
@@ -60,6 +81,12 @@ pipe.insertStageAfter("Build sonarcarp", "Test sonarcarp") {
             }
     ctx.junit allowEmptyResults: true, testResults: 'sonarcarp/target/unit-tests/*-tests.xml'
     ctx.archiveArtifacts "sonarcarp/target/unit-tests/*-tests.xml"
+}
+
+pipe.insertStageBefore("MN-Run Integration Tests", "Setup Configs") {
+   pipe.multiNodeEcoSystem.waitForDogu("sonar")
+   mergeConfigMapYaml('sonar-config', sonarConfigOverride)
+   pipe.multiNodeEcoSystem.waitForDogu("sonar")
 }
 
 pipe.run()
