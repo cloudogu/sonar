@@ -38,7 +38,7 @@ RUN rm sonarqube-${SONAR_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="25.12.0-9" \
+    VERSION="25.12.0-10" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
