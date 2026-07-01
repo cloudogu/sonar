@@ -15,12 +15,12 @@ reinstall_plugins() {
         echo "found installed plugins in config, try to reinstall them..."
 
         echo "Waiting for SonarQube to get up (max ${HEALTH_TIMEOUT} seconds)..."
-        wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
+        wait_for_sonar_to_get_up "${HEALTH_TIMEOUT}"
 
         create_temporary_admin
 
         echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
-        wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+        wait_for_sonar_to_get_healthy "${HEALTH_TIMEOUT}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${CURL_LOG_LEVEL}"
 
         echo "SonarQube is healthy, start reinstalling plugins..."
 
@@ -72,14 +72,14 @@ run_post_upgrade() {
   echo "Running post-upgrade script..."
 
   echo "Waiting for SonarQube status endpoint to be available (max. ${HEALTH_TIMEOUT} seconds)..."
-  wait_for_sonar_status_endpoint ${HEALTH_TIMEOUT}
+  wait_for_sonar_status_endpoint "${HEALTH_TIMEOUT}"
 
   echo "Checking if db migration is needed..."
   DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
   if [[ "${DB_MIGRATION_STATUS}" == "MIGRATION_REQUIRED" ]]; then
     echo "Database migration is required. Migrating database now..."
     curl "${CURL_LOG_LEVEL}" --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
-    printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" ${HEALTH_TIMEOUT}
+    printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" "${HEALTH_TIMEOUT}"
     for i in $(seq 1 "${HEALTH_TIMEOUT}"); do
       DB_MIGRATION_STATE=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
       if [[ "${DB_MIGRATION_STATE}" == "MIGRATION_SUCCEEDED" ]]; then
@@ -158,10 +158,10 @@ WHERE description = '${group_description}';
 
   remove_all_temporary_admins_users_and_groups
 
-  return $rc
+  return "$rc"
 }
 
-# make the script only run when executed, not when sourced from bats tests)
+# make the script only run when executed, not when sourced from bats tests
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   run_post_upgrade "$@"
 fi
