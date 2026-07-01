@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- [#178] Configuration `health_timeout_seconds` to fix errors during upgrades cause by long-running migration tasks.
+- [#178] Configuration `health_timeout_seconds` to fix errors during upgrades caused by long-running migration tasks.
 
 ## [v25.12.0-10] - 2026-05-06
 ### Added
