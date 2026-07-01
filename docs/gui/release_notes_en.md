@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-11] - 2026-07-01
+### Added
+- Configuration `health_timeout_seconds`, to configure the wait mechanism for long migrations.
+
 ## [v25.12.0-10] - 2026-05-06
 ### Changed
 - Sonar now uses the configured ces proxy for update center calls
