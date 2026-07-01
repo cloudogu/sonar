@@ -15,6 +15,9 @@ setDbVars() {
   DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 }
 
+function getHealthTimeout() {
+  doguctl config --default "600" "health_timeout_seconds"
+}
 # Executes the given statement on the sonar database.
 # Needs 'setDbVars' to be called beforehand to have all database variables initialized
 function execute_sql_statement_on_database(){
