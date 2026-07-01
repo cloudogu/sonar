@@ -13,10 +13,16 @@ DATABASE_USER=""
 DATABASE_USER_PASSWORD=""
 DATABASE_DB=""
 
+HEALTH_TIMEOUT=""
+
 function setDbVars() {
   DATABASE_USER=$(doguctl config -e sa-postgresql/username)
   DATABASE_USER_PASSWORD=$(doguctl config -e sa-postgresql/password)
   DATABASE_DB=$(doguctl config -e sa-postgresql/database)
+}
+
+function getHealthTimeout() {
+  doguctl config --default "600" "health_timeout_seconds"
 }
 
 function setAdminVars() {

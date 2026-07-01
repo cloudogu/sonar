@@ -14,13 +14,13 @@ reinstall_plugins() {
   if doguctl config install_plugins >/dev/null; then
         echo "found installed plugins in config, try to reinstall them..."
 
-        echo "Waiting for SonarQube to get up (max ${WAIT_TIMEOUT} seconds)..."
-        wait_for_sonar_to_get_up ${WAIT_TIMEOUT}
+        echo "Waiting for SonarQube to get up (max ${HEALTH_TIMEOUT} seconds)..."
+        wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
 
         create_temporary_admin
 
-        echo "Waiting for SonarQube to get healthy (max. ${WAIT_TIMEOUT} seconds)..."
-        wait_for_sonar_to_get_healthy ${WAIT_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+        echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
+        wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
         echo "SonarQube is healthy, start reinstalling plugins..."
 
@@ -59,10 +59,10 @@ removeCasPlugin() {
 run_post_upgrade() {
   # init variables from util.sh
   setDbVars
+  HEALTH_TIMEOUT="$(getHealthTimeout)"
 
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
-  WAIT_TIMEOUT=600
   CURL_LOG_LEVEL="--silent"
   FAILED_PLUGIN_NAMES=""
 
@@ -71,23 +71,23 @@ run_post_upgrade() {
 
   echo "Running post-upgrade script..."
 
-  echo "Waiting for SonarQube status endpoint to be available (max. ${WAIT_TIMEOUT} seconds)..."
-  wait_for_sonar_status_endpoint ${WAIT_TIMEOUT}
+  echo "Waiting for SonarQube status endpoint to be available (max. ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_status_endpoint ${HEALTH_TIMEOUT}
 
   echo "Checking if db migration is needed..."
   DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
   if [[ "${DB_MIGRATION_STATUS}" == "MIGRATION_REQUIRED" ]]; then
     echo "Database migration is required. Migrating database now..."
     curl "${CURL_LOG_LEVEL}" --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
-    printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" ${WAIT_TIMEOUT}
-    for i in $(seq 1 "${WAIT_TIMEOUT}"); do
+    printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" ${HEALTH_TIMEOUT}
+    for i in $(seq 1 "${HEALTH_TIMEOUT}"); do
       DB_MIGRATION_STATE=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
       if [[ "${DB_MIGRATION_STATE}" == "MIGRATION_SUCCEEDED" ]]; then
         echo "Database migration has been successful: ${DB_MIGRATION_STATE}"
         break
       fi
-      if [[ "$i" -eq ${WAIT_TIMEOUT} ]]; then
-        echo "Database migration did not succeed within ${WAIT_TIMEOUT} seconds; status is ${DB_MIGRATION_STATE}."
+      if [[ "$i" -eq ${HEALTH_TIMEOUT} ]]; then
+        echo "Database migration did not succeed within ${HEALTH_TIMEOUT} seconds; status is ${DB_MIGRATION_STATE}."
         exit 1
       fi
       # waiting for db migration
