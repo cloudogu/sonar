@@ -41,7 +41,6 @@ export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 # variables
 CURL_LOG_LEVEL="--silent"
 API_ENDPOINT="http://localhost:9000/sonar/api"
-HEALTH_TIMEOUT=600
 ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 PROJECT_PERMISSIONS="admin codeviewer issueadmin securityhotspotadmin scan user"
 DEFAULT_PERMISSION_TEMPLATE_NAME="Default template"
@@ -55,6 +54,8 @@ QUALITY_PROFILE_CURL_ARGS=()
 function setVariables() {
   # initialize database variables form util.sh
   setDbVars
+  # initialize health timeout form util.sh
+  HEALTH_TIMEOUT=$(getHealthTimeout)
 
   # export for carp.yaml usage
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
