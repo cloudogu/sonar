@@ -83,14 +83,14 @@ run_post_upgrade() {
   echo "Running post-upgrade script..."
 
   echo "Waiting for SonarQube status endpoint to be available (max. ${HEALTH_TIMEOUT} seconds)..."
-  wait_for_sonar_status_endpoint ${HEALTH_TIMEOUT}
+  wait_for_sonar_status_endpoint "${HEALTH_TIMEOUT}"
 
   echo "Checking if db migration is needed..."
   DB_MIGRATION_STATUS=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
   if [[ "${DB_MIGRATION_STATUS}" == "MIGRATION_REQUIRED" ]]; then
     echo "Database migration is required. Migrating database now..."
     curl "${CURL_LOG_LEVEL}" --fail -X POST http://localhost:9000/sonar/api/system/migrate_db
-    printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" ${HEALTH_TIMEOUT}
+    printf "\\nWaiting for db migration to succeed (max. %s seconds)...\\n" "${HEALTH_TIMEOUT}"
     for i in $(seq 1 "${HEALTH_TIMEOUT}"); do
       DB_MIGRATION_STATE=$(curl "${CURL_LOG_LEVEL}" --fail -X GET http://localhost:9000/sonar/api/system/db_migration_status | jq -r '.state')
       if [[ "${DB_MIGRATION_STATE}" == "MIGRATION_SUCCEEDED" ]]; then
