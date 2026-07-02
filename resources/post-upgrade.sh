@@ -25,7 +25,7 @@ reinstall_plugins() {
         remove_group "${TEMPORARY_ADMIN_GROUP}"
 
         echo "Waiting for SonarQube to get up (max ${HEALTH_TIMEOUT} seconds)..."
-        wait_for_sonar_to_get_up ${HEALTH_TIMEOUT}
+        wait_for_sonar_to_get_up "${HEALTH_TIMEOUT}"
 
         echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
         add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
@@ -34,7 +34,7 @@ reinstall_plugins() {
 
         echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
         # default admin credentials (admin, admin) are used
-        wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+        wait_for_sonar_to_get_healthy "${HEALTH_TIMEOUT}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${CURL_LOG_LEVEL}"
 
         while IFS=',' read -ra ADDR; do
             for PLUGIN in "${ADDR[@]}"; do
