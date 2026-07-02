@@ -247,6 +247,12 @@
       "Description": "A flag to indicate that the profile archive should always be uploaded. Use this only if profiles got deleted manually in the dogu. Don't forget to turn this option to false after using it.",
       "Optional": true,
       "Default": "false"
+    },
+    {
+      "Name": "health_timeout_seconds",
+      "Description": "A timeout which is used by the dogu while starting sonar in background and waiting for the healthy state of the application. This is necessary for configuration tasks. It is also used while upgrading sonar and a migration is needed.",
+      "Optional": true,
+      "Default": "600"
     }
   ],
   "HealthChecks": [

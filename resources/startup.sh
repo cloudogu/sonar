@@ -41,7 +41,6 @@ export SONAR_PROPERTIES_FILE=/opt/sonar/conf/sonar.properties
 # variables
 CURL_LOG_LEVEL="--silent"
 API_ENDPOINT="http://localhost:9000/sonar/api"
-HEALTH_TIMEOUT=600
 ADMIN_PERMISSIONS="admin profileadmin gateadmin provisioning"
 PROJECT_PERMISSIONS="admin codeviewer issueadmin securityhotspotadmin scan user"
 DEFAULT_PERMISSION_TEMPLATE_NAME="Default template"
@@ -55,6 +54,8 @@ QUALITY_PROFILE_CURL_ARGS=()
 function setVariables() {
   # initialize database variables form util.sh
   setDbVars
+  # initialize health timeout form util.sh
+  HEALTH_TIMEOUT=$(getHealthTimeout)
 
   # export for carp.yaml usage
   CES_ADMIN_GROUP=$(doguctl config --global admin_group)
@@ -421,7 +422,7 @@ function first_sonar_start() {
   echo "First start of SonarQube dogu"
 
   echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
-  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+  wait_for_sonar_to_get_healthy "${HEALTH_TIMEOUT}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
   echo "Deactivating default admin user..."
   deactivate_default_admin_user "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${CURL_LOG_LEVEL}"
@@ -435,7 +436,7 @@ function subsequent_sonar_start() {
   echo "Subsequent start of SonarQube dogu"
 
   echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
-  wait_for_sonar_to_get_healthy ${HEALTH_TIMEOUT} "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
+  wait_for_sonar_to_get_healthy "${HEALTH_TIMEOUT}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" ${CURL_LOG_LEVEL}
 
   set_updatecenter_url_if_configured_in_registry "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"
 
@@ -560,7 +561,7 @@ runMain() {
   doguctl state "waitingForPostgreSQL"
 
   echo "Waiting until postgresql passes all health checks..."
-  if ! doguctl healthy --wait --timeout ${HEALTH_TIMEOUT} postgresql; then
+  if ! doguctl healthy --wait --timeout "${HEALTH_TIMEOUT}" postgresql; then
     echo "Timeout reached by waiting of postgresql to get healthy"
     exit 1
   else
