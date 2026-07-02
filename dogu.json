@@ -253,6 +253,12 @@
       "Description": "A flag to indicate to remove the product news widget and the outgoing getbeamer.com call that comes with it. This flag will lead to changes on container files that will only recover on container recreation.",
       "Optional": true,
       "Default": "false"
+    },
+    {
+      "Name": "health_timeout_seconds",
+      "Description": "A timeout which is used by the dogu while starting sonar in background and waiting for the healthy state of the application. This is necessary for configuration tasks. It is also used while upgrading sonar and a migration is needed.",
+      "Optional": true,
+      "Default": "600"
     }
   ],
   "HealthChecks": [

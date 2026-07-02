@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Hinzugefügt
+- Konfiguration `health_timeout_seconds`, um den Wartemechanismus bei langen Migrationen zu konfigurieren.
 
 ## [v25.12.0-7] - 2026-04-01
 ### Hinzugefügt

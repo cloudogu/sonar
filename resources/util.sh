@@ -19,6 +19,10 @@ function setDbVars() {
   DATABASE_DB=$(doguctl config -e sa-postgresql/database)
 }
 
+function getHealthTimeout() {
+  doguctl config --default "600" "health_timeout_seconds"
+}
+
 function setAdminVars() {
   TEMPORARY_ADMIN_GROUP="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
   TEMPORARY_ADMIN_USER="${TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
