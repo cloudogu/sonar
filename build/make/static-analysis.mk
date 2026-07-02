@@ -2,12 +2,12 @@
 
 STATIC_ANALYSIS_DIR=$(TARGET_DIR)/static-analysis
 GOIMAGE?=golang
-GOTAG?=1.24
+GOTAG?=1.25
 CUSTOM_GO_MOUNT?=-v /tmp:/tmp
 
 REVIEW_DOG=$(TMP_DIR)/bin/reviewdog
 LINT=$(TMP_DIR)/bin/golangci-lint
-LINT_VERSION?=v2.1.6
+LINT_VERSION?=v2.5.0
 # ignore tests and mocks
 LINTFLAGS=--tests=false --timeout 10m --issues-exit-code 0
 ADDITIONAL_LINTER=-E bodyclose -E containedctx -E contextcheck -E decorder -E dupl -E errname -E forcetypeassert -E funlen -E unparam
@@ -47,7 +47,7 @@ $(STATIC_ANALYSIS_DIR)/static-analysis.log: $(STATIC_ANALYSIS_DIR)
 
 $(STATIC_ANALYSIS_DIR)/static-analysis-cs.log: $(STATIC_ANALYSIS_DIR)
 	@echo "run static analysis with export to checkstyle format"
-	@$(LINT) $(LINTFLAGS) --output.checkstyle.path stdout run ./... $(ADDITIONAL_LINTER) > $@
+	@$(LINT) $(LINTFLAGS) --output.checkstyle.path $@ run ./... $(ADDITIONAL_LINTER)
 
 $(STATIC_ANALYSIS_DIR): $(LINT)
 	@mkdir -p $(STATIC_ANALYSIS_DIR)
