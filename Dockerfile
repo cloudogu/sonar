@@ -80,7 +80,7 @@ RUN set -eux \
     && chown -R sonar:sonar ${SONARQUBE_HOME} /carp
 
 COPY --from=builder --chown=1000:1000 /builder/sonar ${SONARQUBE_HOME}
-COPY --from=builder --chown=1000:1000 /builder/webapp /webapp
+COPY --from=builder --chown=1000:1000 /builder/webapp /opt/sonar/web.community
 COPY --chown=1000:1000 ./resources /
 
 

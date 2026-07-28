@@ -51,19 +51,6 @@ QUALITY_PROFILE_ZIP_FILE="${QUALITY_PROFILE_DIR}/profiles.zip"
 QUALITY_PROFILE_ZIP_SHA_SUM=""
 QUALITY_PROFILE_CURL_ARGS=()
 
-function override_web_for_community_branch_plugin() {
-  local src="/webapp"
-  local dst="/opt/sonar/web"
-
-  if [[ -d "${src}" ]] && [[ -n "$(ls -A "${src}" 2>/dev/null)" ]]; then
-    echo "Overriding ${dst} with contents from ${src} ..."
-    rm -rf "${dst:?}/"*
-    cp -a "${src}/." "${dst}/"
-  else
-    echo "No override for ${dst}: ${src} does not exist or is empty."
-  fi
-}
-
 function setVariables() {
   # initialize database variables form util.sh
   setDbVars
@@ -544,6 +531,9 @@ function ensure_correct_branch_plugin_state() {
     BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
     # use webapp for current community-plugin
     override_web_for_community_branch_plugin
+  else
+    # restore backup of original webapp
+    restore_web_backup_for_community_branch_plugin
   fi
 
   export BRANCH_PLUGIN_WEB_OPTS
@@ -672,9 +662,6 @@ runMain() {
   create_truststore.sh "${SONARQUBE_HOME}"/truststore.jks >/dev/null
 
   doguctl state "configuring..."
-
-  echo "Trying to override /opt/sonar/web from /web (if mounted)..."
-  override_web_for_community_branch_plugin
 
   echo "Ensure correct branch plugin state"
   ensure_correct_branch_plugin_state
