@@ -1,8 +1,10 @@
 ARG STAGE=prod
 ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.10-4
 
-ARG SONAR_VERSION=25.12.0.117093
+ARG SONAR_BASE_VERSION=25.12.0
+ARG SONAR_VERSION=${SONAR_BASE_VERSION}.117093
 ARG SONARQUBE_ZIP_SHA256=09215f6f6a56db484946e4355c9801fa357eb92eedc99a2bebedf1d7ae21a341
+ARG SONARQUBE_COMMUNITY_WEBAPP_ZIP_SHA256=a91f68bb65474cb607a1929d1a2c08befcc7da3f5b8775422325322c105ebd21
 
 FROM golang:1.26.0 AS compiler-prod
 WORKDIR /app
@@ -21,10 +23,13 @@ RUN CGO_ENABLED=0 go build -gcflags "all=-N -l" -o /app/target/sonarcarp
 
 FROM ${BASE_IMAGE} AS builder
 
+ARG SONAR_BASE_VERSION
 ARG SONAR_VERSION
 ARG SONARQUBE_ZIP_SHA256
+ARG SONARQUBE_COMMUNITY_WEBAPP_ZIP_SHA256
 
 ENV BUILDER_HOME="/builder/sonar"
+ENV BUILDER_WEBAPP="/builder/webapp"
 
 WORKDIR /builder
 
@@ -34,6 +39,12 @@ RUN echo "${SONARQUBE_ZIP_SHA256} *sonarqube-${SONAR_VERSION}.zip" | sha256sum -
 RUN unzip sonarqube-${SONAR_VERSION}.zip
 RUN mv sonarqube-${SONAR_VERSION} ${BUILDER_HOME}
 RUN rm sonarqube-${SONAR_VERSION}.zip
+RUN curl --fail --output sonarqube-webapp-${SONAR_BASE_VERSION}.zip --location https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/${SONAR_BASE_VERSION}/sonarqube-webapp.zip
+RUN echo "${SONARQUBE_COMMUNITY_WEBAPP_ZIP_SHA256} *sonarqube-webapp-${SONAR_BASE_VERSION}.zip" | sha256sum -c -
+RUN unzip sonarqube-webapp-${SONAR_BASE_VERSION}.zip -d sonarqube-webapp-${SONAR_BASE_VERSION}
+RUN mv sonarqube-webapp-${SONAR_BASE_VERSION} ${BUILDER_WEBAPP}
+RUN rm sonarqube-webapp-${SONAR_BASE_VERSION}.zip
+
 
 FROM ${BASE_IMAGE} AS base
 
@@ -69,6 +80,7 @@ RUN set -eux \
     && chown -R sonar:sonar ${SONARQUBE_HOME} /carp
 
 COPY --from=builder --chown=1000:1000 /builder/sonar ${SONARQUBE_HOME}
+COPY --from=builder --chown=1000:1000 /builder/webapp /webapp
 COPY --chown=1000:1000 ./resources /
 
 

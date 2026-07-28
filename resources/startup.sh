@@ -542,6 +542,8 @@ function ensure_correct_branch_plugin_state() {
     BRANCH_PLUGIN_FILENAME="-javaagent:${COMMON_FOLDER}/${PLUGIN_NAME}.jar"
     BRANCH_PLUGIN_WEB_OPTS="${BRANCH_PLUGIN_FILENAME}=web \\"
     BRANCH_PLUGIN_CE_OPTS="${BRANCH_PLUGIN_FILENAME}=ce \\"
+    # use webapp for current community-plugin
+    override_web_for_community_branch_plugin
   fi
 
   export BRANCH_PLUGIN_WEB_OPTS
@@ -674,12 +676,6 @@ runMain() {
   echo "Trying to override /opt/sonar/web from /web (if mounted)..."
   override_web_for_community_branch_plugin
 
-  if [[ "$(doguctl config remove_product_news)" == "true" ]]; then
-    echo "Removing product news..."
-    removeGetBeamerCalls
-    disableProductNewsIcon
-  fi
-
   echo "Ensure correct branch plugin state"
   ensure_correct_branch_plugin_state
 
@@ -741,6 +737,12 @@ runMain() {
 
   echo "Rendering sonar properties template again, to incorporate potential new plugin installations..."
   render_properties_template
+
+  if [[ "$(doguctl config remove_product_news)" == "true" ]]; then
+    echo "Removing product news..."
+    removeGetBeamerCalls
+    disableProductNewsIcon
+  fi
 
   echo "Configuration done, stopping SonarQube..."
   stopSonarQube ${SONAR_PROCESS_ID}
