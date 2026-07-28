@@ -8,3 +8,5 @@
   * siehe /docs/development/community-branch-plugin_de.md
 * Upgrade-Dokumentation schreiben
   * wo findet man den Code vom Community-Branch-Plugin? Wie ersetzt man den Code?
+* Release auf Basis von Sonarqube 25.12.0.0-8
+  * dieser Branch basiert auf develop
