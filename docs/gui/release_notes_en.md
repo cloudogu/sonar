@@ -5,6 +5,9 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Fixed
+- To use the community-branch plugin, the SonarQube frontend was patched
+  - The Message "This application is based on SonarQube™ but is not an official version provided by SonarSource Sàrl." is shown within the footer bar, when the plugin is installed.
 
 ## [v25.12.0-11] - 2026-07-01
 ### Added

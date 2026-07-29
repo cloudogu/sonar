@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#183] deliver webapp for community-branch-plugin
+  - when using the community-branch-plugin, the corresponding webapp is needed
+  - After patching the webapp the disclaimer "This application is based on SonarQube™ but is not an official version provided by SonarSource Sàrl." is shown in the footerbar
 
 ## [v25.12.0-11] - 2026-07-01
 ### Added
