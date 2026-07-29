@@ -502,3 +502,44 @@ function disableProductNewsIcon() {
     echo "${minified_css}" >> "${css_file}"
   fi
 }
+
+function override_web_for_community_branch_plugin() {
+  local src="/opt/sonar/web.community"
+  local dst="/opt/sonar/web"
+  local backup="/opt/sonar/web.backup"
+
+  if [[ -d "${src}" ]] && [[ -n "$(ls -A "${src}" 2>/dev/null)" ]]; then
+    if [[ ! -d "${backup}" ]]; then
+      echo "Creating backup of ${dst}..."
+      if [[ -d "${dst}" ]]; then
+        mv "${dst}" "${backup}"
+      fi
+    else
+      echo "Backup already exists at ${backup}, skipping backup creation."
+      rm -rf "${dst}"
+    fi
+
+    echo "Overriding ${dst} with contents from ${src} ..."
+    mkdir -p "${dst}"
+    cp -a "${src}/." "${dst}/"
+  else
+    echo "No override for ${dst}: ${src} does not exist or is empty."
+  fi
+}
+
+function restore_web_backup_for_community_branch_plugin() {
+  local dst="/opt/sonar/web"
+  local backup="/opt/sonar/web.backup"
+
+  if [[ -d "${backup}" ]]; then
+    echo "Restoring ${dst} from backup ${backup}..."
+
+    rm -rf "${dst}"
+    mkdir -p "${dst}"
+    cp -a "${backup}/." "${dst}/"
+
+    echo "Restore completed."
+  else
+    echo "No backup found at ${backup}. Nothing to restore."
+  fi
+}
