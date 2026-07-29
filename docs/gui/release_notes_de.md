@@ -6,6 +6,11 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-12] - 2026-07-29
+### Behoben
+- Um das Community-Branch-Plugin nutzen zu können, wurde das SonarQube-Frontend angepasst
+  - In der Footer-Leiste erscheint nun die Meldung "This application is based on SonarQube™ but is not an official version provided by SonarSource Sàrl." wenn das Plugin verwendet wird
+
 ## [v25.12.0-11] - 2026-07-01
 ### Hinzugefügt
 - Konfiguration `health_timeout_seconds`, um den Wartemechanismus bei langen Migrationen zu konfigurieren.
