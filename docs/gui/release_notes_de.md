@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Fixed
+- [#187] Statt ``no_proxy`` wird der korrekte ``no_proxy_hosts`` verwendet
 
 ## [v25.12.0-12] - 2026-07-29
 ### Behoben
