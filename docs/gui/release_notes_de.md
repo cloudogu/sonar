@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v25.12.0-13] - 2026-08-14
 ### Fixed
 - Es wurde ein Fehler behoben in dem Werte für globale Proxykonfigurationen aus zwei unterschiedlichen Schlüsseln bezogen wurden. Nun wird nur noch ein Schlüssel verwendet. Nähere Informationen bietet das Changelog.
 
