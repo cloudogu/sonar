@@ -6,7 +6,7 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 ### Fixed
-- [#187] use correct ``no_proxy_hosts`` config key instead of ``no_proxy``
+- A bug has been fixed in which values for global proxy configurations were retrieved from two different keys. Now, only one key is used. For more information, see the changelog.
 
 ## [v25.12.0-12] - 2026-07-29
 ### Fixed
