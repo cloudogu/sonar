@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v25.12.0-13] - 2026-08-14
 ### Fixed
 - [#187] use correct ``no_proxy_hosts`` config key instead of ``no_proxy``
 
