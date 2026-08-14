@@ -259,7 +259,7 @@ http.proxyUser={{ .GlobalConfig.GetOrDefault "proxy/username" "" }}
 http.proxyPassword={{ .GlobalConfig.GetOrDefault "proxy/password" "" }}
 {{ end }}
 
-http.nonProxyHosts={{ .GlobalConfig.GetOrDefault "proxy/no_proxy" "" }}
+http.nonProxyHosts={{ .GlobalConfig.GetOrDefault "proxy/no_proxy_hosts" "" }}
 {{ end }}
 #--------------------------------------------------------------------------------------------------
 # LOGGING

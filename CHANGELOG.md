@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-13] - 2026-08-14
+### Fixed
+- [#187] use correct ``no_proxy_hosts`` config key instead of ``no_proxy``
+
 ## [v25.12.0-12] - 2026-07-29
 ### Fixed
 - [#183] deliver webapp for community-branch-plugin
