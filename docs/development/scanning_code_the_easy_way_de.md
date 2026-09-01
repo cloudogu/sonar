@@ -18,7 +18,7 @@ Um weiterhin nicht einen ganzen Stack von SCM-Manager, Jenkins usw. zu installie
    1. Sonar-scanner starten, 
    2. Zertifikat importieren und 
    3. scannen
-   4. scannen, zur Sicherheit ein zweites Mal, denn SonarQube ist seltsam und h[scanning_code_the_easy_way.de.md](scanning_code_the_easy_way.de.md)asst erste Scans
+   4. scannen, zur Sicherheit ein zweites Mal, denn SonarQube ist seltsam und hasst erste Scans
 
 ```shell
 docker run \                         
