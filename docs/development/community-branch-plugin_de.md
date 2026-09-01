@@ -78,7 +78,7 @@ Das "Community Branch Plugin" kann auch über das Updatecenter installiert werde
 > Wenn der Web-Server nicht über ein gültiges HTTPS-Zertifikat verfügt, kann das Update-Center nicht verwendet werden.
 > Damit dem Zertifikat verttraut werden kann, muss es im Dogu zu hinterlegt werden:
 > 1. Die Zertifikate müssen im PEM-Format vorliegen.
-> 2. Die Zertifikate müssen in der Configmap ``global-config`` unterhalb von `certificate/additional/` vorliegen
+> 2. Die Zertifikate müssen in der Configmap `global-config` unterhalb von `certificate/additional/` vorliegen
 >   - Der Schlüsselname (auch _Alias_ genannt) dient der Adressierung und dogu-internen Ablage und sollte keine Leerzeichen enthalten.
 >   - Sinnvoll wäre hier die FQDN des Dienstes (etwa: `dienst.example.com`), damit später ein Zertifikat leichter wieder entfernt werden kann
 >   - Ein Schlüssel kann mehr als ein Zertifikat zu einem Dienst besitzen. Zertifikate im PEM-Format haben textuelle Markierungen, anhand dessen die Zertifikate wieder auseinander getrennt werden können.

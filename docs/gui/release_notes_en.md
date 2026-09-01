@@ -5,6 +5,8 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Changed
+- The documentation of old version was removed. References to Classic CES were replaced by MN CES.
 
 ## [v25.12.0-12] - 2026-07-29
 ### Fixed
