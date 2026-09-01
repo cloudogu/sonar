@@ -2,25 +2,28 @@
 
 Due to common certificate errors, it is not that easy to use the sonar scanner in a local system with self-signed certificates.
 
+## SonarQube scan without pipeline tools
+
 To avoid installing a whole stack of SCM Manager, Jenkins, etc., it is easier to modify a Sonar scanner with your own certificate:
 
 <!-- markdown-link-check-disable-next-line -->
-1. Generate a SonarQube token, e.g., at https://example.invalid/sonar/account/security.
+1. Generate a SonarQube token, e.g. at https://example.invalid/sonar/account/security
    - In this example: `sqa_3ffb7e36dee85c27ab1b3cca58e0dea400068f70`
 2. Select the codebase to be scanned
-3. Copy the certificate to a file and store it in the codebase's file system
-   - CES-VM: `etcdctl get /config/_global/certificate/server.crt > /vagrant/ces.pem`
-4. Copy the certificate to the codebase directory
+   - See below for a minimal example
+3. Copy the certificate into a file and store it in the codebase file system
+   - CES VM: `etcdctl get /config/_global/certificate/server.crt > /vagrant/ces.pem`
+4. Copy the certificate into the codebase directory
 5. From the codebase directory (`$PWD -> /usr/src/`)
-   1. Start Sonar scanner,
-   2. Import the certificate, and
-   3. Scan
-   4. Scan a second time for good measure, because SonarQube is weird and hates first scans
+   1. start Sonar scanner,
+   2. import the certificate, and
+   3. scan
+   4. scan a second time for good measure, because SonarQube is weird and hates first scans
 
 ```shell
-docker run \                         
+docker run \
     --rm -u 0 \
-    -e SONAR_HOST_URL="https://example.invalid/sonar"  \
+    -e SONAR_HOST_URL="https://example.invalid/sonar" \
     -e SONAR_TOKEN="sqa_3ffb7e36dee85c27ab1b3cca58e0dea400068f70" \
     -v "${PWD}:/usr/src" -it --entrypoint sh \
     sonarsource/sonar-scanner-cli

@@ -6,6 +6,10 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-14] - 2026-09-01
+### Changed
+- Die Dokumentation veralteter Versionen wurde entfernt. Referenzen auf Classic-CES wurden durch MN-CES ersetzt.
+
 ## [v25.12.0-13] - 2026-08-14
 ### Fixed
 - Es wurde ein Fehler behoben in dem Werte für globale Proxykonfigurationen aus zwei unterschiedlichen Schlüsseln bezogen wurden. Nun wird nur noch ein Schlüssel verwendet. Nähere Informationen bietet das Changelog.

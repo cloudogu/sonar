@@ -4,20 +4,20 @@ The [SonarQube Community Branch Plugin](https://github.com/mc1arke/sonarqube-com
 The plugin must always be installed in the appropriate version for the SonarQube version.
 See: [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility)
 
-When the Dogus is started, it is checked whether the JAR file of the “Community Branch Plugin” exists in `/opt/sonar/extensions/downloads` or `/opt/sonar/extensions/plugins` and then also copied to `/opt/sonar/lib/common`.
+When the Dogus is started, it is checked whether the JAR file of the "Community Branch Plugin" exists in `/opt/sonar/extensions/downloads` or `/opt/sonar/extensions/plugins` and then also copied to `/opt/sonar/lib/common`.
 This is necessary so that the plugin can be executed correctly and the dogu starts.
 
 ## Installation
 
 ### Manual installation via the volume
 1. as CES shell administrator: download the [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) as JAR
-2. move the downloaded JAR file to `/var/lib/ces/sonar/volumes/extensions/plugins/`
+2. copy the downloaded JAR file to `/opt/sonar/extensions/plugins/`, e.g. with `kubectl cp`
 3. restart SonarQube
 
 ### Installation via the update center
-The “Community Branch Plugin” can also be installed via the Update Center.
+The "Community Branch Plugin" can also be installed via the Update Center.
 
-1. create an update center `.properties` file and enter the required version of the “Community Branch Plugin” there.
+1. create an update center `.properties` file and enter the required version of the "Community Branch Plugin" there.
    Example:
     ```properties
     plugins=communityBranchPlugin
@@ -63,57 +63,64 @@ The “Community Branch Plugin” can also be installed via the Update Center.
    > For SonarQube > 2025.1, `*.sqcb` must match `sqbc` and `*.sqs` must match `sqs` and the installed SonarQube version
 
 2. host the update center `.properties` file on a web server available without authentication
-3. customize the Dogu-Config for SonarQube:
-    * Update-Center-URL: `etcdctl set /config/sonar/sonar.updatecenter.url https://domain.de/update-center.properties`
-    * Default plugins that are installed at startup: `etcdctl set /config/sonar/sonar.plugins.default communityBranchPlugin`.
+3. customize the Dogu config for SonarQube:
+    * `kubectl edit configmap -n ecosystem jenkins-config`
+   ````yaml
+       data:
+         config.yaml: |
+           sonar.updatecenter.url: "https://domain.de/update-center.properties"
+           sonar.plugins.default: communityBranchPlugin
+   ````
 4. restart SonarQube
 
-
-> When installing the “Community Branch Plugin” via the UpdateCenter for the first time, Sonar must be restarted so that the plugin is copied to the correct location as described above.
+> When installing the "Community Branch Plugin" via the UpdateCenter for the first time, Sonar must be restarted once more so that the plugin is copied to the correct location as described above.
 
 > If the web server does not have a valid HTTPS certificate, the Update Center cannot be used.
 > In order for the certificate to be trusted, it must be stored in the Dogu:
 > 1. the certificates must be in PEM format.
-> 2. the certificates must be available in `etcd` below `/config/_global/certificate/additional/`
-     > The key name (also called _Alias_) is used for addressing and internal dogu storage and should not contain any spaces.
-> - The FQDN of the service would be useful here (e.g. `service.example.com`) so that a certificate can be removed more easily at a later date
-> - A key can have more than one certificate for a service. Certificates in PEM format have textual markers that can be used to separate the certificates again.
-> 3. the key name under which the certificate was stored must be stored in `etcd` under `/config/_global/certificate/additional/toc`.
-     > Certificates of different services must be separated by a single space
+> 2. the certificates must be available in the `global-config` ConfigMap under `certificate/additional/`
+>   - The key name (also called _alias_) is used for addressing and internal dogu storage and should not contain any spaces.
+>   - The FQDN of the service would make sense here (for example `service.example.com`) so that a certificate can be removed more easily later.
+>   - A key can have more than one certificate for a service. Certificates in PEM format have textual markers that can be used to separate the certificates again.
+> 3. the key name under which the certificate was stored must be stored under `certificate/additional/toc`
+>   - Certificates of different services must be separated by a single space
 > 4. restart Dogu
 >
-> Example:
-> ```shell
-> #  Create key name
-> etcdctl set /config/_global/certificate/additional/toc 35.198.174.144
-> # Create certificate from file
-> cat ./test.crt | etcdctl set /config/_global/certificate/additional/35.198.174.144
-> ```
+> Example
+> * `kubectl edit configmap -n ecosystem jenkins-config`
+> ````yaml
+>     data:
+>       config.yaml: |
+>         certificate:
+>           additional:
+>             toc: 35.198.174.144
+>             35.198.174.144: <certificate>
+> ````
 
 ### Testing the SonarQube Community Plugin
 
 Prerequisite: SonarQube is set up as described [here](./developing_en.md/#test-sonarqube-dogu) <!-- markdown-link-check-disable-line -->
 
-1. install the “Community Branch Plugin” as described above
+1. install the "Community Branch Plugin" as described above
 2. in the SCM Manager: install the editor and review plugins
     - This makes it possible to edit source files without `git clone ... ; git commit ...`
-3. edit spring-petclinic/ `master` branch
+3. edit the `master` branch of `spring-petclinic/`
     - create a `sonar-project.properties` in the SCM Manager (if not already available)
-        - see below for an example file
+        - see below for an example
         - this ensures that SonarQube finds the built `.class` files
     - enrich the `Jenkinsfile` in the SCM Manager so that `stage("build")` and `stage("integration test")` are also available
-        - see below for an example file
-        - This ensures that SonarQube also scans PR branches and informs Jenkins about the status
+        - see below for an example
+        - this ensures that SonarQube also scans PR branches and informs Jenkins about the status
 4. in SonarQube: redeclare the main branch (only if necessary)
     1. navigate to [Projects](https://192.168.56.2/sonar/admin/projects_management) <!-- markdown-link-check-disable-line -->
     2. only necessary if a wrong branch has been scanned
     3. rename the project marked as `main` to the desired branch, e.g. `master`
     4. delete the remaining projects
 5. test PR branch recognition
-    1. create a new branch in the SCM Manager on a `master` basis
+    1. create a new branch in the SCM Manager based on `master`
     2. minimally modify and commit any file (so a PR can be created)
-    3. create PR from new branch on `master`
-6. after PR creation, check SonarQube and Jenkins job for the scan result
+    3. create a PR from the new branch to `master`
+6. after PR creation, check SonarQube and the Jenkins job for the scan result
 
 **sonar-project.properties**
 
@@ -135,7 +142,7 @@ sonar.coverage.jacoco.xmlReportPaths=./target/site/jacoco/jacoco.xml
 
 ```groovy
 #!groovy
-@Library('github.com/cloudogu/ces-build-lib@2.2.1')
+@Library('github.com/cloudogu/ces-build-lib@4.0.1')
 import com.cloudogu.ces.cesbuildlib.*
 
 node {
@@ -150,12 +157,12 @@ node {
     String credentialsId = 'scmCredentials'
 
     catchError {
-        // Add the usual Checkout, Build, Test, Integration Test stages here
+        // usual stages go here: Checkout, Build, Test, Integration Test
         stage("...") {}
         
         stage('SonarQube') {
             def scannerHome = tool name: 'sonar-scanner', type: 'hudson.plugins.sonar.SonarRunnerInstallation'
-            env.JAVA_HOME="${tool 'OpenJDK-11'}"
+            env.JAVA_HOME="${tool 'OpenJDK-17'}"
             withSonarQubeEnv {
                 gitWithCredentials("fetch --all", credentialsId)
 

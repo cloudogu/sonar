@@ -11,7 +11,7 @@ Dies ist nötig, damit das Plugin richtig ausgeführt werden kann und das Dogu s
 
 ### Manuelle Installation über das Volume
 1. Als CES-Shell-Administrator: das [SonarQube version appropriate community plugin](https://github.com/mc1arke/sonarqube-community-branch-plugin?tab=readme-ov-file#compatibility) als JAR herunterladen 
-2. Die heruntergeladene JAR-Datei nach `/var/lib/ces/sonar/volumes/extensions/plugins/` verschieben
+2. Die heruntergeladene JAR-Datei nach `/opt/sonar/extensions/plugins/` kopieren, z.B. mit `kubectl cp`
 3. SonarQube neustarten
 
 ### Installation über das Updatecenter
@@ -64,8 +64,13 @@ Das "Community Branch Plugin" kann auch über das Updatecenter installiert werde
 
 2. Die Update-Center `.properties`-Datei auf einem ohne Authentifizierung verfügbaren Web-Server hosten
 3. Die Dogu-Config für SonarQube anpassen:
-    * Update-Center-URL: `etcdctl set /config/sonar/sonar.updatecenter.url https://domain.de/update-center.properties`
-    * Default-Plugins, die beim Start installiert werden: `etcdctl set /config/sonar/sonar.plugins.default communityBranchPlugin`
+    * `kubectl edit configmap -n ecosystem jenkins-config`
+   ````yaml
+       data:
+         config.yaml: |
+           sonar.updatecenter.url: "https://domain.de/update-center.properties"
+           sonar.plugins.default: communityBranchPlugin
+   ````
 4. SonarQube neustarten
 
 > Bei der ersten Installation des "Community Branch Plugin" über das UpdateCenter, muss Sonar nocheinmal neugestarte werden, damit das Plugin, wie oben beschrieben, an die richtige Stelle kopiert wird.
@@ -73,21 +78,24 @@ Das "Community Branch Plugin" kann auch über das Updatecenter installiert werde
 > Wenn der Web-Server nicht über ein gültiges HTTPS-Zertifikat verfügt, kann das Update-Center nicht verwendet werden.
 > Damit dem Zertifikat verttraut werden kann, muss es im Dogu zu hinterlegt werden:
 > 1. Die Zertifikate müssen im PEM-Format vorliegen.
-> 2. Die Zertifikate müssen im `etcd` unterhalb von `/config/_global/certificate/additional/` vorliegen
+> 2. Die Zertifikate müssen in der Configmap `global-config` unterhalb von `certificate/additional/` vorliegen
 >   - Der Schlüsselname (auch _Alias_ genannt) dient der Adressierung und dogu-internen Ablage und sollte keine Leerzeichen enthalten.
 >   - Sinnvoll wäre hier die FQDN des Dienstes (etwa: `dienst.example.com`), damit später ein Zertifikat leichter wieder entfernt werden kann
 >   - Ein Schlüssel kann mehr als ein Zertifikat zu einem Dienst besitzen. Zertifikate im PEM-Format haben textuelle Markierungen, anhand dessen die Zertifikate wieder auseinander getrennt werden können.
-> 3. Der Schlüsselname, unter dem das Zertifikat abgelegt wurde, muss im `etcd` unter `/config/_global/certificate/additional/toc` abgelegt werden.
+> 3. Der Schlüsselname, unter dem das Zertifikat abgelegt wurde, muss im `etcd` unter `certificate/additional/toc` abgelegt werden.
 >   - Zertifikate unterschiedlicher Dienste müssen mit einem einzelnen Leerzeichen getrennt werden
 > 4. Dogu neustarten
 > 
 > Beispiel
-> ```shell
-> # Schlüsselname anlegen
-> etcdctl set /config/_global/certificate/additional/toc 35.198.174.144
-> # Zertifikat aus Datei anlegen
-> cat ./test.crt | etcdctl set /config/_global/certificate/additional/35.198.174.144
-> ```
+>  * `kubectl edit configmap -n ecosystem jenkins-config`
+> ````yaml
+>     data:
+>       config.yaml: |
+>         certificate:
+>           additional:
+>             toc: 35.198.174.144
+>             35.198.174.144: <Zertifikat>
+> ````
 
 ### Testen des SonarQube Community Plugin
 

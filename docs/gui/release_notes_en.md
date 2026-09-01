@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-14] - 2026-09-01
+### Changed
+- The documentation of old version was removed. References to Classic CES were replaced by MN CES.
+
 ## [v25.12.0-13] - 2026-08-14
 ### Fixed
 - A bug has been fixed in which values for global proxy configurations were retrieved from two different keys. Now, only one key is used. For more information, see the changelog.
