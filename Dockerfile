@@ -49,7 +49,7 @@ RUN rm sonarqube-webapp-${SONAR_BASE_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="25.12.0-13" \
+    VERSION="25.12.0-14" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
