@@ -2,7 +2,7 @@
 
 To import quality profiles into the SonarQube dogu please follow these steps:
 
-- Move your quality profile files (in xml format) to /var/lib/ces/sonar/volumes/qualityprofiles
-- Restart the sonar dogu (e.g. via `docker restart sonar`)
+- Move your quality profile files (in XML format) to `/var/lib/qualityprofiles`, for example with `kubectl cp`
+- Restart the sonar dogu (e.g. with `kubectl rollout restart deployment/sonar`)
 
-The profiles will be automatically imported into SonarQube and are usable in it as soon as it has started up.
+The profiles will be imported automatically into the SonarQube dogu and can be used as soon as the dogu has fully started.
