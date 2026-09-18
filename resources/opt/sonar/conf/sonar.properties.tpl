@@ -259,8 +259,10 @@ http.proxyUser={{ .GlobalConfig.GetOrDefault "proxy/username" "" }}
 http.proxyPassword={{ .GlobalConfig.GetOrDefault "proxy/password" "" }}
 {{ end }}
 
-http.nonProxyHosts={{ .GlobalConfig.GetOrDefault "proxy/no_proxy_hosts" "" }}
+# http.nonProxyHosts is appended by startup.sh.
+# the CES config key proxy/no_proxy_hosts is comma-separated, while Java expects a pipe-separated list.
 {{ end }}
+
 #--------------------------------------------------------------------------------------------------
 # LOGGING
 
