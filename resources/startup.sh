@@ -50,6 +50,8 @@ QUALITY_PROFILE_DIR="/var/lib/qualityprofiles"
 QUALITY_PROFILE_ZIP_FILE="${QUALITY_PROFILE_DIR}/profiles.zip"
 QUALITY_PROFILE_ZIP_SHA_SUM=""
 QUALITY_PROFILE_CURL_ARGS=()
+# SonarQube's own default, which must not get lost when the CES proxy excludes are added
+DEFAULT_NON_PROXY_HOSTS="localhost|127.*|[::1]"
 
 function setVariables() {
   # initialize database variables form util.sh
@@ -216,6 +218,37 @@ function importQualityProfiles() {
 
 function render_properties_template() {
   doguctl template "${SONAR_PROPERTIES_FILE}.tpl" "${SONAR_PROPERTIES_FILE}"
+  appendJavaNonProxyHosts
+}
+
+# appendJavaNonProxyHosts writes http.nonProxyHosts to the rendered sonar.properties.
+# The CES config key proxy/no_proxy_hosts is comma-separated, whereas Java expects a pipe-separated list, so the value cannot be used as is.
+# The FQDN is always excluded to keep CES internal traffic, e. g. webhooks, away from the proxy.
+function appendJavaNonProxyHosts() {
+  local proxyEnabled noProxyHosts fqdn nonProxyHosts
+  proxyEnabled=$(doguctl config --global --default "false" "proxy/enabled")
+  # ${var,,} converts to lowercase
+  if [[ "${proxyEnabled,,}" != "true" ]]; then
+    return
+  fi
+
+  nonProxyHosts="${DEFAULT_NON_PROXY_HOSTS}"
+
+  fqdn=$(doguctl config --global --default "" "fqdn")
+  if [[ -n "${fqdn}" ]]; then
+    nonProxyHosts="${nonProxyHosts}|${fqdn}"
+  fi
+
+  noProxyHosts=$(doguctl config --global --default "" "proxy/no_proxy_hosts")
+  # remove all whitespaces
+  noProxyHosts="${noProxyHosts// /}"
+  if [[ -n "${noProxyHosts}" ]]; then
+    # replace every comma with |
+    nonProxyHosts="${nonProxyHosts}|${noProxyHosts//,/|}"
+  fi
+
+  echo "Setting http.nonProxyHosts=${nonProxyHosts}"
+  echo "http.nonProxyHosts=${nonProxyHosts}" >> "${SONAR_PROPERTIES_FILE}"
 }
 
 function set_property_via_rest_api() {

@@ -6,6 +6,11 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v25.12.0-15] - 2026-09-21
+### Fixed
+- Outgoing connections of the SonarQube Dogu were routed through the proxy even if the target host was listed in proxy/no_proxy_hosts. Among other things, this caused the Jenkins notification after an analysis to fail.
+  - The instance's FQDN is now always excluded from proxy usage.
+
 ## [v25.12.0-14] - 2026-09-01
 ### Changed
 - The documentation of old version was removed. References to Classic CES were replaced by MN CES.

@@ -6,6 +6,11 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-15] - 2026-09-21
+### Fixed
+- Ausgehende Verbindungen des SonarQube-Dogus wurden auch dann über den Proxy geleitet, wenn der Zielhost in proxy/no_proxy_hosts eingetragen war. Dadurch schlug u. a. die Jenkins-Benachrichtigung nach einer Analyse fehl.
+  - Die FQDN der Instanz wird nun immer von der Proxy-Nutzung ausgenommen.
+
 ## [v25.12.0-14] - 2026-09-01
 ### Changed
 - Die Dokumentation veralteter Versionen wurde entfernt. Referenzen auf Classic-CES wurden durch MN-CES ersetzt.

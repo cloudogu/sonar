@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-15] - 2026-09-21
+### Fixed
+- [#189] convert the comma separated `proxy/no_proxy_hosts` into the pipe separated list Java expects for `http.nonProxyHosts`
+
 ## [v25.12.0-14] - 2026-09-01
 ### Added
 - [#185] update docs for multinode
