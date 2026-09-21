@@ -450,6 +450,72 @@ teardown() {
   assert_line "Returned http code 400 on getting profiles archive. Return"
 }
 
+@test "should convert the comma separated no_proxy_hosts into a pipe separated list" {
+  mock_set_status "${doguctl}" 0
+  # proxy/enabled
+  mock_set_output "${doguctl}" "true" 1
+  # fqdn
+  mock_set_output "${doguctl}" "ces.example.com" 2
+  # proxy/no_proxy_hosts
+  mock_set_output "${doguctl}" "*.example.com, cloudogu.com" 3
+
+  source /workspace/resources/startup.sh
+
+  export SONAR_PROPERTIES_FILE="${BATS_TMPDIR}/sonar.properties"
+  : > "${SONAR_PROPERTIES_FILE}"
+
+  run appendJavaNonProxyHosts
+
+  assert_success
+  assert_equal "$(mock_get_call_num "${doguctl}")" "3"
+  assert_equal "$(mock_get_call_args "${doguctl}" "1")" 'config --global --default false proxy/enabled'
+  assert_equal "$(mock_get_call_args "${doguctl}" "2")" 'config --global --default  fqdn'
+  assert_equal "$(mock_get_call_args "${doguctl}" "3")" 'config --global --default  proxy/no_proxy_hosts'
+  assert_equal "$(cat "${SONAR_PROPERTIES_FILE}")" 'http.nonProxyHosts=localhost|127.*|[::1]|ces.example.com|*.example.com|cloudogu.com'
+
+  /bin/rm -f "${SONAR_PROPERTIES_FILE}"
+  unset SONAR_PROPERTIES_FILE
+}
+
+@test "should keep the default non proxy hosts when no_proxy_hosts is empty" {
+  mock_set_status "${doguctl}" 0
+  mock_set_output "${doguctl}" "true" 1
+  mock_set_output "${doguctl}" "ces.example.com" 2
+  mock_set_output "${doguctl}" "" 3
+
+  source /workspace/resources/startup.sh
+
+  export SONAR_PROPERTIES_FILE="${BATS_TMPDIR}/sonar.properties"
+  : > "${SONAR_PROPERTIES_FILE}"
+
+  run appendJavaNonProxyHosts
+
+  assert_success
+  assert_equal "$(cat "${SONAR_PROPERTIES_FILE}")" 'http.nonProxyHosts=localhost|127.*|[::1]|ces.example.com'
+
+  /bin/rm -f "${SONAR_PROPERTIES_FILE}"
+  unset SONAR_PROPERTIES_FILE
+}
+
+@test "should not write non proxy hosts when the proxy is disabled" {
+  mock_set_status "${doguctl}" 0
+  mock_set_output "${doguctl}" "false" 1
+
+  source /workspace/resources/startup.sh
+
+  export SONAR_PROPERTIES_FILE="${BATS_TMPDIR}/sonar.properties"
+  : > "${SONAR_PROPERTIES_FILE}"
+
+  run appendJavaNonProxyHosts
+
+  assert_success
+  assert_equal "$(mock_get_call_num "${doguctl}")" "1"
+  assert_equal "$(cat "${SONAR_PROPERTIES_FILE}")" ''
+
+  /bin/rm -f "${SONAR_PROPERTIES_FILE}"
+  unset SONAR_PROPERTIES_FILE
+}
+
 @test "should set mail configuration" {
 
   mock_set_status "${psql}" 0
