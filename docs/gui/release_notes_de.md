@@ -6,6 +6,10 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v25.12.0-16] - 2026-09-22
+### Security
+- Dieses Release schließt eine Sicherheitslücke in doguctl, das über das Basis-Image eingebunden wird [CVE-2026-56854](https://avd.aquasec.com/nvd/2026/cve-2026-56854/)
+
 ## [v25.12.0-15] - 2026-09-21
 ### Fixed
 - Ausgehende Verbindungen des SonarQube-Dogus wurden auch dann über den Proxy geleitet, wenn der Zielhost in proxy/no_proxy_hosts eingetragen war. Dadurch schlug u. a. die Jenkins-Benachrichtigung nach einer Analyse fehl.

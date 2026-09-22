@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-16] - 2026-09-22
+### Changed
+- [#191] Update java base image to v21.0.12-1
+
+### Security
+- [#191] Fix [CVE-2026-56854](https://avd.aquasec.com/nvd/2026/cve-2026-56854/)
+
 ## [v25.12.0-15] - 2026-09-21
 ### Fixed
 - [#189] convert the comma separated `proxy/no_proxy_hosts` into the pipe separated list Java expects for `http.nonProxyHosts`
