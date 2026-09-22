@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Security
+- Dieses Release schließt eine Sicherheitslücke in doguctl, das über das Basis-Image eingebunden wird [CVE-2026-56854](https://avd.aquasec.com/nvd/2026/cve-2026-56854/)
 
 ## [v25.12.0-15] - 2026-09-21
 ### Fixed
