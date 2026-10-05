@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/cloudogu/go-cas/v2 v2.4.0
-	github.com/op/go-logging v0.0.0-20160211212156-b2cb9fa56473
+	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/stretchr/testify v1.12.1
 	github.com/vulcand/oxy/v2 v2.2.0
 	golang.org/x/time v0.16.0
