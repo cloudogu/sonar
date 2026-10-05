@@ -5,6 +5,11 @@ Below you will find the release notes for the SonarQube Dogu.
 Technical details on a release can be found in the corresponding [Changelog](https://docs.cloudogu.com/en/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Changed
+- The Dogu now offers SonarQube version v26.2.0. The release notes can be found [here](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
+  - SonarQube v26 no longer supports PostgreSQL 13. The PostgreSQL Dogu is therefore required in version v14.12-1 or newer.
+  - Upgrading to this version is only possible from SonarQube v25.x.
+  - Due to a known bug, a direct upgrade from SonarQube v25.x to v26.5 or newer is not possible. Upgrade to this version (v26.2.0) first.
 
 ## [v25.12.0-16] - 2026-09-22
 ### Security

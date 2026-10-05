@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- [#193] Update SonarQube to v26.2.0
+  - the webapp of the community-branch-plugin is updated to v26.2.0 accordingly
+- [#193] Update java base image to v21.0.12-2
+- [#193] Require postgresql dogu >= v14.12-1, as SonarQube v26.2 dropped support for PostgreSQL 13
+- [#193] Allow upgrade from SonarQube v25.x to v26.x
+- [#193] Prevent the direct upgrade from SonarQube v25.x to v26.5 or newer due to a known upgrade bug
+  - upgrade to v26.2.0 first
+- [#193] Bump go to v1.27.1
+- [#193] Bump go modules
+- [#193] Migrate sonarcarp mocks to mockery v3
 
 ## [v25.12.0-16] - 2026-09-22
 ### Changed
