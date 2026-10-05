@@ -16,7 +16,8 @@
   "Dependencies": [
     {
       "type": "dogu",
-      "name": "postgresql"
+      "name": "postgresql",
+      "Version": ">=14.12-1"
     },
     {
       "type": "dogu",
