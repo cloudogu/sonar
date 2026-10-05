@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#194] Allow unauthenticated requests to `/sonar/api/system/status` in sonarcarp
+  - SonarQube for IDE requests the server status without its token, which sonarcarp answered with HTTP 401
 
 ## [v25.12.0-16] - 2026-09-22
 ### Changed

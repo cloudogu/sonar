@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Fixed
+- SonarQube for IDE (SonarLint) konnte sich nicht mehr mit einem Benutzer-Token mit SonarQube verbinden. Die Verbindung funktioniert nun wieder.
 
 ## [v25.12.0-16] - 2026-09-22
 ### Security
