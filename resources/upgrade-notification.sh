@@ -28,13 +28,15 @@ function run_upgrade_notification() {
     exit 1
   fi
 
-  # Allow ONLY: (<8 -> 9) OR (9 -> 25)
+  # Allow ONLY: (<8 -> 9) OR (9 -> 25) OR (25 -> 26)
   if ! (( (FROM_MAJOR_VERSION == 8 && TO_MAJOR_VERSION == 9) \
-       || (FROM_MAJOR_VERSION == 9 && TO_MAJOR_VERSION == 25) )); then
+       || (FROM_MAJOR_VERSION == 9 && TO_MAJOR_VERSION == 25) \
+       || (FROM_MAJOR_VERSION == 25 && TO_MAJOR_VERSION == 26) )); then
     echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported."
     echo "Allowed upgrade paths are strictly:"
     echo "  - <8.x  -> 9.x"
     echo "  - 9.x   -> 25.x"
+    echo "  - 25.x  -> 26.x"
     echo "No other major transitions (including downgrades or same-version) are allowed."
     exit 1
   fi
