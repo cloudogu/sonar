@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v25.12.0-17] - 2026-10-07
+### Fixed
+- [#194] Allow unauthenticated requests to `/sonar/api/system/status` in sonarcarp
+  - SonarQube for IDE requests the server status without its token, which sonarcarp answered with HTTP 401
+
 ## [v25.12.0-16] - 2026-09-22
 ### Changed
 - [#191] Update java base image to v21.0.12-1
