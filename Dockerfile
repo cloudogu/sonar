@@ -6,7 +6,7 @@ ARG SONAR_VERSION=${SONAR_BASE_VERSION}.119303
 ARG SONARQUBE_ZIP_SHA256=601367a97dfacf7d0ba54e23ea54d77bdeef548cd1b5a7f2378a83eea931efa1
 ARG SONARQUBE_COMMUNITY_WEBAPP_ZIP_SHA256=17722659cbc27e6ee9147afdd93e22202e2899cbaa39650d3dcc5df30cdc1d11
 
-FROM golang:1.27.1 AS compiler-prod
+FROM golang:1.27.2 AS compiler-prod
 WORKDIR /app
 COPY sonarcarp /app
 COPY build /app/build
@@ -14,7 +14,7 @@ COPY build /app/build
 
 RUN make vendor compile-generic
 
-FROM golang:1.27.1-alpine3.23 AS compiler-debug
+FROM golang:1.27.2-alpine3.23 AS compiler-debug
 WORKDIR /app
 COPY sonarcarp /app
 

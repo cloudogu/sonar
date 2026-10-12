@@ -2,7 +2,7 @@ VERSION=26.2.0-0
 MAKEFILES_VERSION=11.0.0
 .DEFAULT_GOAL:=dogu-release
 
-GOTAG="1.27.1"
+GOTAG="1.27.2"
 GO_ENV_VARS=CGO_ENABLED=0 GOOS=linux
 
 include build/make/variables.mk
