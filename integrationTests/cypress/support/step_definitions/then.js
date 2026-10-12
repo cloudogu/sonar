@@ -8,7 +8,7 @@ Then(/^the page shows the replicated data of the user in tabular form$/, functio
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.get("#login").contains(testuserdata.username)
         cy.get("#email").contains(testuserdata.mail)
-        cy.get("#component-nav-portal").contains(testuserdata.displayName)
+        cy.get("#account-page nav").contains(testuserdata.displayName)
     })
 });
 
