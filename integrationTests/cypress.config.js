@@ -35,16 +35,18 @@ async function setupNodeEvents(on, config) {
 
     config = doguTestLibrary.configure(config);
 
-    if (!config.env.TAGS) {
-        config.env.TAGS = config.env.AdminUsername == "team-ces"
+    // Since Cypress 15.17 the cucumber preprocessor (v27+) reads the tag filter only from the
+    // lowercase "tags" key in config.expose (e.g. `cypress run --expose tags=...`), not from env.
+    if (!config.expose.tags) {
+        config.expose.tags = config.env.AdminUsername == "team-ces"
             ? "not @classic"
             : "not @multinode";
     } else {
-        config.env.TAGS += config.env.AdminUsername == "team-ces"
+        config.expose.tags = "(" + config.expose.tags + ")" + (config.env.AdminUsername == "team-ces"
             ? " and not @classic"
-            : " and not @multinode";
+            : " and not @multinode");
     }
-    config.env.TAGS += " and not @disabled"
+    config.expose.tags += " and not @disabled"
 
     return config;
 }
