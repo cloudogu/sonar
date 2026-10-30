@@ -11,6 +11,9 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
   - Ein Upgrade auf diese Version ist nur von SonarQube v25.x aus möglich.
   - Aufgrund eines bekannten Fehlers ist ein direktes Upgrade von SonarQube v25.x auf v26.5 oder neuer nicht möglich. Führen Sie zuerst ein Upgrade auf diese Version (v26.2.0) durch.
 
+### Fixed
+- Ein Upgrade von Dogu-Version v25.1.0-5 oder älter schlägt nicht mehr aufgrund des veralteten CAS-Plugins fehl, das den Start von SonarQube verhindert hat.
+
 ## [v25.12.0-16] - 2026-09-22
 ### Security
 - Dieses Release schließt eine Sicherheitslücke in doguctl, das über das Basis-Image eingebunden wird [CVE-2026-56854](https://avd.aquasec.com/nvd/2026/cve-2026-56854/)

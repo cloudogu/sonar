@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#193] Bump go modules
 - [#193] Migrate sonarcarp mocks to mockery v3
 
+### Fixed
+- [#193] Remove CAS plugin on startup instead of post-upgrade
+  - a leftover CAS plugin crashed SonarQube when upgrading from v25.1.0-5 or older to v26.x
+
 ## [v25.12.0-16] - 2026-09-22
 ### Changed
 - [#191] Update java base image to v21.0.12-1
