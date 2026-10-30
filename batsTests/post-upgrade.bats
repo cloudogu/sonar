@@ -37,41 +37,11 @@ teardown() {
   /bin/rm "${BATS_TMPDIR}/jq"
 }
 
-@test "removeCasPlugin should delete any version of the CAS plugin jar" {
-  sonarhome=$(mktemp -d)
-  mkdir -p "${sonarhome}"/extensions/plugins
-  file1="${sonarhome}"/extensions/plugins/sonar-cas-plugin-6.1.0.jar
-  file2="${sonarhome}"/extensions/plugins/sonar-cas-plugin-5.4.3.jar
-  touch ${file1}
-  touch ${file2}
-  assert_file_exist ${file1}
-  assert_file_exist ${file2}
-  export SONARQUBE_HOME="${sonarhome}"
-
-  source /workspace/resources/post-upgrade.sh
-
-  removeCasPlugin
-
-  assert_success
-  assert_file_not_exist ${file1}
-  assert_file_not_exist ${file2}
-}
-
-@test "run_post_upgrade should delete the CAS plugin jar if dogu upgrades from version 25.0" {
+@test "run_post_upgrade should succeed for upgrade from 25.0.1-5 to 25.1.0-6" {
   # given
   mock_set_output "${doguctl}" "600" 4
   mock_set_output "${curl}" "400" 1
   mock_set_output "${jq}" "MIGRATION_SUCCEEDED" 1
-
-  sonarhome=$(mktemp -d)
-  mkdir -p "${sonarhome}"/extensions/plugins
-  file1="${sonarhome}"/extensions/plugins/sonar-cas-plugin-6.1.0.jar
-  file2="${sonarhome}"/extensions/plugins/sonar-cas-plugin-5.4.3.jar
-  touch ${file1}
-  touch ${file2}
-  assert_file_exist ${file1}
-  assert_file_exist ${file2}
-  export SONARQUBE_HOME="${sonarhome}"
 
   source /workspace/resources/post-upgrade.sh
   reinstall_plugins(){
@@ -95,24 +65,13 @@ teardown() {
 
   assert_line "Running post-upgrade script..."
   assert_line "No db migration is needed"
-  assert_line "Deleting obsolete SonarQube CAS plugins..."
 }
 
-@test "run_post_upgrade should not delete the CAS plugin jar if dogu upgrades from version 6.25.0-1" {
+@test "run_post_upgrade should succeed for upgrade from 5.1.2-3 to 6.25.0.0-6" {
   # given
   mock_set_output "${doguctl}" "600" 4
   mock_set_output "${curl}" "400" 1
   mock_set_output "${jq}" "MIGRATION_SUCCEEDED" 1
-
-  sonarhome=$(mktemp -d)
-  mkdir -p "${sonarhome}"/extensions/plugins
-  file1="${sonarhome}"/extensions/plugins/sonar-cas-plugin-6.1.0.jar
-  file2="${sonarhome}"/extensions/plugins/sonar-cas-plugin-5.4.3.jar
-  touch ${file1}
-  touch ${file2}
-  assert_file_exist ${file1}
-  assert_file_exist ${file2}
-  export SONARQUBE_HOME="${sonarhome}"
 
   source /workspace/resources/post-upgrade.sh
   reinstall_plugins(){
@@ -136,5 +95,4 @@ teardown() {
 
   assert_line "Running post-upgrade script..."
   assert_line "No db migration is needed"
-  echo "${lines[@]}" | grep -q -v "Deleting obsolete SonarQube CAS plugins..."
 }
