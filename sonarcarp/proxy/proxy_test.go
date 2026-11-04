@@ -197,6 +197,39 @@ func TestProxyHandler_ServeHTTP(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, actualResp.StatusCode)
 
 	})
+	t.Run("Unauthenticated api request to an allowed resource is forwarded", func(t *testing.T) {
+		// SonarQube for IDE requests the server status without sending its token
+		cfgWithStatus := cfg
+		cfgWithStatus.CarpResourcePaths = []string{"^/sonar/api/system/status$"}
+		err := internal.InitStaticResourceMatchers(cfgWithStatus.CarpResourcePaths)
+		require.NoError(t, err)
+		defer internal.InitStaticResourceMatchers(cfg.CarpResourcePaths)
+
+		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "/sonar/api/system/status", r.URL.Path)
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer sonarMock.Close()
+		cfgWithStatus.ServiceUrl = sonarMock.URL
+
+		casClientMock := newMockCasClient(t)
+
+		sut, err := CreateProxyHandler(testHeaders, cfgWithStatus)
+		require.NoError(t, err)
+		sut.casClient = casClientMock
+		carpServer := httptest.NewServer(sut)
+		defer carpServer.Close()
+
+		req, err := http.NewRequest(http.MethodGet, carpServer.URL+testAppContextPath+"/api/system/status", nil)
+		req.Header.Add("User-Agent", "SonarQube for IDE (SonarLint) - IntelliJ 12.9.0.85269 - IntelliJ IDEA 2026.2.3")
+
+		// when
+		actualResp, err := http.DefaultClient.Do(req)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, actualResp.StatusCode)
+	})
 	t.Run("request to sessions that are no logout should be redirected to appContextPath", func(t *testing.T) {
 		sonarMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			t.Fatalf("unexpected sonar call to %s", r.URL.Path)

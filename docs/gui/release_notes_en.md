@@ -14,6 +14,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 ### Fixed
 - Upgrading from Dogu version v25.1.0-5 or older no longer fails because of the obsolete CAS plugin, which prevented SonarQube from starting.
 
+## [v25.12.0-17] - 2026-10-07
+### Fixed
+- SonarQube for IDE (SonarLint) could no longer connect to SonarQube with a user token. The connection now works again.
+
 ## [v25.12.0-16] - 2026-09-22
 ### Security
 - This release closes a security vulnerability in doguctl, bundled via the base image [CVE-2026-56854](https://avd.aquasec.com/nvd/2026/cve-2026-56854/)

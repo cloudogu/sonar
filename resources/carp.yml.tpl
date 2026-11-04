@@ -69,6 +69,8 @@ carp-resource-paths:
   - /sonar/images/
   - /sonar/js/
   - /sonar/batch/
+  # SonarQube for IDE (SonarLint) checks the server status without sending its token
+  - ^/sonar/api/system/status$
 
 # Throttling
 #
