@@ -47,3 +47,24 @@ teardown() {
   assert_failure
   assert_line --partial 'Your max virtual memory areas vm.max_map_count is too low'
 }
+
+@test "run_upgrade_notification should succeed for upgrade from 25.12.0-16 to 26.2.0-0" {
+  # note the sequence of sourcing and overwriting the map count variable
+  source /workspace/resources/upgrade-notification.sh
+  local CURRENT_MAX_MAP_COUNT=9999999
+
+  run run_upgrade_notification "25.12.0-16" "26.2.0-0"
+
+  assert_success
+}
+
+@test "run_upgrade_notification should fail for multi-hop upgrade from 9.9.1-3 to 26.2.0-0" {
+  # note the sequence of sourcing and overwriting the map count variable
+  source /workspace/resources/upgrade-notification.sh
+  local CURRENT_MAX_MAP_COUNT=9999999
+
+  run run_upgrade_notification "9.9.1-3" "26.2.0-0"
+
+  assert_failure
+  assert_line --partial 'Upgrade from version 9.9.1-3 to 26.2.0-0 is not supported'
+}

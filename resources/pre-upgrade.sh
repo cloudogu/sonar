@@ -14,6 +14,8 @@ function run_pre_upgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
   FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
+  TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
+  TO_MINOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f2)
 
   echo "Running pre-upgrade script..."
   echo "  FROM_VERSION: ${FROM_VERSION}"
@@ -22,6 +24,13 @@ function run_pre_upgrade() {
   if [[ ${FROM_MAJOR_VERSION} -lt 8 ]]; then
     echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 8.9.8-3 before."
     echo "It is not safe to migrate between several major versions in one step."
+    exit 1
+  fi
+
+  # A known bug breaks the direct upgrade from SonarQube 25.x to 26.5 or newer
+  if [[ ${FROM_MAJOR_VERSION} -eq 25 ]] && [[ ${TO_MAJOR_VERSION} -eq 26 ]] && [[ ${TO_MINOR_VERSION} -ge 5 ]]; then
+    echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 26.2.0 before."
+    echo "A direct upgrade from SonarQube 25.x to 26.5 or newer fails because of a known bug."
     exit 1
   fi
 

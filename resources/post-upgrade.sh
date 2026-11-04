@@ -49,13 +49,6 @@ reinstall_plugins() {
   fi
 }
 
-# Variables:
-# - SONARQUBE_HOME is a global variable being set from the Dockerfile.
-removeCasPlugin() {
-  echo "Deleting obsolete SonarQube CAS plugins..."
-  rm -f "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
-}
-
 run_post_upgrade() {
   # init variables from util.sh
   setDbVars
@@ -95,13 +88,6 @@ run_post_upgrade() {
     done
   else
     echo "No db migration is needed"
-  fi
-
-  if [[ ${FROM_VERSION} =~ ^[6789|25.1].* ]] && [[ ${TO_VERSION} =~ ^25.[1-9]* ]]; then
-    # use sonarcarp instead of the CAS plugin
-    removeCasPlugin
-  else
-    echo "skipping upgrade from ${FROM_VERSION} to ${TO_VERSION}"
   fi
 
 
