@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - upgrade to v26.2.0 first
 - [#193] Bump go to v1.27.3
 - [#193] Bump go modules
+- [#193] Update makefiles to v11.0.0
 - [#193] Migrate sonarcarp mocks to mockery v3
 
 ### Fixed
