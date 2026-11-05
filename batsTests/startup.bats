@@ -549,6 +549,25 @@ teardown() {
   assert_equal "$(contains "$actual_args" "created_at = EXCLUDED.created_at;")" "0"
 }
 
+@test "removeCasPlugin should delete any version of the CAS plugin jar" {
+  sonarhome=$(mktemp -d)
+  mkdir -p "${sonarhome}"/extensions/plugins
+  file1="${sonarhome}"/extensions/plugins/sonar-cas-plugin-5.4.3.jar
+  file2="${sonarhome}"/extensions/plugins/sonar-cas-plugin-6.1.0.jar
+  touch "${file1}" "${file2}"
+  export SONARQUBE_HOME="${sonarhome}"
+  mock_set_status "${rm}" 0
+
+  source /workspace/resources/startup.sh
+
+  run removeCasPlugin
+
+  assert_success
+  assert_line "Deleting obsolete SonarQube CAS plugins..."
+  assert_equal "$(mock_get_call_num "${rm}")" "1"
+  assert_equal "$(mock_get_call_args "${rm}" "1")" "-f ${file1} ${file2}"
+}
+
 function contains {
   if [[ $1 == *"$2"* ]]; then
     echo "0"

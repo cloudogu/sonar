@@ -573,6 +573,14 @@ function ensure_correct_branch_plugin_state() {
   export BRANCH_PLUGIN_CE_OPTS
 }
 
+# removeCasPlugin deletes leftover SonarQube CAS plugin jars from the plugin volume. Authentication is handled by
+# sonarcarp, so the CAS plugin is obsolete and crashes SonarQube on startup because its properties are no longer
+# rendered. This must happen before SonarQube starts, as the post-upgrade script only runs after a successful start.
+function removeCasPlugin() {
+  echo "Deleting obsolete SonarQube CAS plugins..."
+  rm -f "${SONARQUBE_HOME}"/extensions/plugins/sonar-cas-plugin-*.jar
+}
+
 function setDoguLogLevel() {
   local currentLogLevel SONAR_LOGLEVEL
   currentLogLevel=$(doguctl config "logging/root")
@@ -698,6 +706,8 @@ runMain() {
 
   echo "Ensure correct branch plugin state"
   ensure_correct_branch_plugin_state
+
+  removeCasPlugin
 
   echo "Configuring log level..."
   setDoguLogLevel

@@ -6,6 +6,16 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v26.2.0-1] - 2026-11-05
+### Changed
+- Das Dogu bietet nun die SonarQube Version v26.2.0 an. Die Release Notes finden Sie [hier](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
+  - SonarQube v26 unterstützt PostgreSQL 13 nicht mehr. Das PostgreSQL-Dogu wird daher in Version v14.12-1 oder neuer benötigt.
+  - Ein Upgrade auf diese Version ist nur von SonarQube v25.x aus möglich.
+  - Aufgrund eines bekannten Fehlers ist ein direktes Upgrade von SonarQube v25.x auf v26.5 oder neuer nicht möglich. Führen Sie zuerst ein Upgrade auf diese Version (v26.2.0) durch.
+
+### Fixed
+- Ein Upgrade von Dogu-Version v25.1.0-5 oder älter schlägt nicht mehr aufgrund des veralteten CAS-Plugins fehl, das den Start von SonarQube verhindert hat.
+
 ## [v25.12.0-17] - 2026-10-07
 ### Fixed
 - SonarQube for IDE (SonarLint) konnte sich nicht mehr mit einem Benutzer-Token mit SonarQube verbinden. Die Verbindung funktioniert nun wieder.

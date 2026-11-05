@@ -1,12 +1,12 @@
 ARG STAGE=prod
-ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.12-1
+ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.13-1
 
-ARG SONAR_BASE_VERSION=25.12.0
-ARG SONAR_VERSION=${SONAR_BASE_VERSION}.117093
-ARG SONARQUBE_ZIP_SHA256=09215f6f6a56db484946e4355c9801fa357eb92eedc99a2bebedf1d7ae21a341
-ARG SONARQUBE_COMMUNITY_WEBAPP_ZIP_SHA256=a91f68bb65474cb607a1929d1a2c08befcc7da3f5b8775422325322c105ebd21
+ARG SONAR_BASE_VERSION=26.2.0
+ARG SONAR_VERSION=${SONAR_BASE_VERSION}.119303
+ARG SONARQUBE_ZIP_SHA256=601367a97dfacf7d0ba54e23ea54d77bdeef548cd1b5a7f2378a83eea931efa1
+ARG SONARQUBE_COMMUNITY_WEBAPP_ZIP_SHA256=17722659cbc27e6ee9147afdd93e22202e2899cbaa39650d3dcc5df30cdc1d11
 
-FROM golang:1.26.8 AS compiler-prod
+FROM golang:1.27.3 AS compiler-prod
 WORKDIR /app
 COPY sonarcarp /app
 COPY build /app/build
@@ -14,7 +14,7 @@ COPY build /app/build
 
 RUN make vendor compile-generic
 
-FROM golang:1.26.8-alpine3.23 AS compiler-debug
+FROM golang:1.27.3-alpine3.23 AS compiler-debug
 WORKDIR /app
 COPY sonarcarp /app
 
@@ -49,7 +49,7 @@ RUN rm sonarqube-webapp-${SONAR_BASE_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="25.12.0-17" \
+    VERSION="26.2.0-1" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
