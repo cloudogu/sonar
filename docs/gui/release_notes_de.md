@@ -5,6 +5,8 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+
+## [v26.2.0-2] - 2026-11-23
 ### Security
 - Sicherheitslücke [CVE-2026-114938](https://nvd.nist.gov/vuln/detail/CVE-2026-114938) (Java4Shell) geschlossen
 
