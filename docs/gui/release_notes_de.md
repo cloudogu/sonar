@@ -6,6 +6,10 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 
+## [v26.2.0-2] - 2026-11-23
+### Security
+- Sicherheitslücke [CVE-2026-114938](https://nvd.nist.gov/vuln/detail/CVE-2026-114938) (Java4Shell) geschlossen
+
 ## [v26.2.0-1] - 2026-11-05
 ### Changed
 - Das Dogu bietet nun die SonarQube Version v26.2.0 an. Die Release Notes finden Sie [hier](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).

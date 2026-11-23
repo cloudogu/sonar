@@ -1,5 +1,5 @@
 ARG STAGE=prod
-ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.13-1
+ARG BASE_IMAGE=registry.cloudogu.com/official/java:21.0.13-3
 
 ARG SONAR_BASE_VERSION=26.2.0
 ARG SONAR_VERSION=${SONAR_BASE_VERSION}.119303
@@ -49,7 +49,7 @@ RUN rm sonarqube-webapp-${SONAR_BASE_VERSION}.zip
 FROM ${BASE_IMAGE} AS base
 
 LABEL NAME="official/sonar" \
-    VERSION="26.2.0-1" \
+    VERSION="26.2.0-2" \
     maintainer="hello@cloudogu.com"
 
 ARG SONAR_VERSION
