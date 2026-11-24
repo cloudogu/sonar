@@ -145,7 +145,7 @@ function prepareQualityProfileCurlArgs() {
 
   proxyEnabled=$(doguctl config --global "proxy/enabled")
   if [[ "${proxyEnabled,,}" == "true" ]]; then
-    no_proxy_hosts=$(doguctl config --global "proxy/no_proxy_hosts")
+    no_proxy_hosts=$(readNoProxyHosts) || return
     export no_proxy=$no_proxy_hosts # export for curl
 
     proxyUrl=$(doguctl config --default "empty" --global "proxy/server")
@@ -221,6 +221,15 @@ function render_properties_template() {
   appendJavaNonProxyHosts
 }
 
+function readNoProxyHosts() {
+  local noProxyHosts
+  # doguctl treats an empty default as no default.
+  noProxyHosts=$(doguctl config --global --default " " "proxy/no_proxy_hosts") || return
+  if [[ "$noProxyHosts" != " " ]]; then
+    printf '%s' "$noProxyHosts"
+  fi
+}
+
 # appendJavaNonProxyHosts writes http.nonProxyHosts to the rendered sonar.properties.
 # The CES config key proxy/no_proxy_hosts is comma-separated, whereas Java expects a pipe-separated list, so the value cannot be used as is.
 # The FQDN is always excluded to keep CES internal traffic, e. g. webhooks, away from the proxy.
@@ -239,7 +248,7 @@ function appendJavaNonProxyHosts() {
     nonProxyHosts="${nonProxyHosts}|${fqdn}"
   fi
 
-  noProxyHosts=$(doguctl config --global --default "" "proxy/no_proxy_hosts")
+  noProxyHosts=$(readNoProxyHosts) || return
   # remove all whitespaces
   noProxyHosts="${noProxyHosts// /}"
   if [[ -n "${noProxyHosts}" ]]; then

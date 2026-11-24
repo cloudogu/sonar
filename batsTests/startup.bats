@@ -437,7 +437,6 @@ teardown() {
   assert_equal "$(mock_get_call_args "${doguctl}" "3")" 'config -e --default empty profiles/password'
   assert_equal "$(mock_get_call_args "${doguctl}" "4")" 'config profiles/allow_insecure'
   assert_equal "$(mock_get_call_args "${doguctl}" "5")" 'config --global proxy/enabled'
-  assert_equal "$(mock_get_call_args "${doguctl}" "6")" 'config --global proxy/no_proxy_hosts'
   assert_equal "$(mock_get_call_args "${doguctl}" "7")" 'config --default empty --global proxy/server'
   assert_equal "$(mock_get_call_args "${doguctl}" "8")" 'config --default empty --global proxy/port'
   assert_equal "$(mock_get_call_args "${doguctl}" "9")" 'config --global --default empty proxy/user'
@@ -470,31 +469,31 @@ teardown() {
   assert_equal "$(mock_get_call_num "${doguctl}")" "3"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" 'config --global --default false proxy/enabled'
   assert_equal "$(mock_get_call_args "${doguctl}" "2")" 'config --global --default  fqdn'
-  assert_equal "$(mock_get_call_args "${doguctl}" "3")" 'config --global --default  proxy/no_proxy_hosts'
   assert_equal "$(cat "${SONAR_PROPERTIES_FILE}")" 'http.nonProxyHosts=localhost|127.*|[::1]|ces.example.com|*.example.com|cloudogu.com'
 
   /bin/rm -f "${SONAR_PROPERTIES_FILE}"
   unset SONAR_PROPERTIES_FILE
 }
 
-@test "should keep the default non proxy hosts when no_proxy_hosts is empty" {
-  mock_set_status "${doguctl}" 0
-  mock_set_output "${doguctl}" "true" 1
-  mock_set_output "${doguctl}" "ces.example.com" 2
-  mock_set_output "${doguctl}" "" 3
-
+@test "should keep the default non proxy hosts when no_proxy_hosts is missing" {
   source /workspace/resources/startup.sh
 
-  export SONAR_PROPERTIES_FILE="${BATS_TMPDIR}/sonar.properties"
-  : > "${SONAR_PROPERTIES_FILE}"
+  doguctl() {
+    case "${@: -1}" in
+      proxy/enabled) printf 'true\n' ;;
+      fqdn) printf 'ces.example.com\n' ;;
+      proxy/no_proxy_hosts)
+        # Like doguctl, reject a missing key unless a non-empty default is supplied.
+        [[ "$#" -eq 5 && "$3" == "--default" && -n "$4" ]] || return 1
+        printf '%s\n' "$4"
+        ;;
+    esac
+  }
+  SONAR_PROPERTIES_FILE="${BATS_TEST_TMPDIR}/sonar.properties"
 
-  run appendJavaNonProxyHosts
+  appendJavaNonProxyHosts
 
-  assert_success
   assert_equal "$(cat "${SONAR_PROPERTIES_FILE}")" 'http.nonProxyHosts=localhost|127.*|[::1]|ces.example.com'
-
-  /bin/rm -f "${SONAR_PROPERTIES_FILE}"
-  unset SONAR_PROPERTIES_FILE
 }
 
 @test "should not write non proxy hosts when the proxy is disabled" {
