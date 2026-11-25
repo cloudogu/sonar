@@ -32,20 +32,30 @@ teardown() {
   assert_equal "$(mock_get_call_num "${doguctl}")" "0"
 }
 
-@test "run_pre_upgrade should succeed for upgrade from 25.12.0-16 to 26.2.0-0" {
+@test "run_pre_upgrade should collect installed plugins for upgrade from 25.12.0-16 to 26.2.0-0" {
   source /workspace/resources/pre-upgrade.sh
+
+  collectInstalledPlugins() {
+    echo "collectInstalledPlugins null implementation"
+  }
 
   run run_pre_upgrade "25.12.0-16" "26.2.0-0"
 
   assert_success
+  assert_line "collectInstalledPlugins null implementation"
+  assert_equal "$(mock_get_call_num "${doguctl}")" "1"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" "config post_upgrade_running true"
 }
 
 @test "run_pre_upgrade should succeed for upgrade from 26.2.0-0 to 26.5.0-0" {
   source /workspace/resources/pre-upgrade.sh
+  collectInstalledPlugins() {
+    echo "collectInstalledPlugins null implementation"
+  }
 
   run run_pre_upgrade "26.2.0-0" "26.5.0-0"
 
   assert_success
+  refute_line "collectInstalledPlugins null implementation"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" "config post_upgrade_running true"
 }

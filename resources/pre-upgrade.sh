@@ -42,6 +42,10 @@ function run_pre_upgrade() {
     collectInstalledPlugins
   fi
 
+  if [[ ${FROM_MAJOR_VERSION} -eq 25 ]] && [[ ${TO_MAJOR_VERSION} -eq 26 ]]; then
+    collectInstalledPlugins
+  fi
+
   # set this so the startup.sh waits for the post_upgrade to finish
   doguctl config post_upgrade_running true
 }
