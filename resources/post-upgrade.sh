@@ -49,6 +49,31 @@ reinstall_plugins() {
   fi
 }
 
+# Dogu versions v26.2.0-1 to v26.2.0-3 did not reinstall plugins when upgrading from SonarQube v25.x,
+# so instances upgraded to one of these versions still run their outdated v25.x plugins.
+is_affected_by_missing_plugin_update() {
+  local fromVersion="${1}"
+  [[ ${fromVersion} =~ ^26\.2\.0-[123]$ ]]
+}
+
+update_plugins() {
+  echo "Waiting for SonarQube to get up (max ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_up "${HEALTH_TIMEOUT}"
+
+  create_temporary_admin
+
+  echo "Waiting for SonarQube to get healthy (max. ${HEALTH_TIMEOUT} seconds)..."
+  wait_for_sonar_to_get_healthy "${HEALTH_TIMEOUT}" "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}" "${CURL_LOG_LEVEL}"
+
+  echo "SonarQube is healthy, start updating plugins..."
+  # do not fail the post-upgrade (and block the dogu start) if the update center is not reachable
+  if ! check_for_updates "${TEMPORARY_ADMIN_USER}" "${TEMPORARY_ADMIN_PASSWORD}"; then
+    echo "WARNING: Could not update plugins. Please update them manually via Administration -> Marketplace."
+  fi
+
+  remove_all_temporary_admins_users_and_groups
+}
+
 run_post_upgrade() {
   # init variables from util.sh
   setDbVars
@@ -104,6 +129,11 @@ run_post_upgrade() {
   if (( FROM_MAJOR_VERSION == 25 && TO_MAJOR_VERSION == 26 )); then
     # reinstall missing plugins if there are any
     reinstall_plugins
+  fi
+
+  if is_affected_by_missing_plugin_update "${FROM_VERSION}"; then
+    echo "Upgrading from ${FROM_VERSION}: updating plugins that were not updated during the upgrade from SonarQube v25.x..."
+    update_plugins
   fi
 
   if (( FROM_MAJOR_VERSION > 9 && TO_MAJOR_VERSION < 26 )); then
