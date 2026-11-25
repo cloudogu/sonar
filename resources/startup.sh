@@ -223,9 +223,9 @@ function render_properties_template() {
 
 function readNoProxyHosts() {
   local noProxyHosts
-  # doguctl treats an empty default as no default.
-  noProxyHosts=$(doguctl config --global --default " " "proxy/no_proxy_hosts") || return
-  if [[ "$noProxyHosts" != " " ]]; then
+  # doguctl treats an empty default as no default, so a missing key needs the "empty" placeholder.
+  noProxyHosts=$(doguctl config --global --default "empty" "proxy/no_proxy_hosts") || return
+  if [[ "$noProxyHosts" != "empty" ]]; then
     printf '%s' "$noProxyHosts"
   fi
 }

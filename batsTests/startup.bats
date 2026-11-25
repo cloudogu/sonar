@@ -437,6 +437,7 @@ teardown() {
   assert_equal "$(mock_get_call_args "${doguctl}" "3")" 'config -e --default empty profiles/password'
   assert_equal "$(mock_get_call_args "${doguctl}" "4")" 'config profiles/allow_insecure'
   assert_equal "$(mock_get_call_args "${doguctl}" "5")" 'config --global proxy/enabled'
+  assert_equal "$(mock_get_call_args "${doguctl}" "6")" 'config --global --default empty proxy/no_proxy_hosts'
   assert_equal "$(mock_get_call_args "${doguctl}" "7")" 'config --default empty --global proxy/server'
   assert_equal "$(mock_get_call_args "${doguctl}" "8")" 'config --default empty --global proxy/port'
   assert_equal "$(mock_get_call_args "${doguctl}" "9")" 'config --global --default empty proxy/user'
@@ -468,7 +469,9 @@ teardown() {
   assert_success
   assert_equal "$(mock_get_call_num "${doguctl}")" "3"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" 'config --global --default false proxy/enabled'
-  assert_equal "$(mock_get_call_args "${doguctl}" "2")" 'config --global --default  fqdn'
+  local emptyDefault=""
+  assert_equal "$(mock_get_call_args "${doguctl}" "2")" "config --global --default ${emptyDefault} fqdn"
+  assert_equal "$(mock_get_call_args "${doguctl}" "3")" 'config --global --default empty proxy/no_proxy_hosts'
   assert_equal "$(cat "${SONAR_PROPERTIES_FILE}")" 'http.nonProxyHosts=localhost|127.*|[::1]|ces.example.com|*.example.com|cloudogu.com'
 
   /bin/rm -f "${SONAR_PROPERTIES_FILE}"
