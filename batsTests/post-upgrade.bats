@@ -67,6 +67,47 @@ teardown() {
   assert_line "No db migration is needed"
 }
 
+@test "run_post_upgrade should reinstall plugins for upgrade from 25.12.0-16 to 26.2.0-4" {
+  # given
+  mock_set_output "${doguctl}" "600" 4
+  mock_set_output "${curl}" "400" 1
+  mock_set_output "${jq}" "MIGRATION_SUCCEEDED" 1
+
+  source /workspace/resources/post-upgrade.sh
+  reinstall_plugins(){
+    echo "reinstall_plugins null implementation"
+  }
+
+  # when
+  run run_post_upgrade 25.12.0-16 26.2.0-4
+
+  # then
+  assert_success
+  assert_line "reinstall_plugins null implementation"
+  assert_equal "$(mock_get_call_num "${doguctl}")" "6"
+  assert_equal "$(mock_get_call_args "${doguctl}" "6")" 'config post_upgrade_running false'
+}
+
+@test "run_post_upgrade should not reinstall plugins for upgrade from 26.2.0-3 to 26.2.0-4" {
+  # given
+  mock_set_output "${doguctl}" "600" 4
+  mock_set_output "${curl}" "400" 1
+  mock_set_output "${jq}" "MIGRATION_SUCCEEDED" 1
+
+  source /workspace/resources/post-upgrade.sh
+  reinstall_plugins(){
+    echo "reinstall_plugins null implementation"
+  }
+
+  # when
+  run run_post_upgrade 26.2.0-3 26.2.0-4
+
+  # then
+  assert_success
+  refute_line "reinstall_plugins null implementation"
+  assert_equal "$(mock_get_call_num "${doguctl}")" "6"
+}
+
 @test "run_post_upgrade should succeed for upgrade from 5.1.2-3 to 6.25.0.0-6" {
   # given
   mock_set_output "${doguctl}" "600" 4

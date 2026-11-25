@@ -101,6 +101,11 @@ run_post_upgrade() {
     reinstall_plugins
   fi
 
+  if (( FROM_MAJOR_VERSION == 25 && TO_MAJOR_VERSION == 26 )); then
+    # reinstall missing plugins if there are any
+    reinstall_plugins
+  fi
+
   if (( FROM_MAJOR_VERSION > 9 && TO_MAJOR_VERSION < 26 )); then
     cleanUpLegacyTemporaryAdmins
   fi
