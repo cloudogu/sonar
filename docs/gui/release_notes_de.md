@@ -5,6 +5,9 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Fixed
+- Installierte Plugins werden beim Upgrade von SonarQube v25.x auf v26.x nun wieder aktualisiert.
+  - Wenn Sie bereits von SonarQube v25.x auf die Dogu-Version v26.2.0-1, v26.2.0-2 oder v26.2.0-3 aktualisiert haben, wurden Ihre Plugins nicht aktualisiert. Sie werden beim Upgrade auf diese Version automatisch aktualisiert. Falls SonarQube sein Update Center nicht erreichen kann, aktualisieren Sie die Plugins bitte manuell unter *Administration → Marketplace → Updates* und starten Sie SonarQube anschließend neu.
 
 ## [v26.2.0-3] - 2026-11-25
 ### Fixed

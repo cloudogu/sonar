@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#201] Reinstall plugins on upgrade from SonarQube v25.x to v26.x
+- [#201] Update plugins on upgrade from v26.2.0-1, v26.2.0-2 or v26.2.0-3
+  - these versions did not update plugins on upgrades from v25.x
 
 ## [v26.2.0-3] - 2026-11-25
 ### Fixed
