@@ -6,6 +6,10 @@ Technical details on a release can be found in the corresponding [Changelog](htt
 
 ## [Unreleased]
 
+## [v26.2.0-3] - 2026-11-25
+### Fixed
+- SonarQube did not start if the proxy was enabled but proxy/no_proxy_hosts was not set. The error occurred since version v25.12.0-15.
+
 ## [v26.2.0-2] - 2026-11-23
 ### Security
 - Fix vulnerability [CVE-2026-114938](https://nvd.nist.gov/vuln/detail/CVE-2026-114938) (Java4Shell)
