@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- [#201] Update SonarQube to v26.9.0
+- [#201] Only allow upgrades to SonarQube v26.x from v25.12
+- [#201] Bump go to v1.27.4
+
+### Fixed
+- [#201] Reinstall plugins on upgrade from SonarQube v25.x to v26.x
+- [#201] Update plugins on upgrade from v26.2.0-1, v26.2.0-2 or v26.2.0-3
+- [#201] Wait for SonarQube to be ready before collecting plugins in pre-upgrade
+- [#201] Remove temporary admin in pre-upgrade even if collecting plugins fails
 
 ## [v26.2.0-3] - 2026-11-25
 ### Fixed
@@ -26,7 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#193] Require postgresql dogu >= v14.12-1, as SonarQube v26.2 dropped support for PostgreSQL 13
 - [#193] Allow upgrade from SonarQube v25.x to v26.x
 - [#193] Prevent the direct upgrade from SonarQube v25.x to v26.5 or newer due to a known upgrade bug
-  - upgrade to v26.2.0 first
 - [#193] Bump go to v1.27.3
 - [#193] Bump go modules
 - [#193] Update makefiles to v11.2.0

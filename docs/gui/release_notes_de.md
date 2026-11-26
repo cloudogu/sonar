@@ -5,6 +5,15 @@ Im Folgenden finden Sie die Release Notes für das SonarQube-Dogu.
 Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https://docs.cloudogu.com/de/docs/dogus/sonar/CHANGELOG/).
 
 ## [Unreleased]
+### Changed
+- Das Dogu bietet nun die SonarQube Version v26.9.0 an. Die Release Notes finden Sie [hier](https://docs.sonarsource.com/sonarqube-community-build/server-update-and-maintenance/release-notes).
+- Ein Upgrade auf diese Version ist nur von SonarQube v25.12 oder neuer aus möglich. 
+
+### Fixed
+- Plugins werden beim Upgrade von SonarQube v25.x auf v26.x wieder aktualisiert.
+- Plugins, die von den Dogu-Versionen v26.2.0-1 bis v26.2.0-3 nicht aktualisiert wurden, werden mit dieser Version aktualisiert.
+- Upgrades schlagen nicht mehr fehl, wenn SonarQube zu Beginn des Upgrades noch startet.
+- Ein fehlgeschlagenes Upgrade hinterlässt keine temporären Administrator-Konten mehr in SonarQube.
 
 ## [v26.2.0-3] - 2026-11-25
 ### Fixed
