@@ -57,6 +57,11 @@ function collectInstalledPlugins() {
     setDbVars
   fi
 
+  if ! waitForSonarToBeReady "$(doguctl config --default "600" "health_timeout_seconds")"; then
+    echo "Could not collect the installed plugins because SonarQube is not ready."
+    exit 1
+  fi
+
   TEMPORARY_ADMIN_GROUP=$(doguctl random)
   TEMPORARY_ADMIN_USER=$(doguctl random)
   TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
@@ -85,6 +90,28 @@ function collectInstalledPlugins() {
   remove_group "${TEMPORARY_ADMIN_GROUP}"
 
   mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
+}
+
+# Waits until the dogu has finished its startup and SonarQube is up. The dogu reports itself as healthy while the
+# startup script still restarts SonarQube, so the SonarQube status alone is not sufficient.
+# This script runs in the old container, so only doguctl and curl are used and no functions from its util.sh.
+function waitForSonarToBeReady() {
+  local timeout="${1}" waited=0 state status
+  echo "Waiting for SonarQube to be ready (max. ${timeout} seconds)..."
+  while true; do
+    state="$(doguctl state 2>/dev/null || true)"
+    status="$(curl --silent --max-time 10 http://localhost:9000/sonar/api/system/status 2>/dev/null || true)"
+    if [[ "${state}" == "ready" ]] && [[ "${status}" == *'"status":"UP"'* ]]; then
+      echo "SonarQube is ready"
+      return 0
+    fi
+    if [[ ${waited} -ge ${timeout} ]]; then
+      echo "SonarQube did not get ready within ${timeout} seconds (dogu state: '${state}', SonarQube status: '${status}')."
+      return 1
+    fi
+    sleep 5
+    waited=$((waited + 5))
+  done
 }
 
 # make the script only run when executed, not when sourced from bats tests)

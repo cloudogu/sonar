@@ -83,3 +83,48 @@ teardown() {
   refute_line "collectInstalledPlugins null implementation"
   assert_equal "$(mock_get_call_args "${doguctl}" "1")" "config post_upgrade_running true"
 }
+
+@test "waitForSonarToBeReady should succeed if the dogu is ready and SonarQube is up" {
+  source /workspace/resources/pre-upgrade.sh
+  curl="$(mock_create)"
+  ln -s "${curl}" "${BATS_TMPDIR}/curl"
+  mock_set_output "${doguctl}" "ready" 1
+  mock_set_output "${curl}" '{"id":"1","version":"25.12.0.117093","status":"UP"}' 1
+
+  run waitForSonarToBeReady 10
+
+  rm "${BATS_TMPDIR}/curl"
+  assert_success
+  assert_line "SonarQube is ready"
+  assert_equal "$(mock_get_call_args "${doguctl}" "1")" "state"
+}
+
+@test "waitForSonarToBeReady should fail if the dogu is still starting after the timeout" {
+  source /workspace/resources/pre-upgrade.sh
+  curl="$(mock_create)"
+  ln -s "${curl}" "${BATS_TMPDIR}/curl"
+  mock_set_output "${doguctl}" "configuring..." 1
+  mock_set_output "${curl}" '{"id":"1","version":"25.12.0.117093","status":"UP"}' 1
+
+  run waitForSonarToBeReady 0
+
+  rm "${BATS_TMPDIR}/curl"
+  assert_failure
+  assert_line --partial "SonarQube did not get ready within 0 seconds (dogu state: 'configuring...'"
+}
+
+@test "collectInstalledPlugins should not create a temporary admin if SonarQube does not get ready" {
+  source /workspace/resources/pre-upgrade.sh
+  waitForSonarToBeReady() {
+    return 1
+  }
+  add_temporary_admin_group() {
+    echo "add_temporary_admin_group called"
+  }
+
+  run collectInstalledPlugins
+
+  assert_failure
+  assert_line "Could not collect the installed plugins because SonarQube is not ready."
+  refute_line "add_temporary_admin_group called"
+}
