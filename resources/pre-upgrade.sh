@@ -51,6 +51,12 @@ function run_pre_upgrade() {
 }
 
 function collectInstalledPlugins() {
+  # This script runs in the old container and sources its util.sh. Newer versions (e.g. 25.x) only initialize the
+  # database variables via 'setDbVars', older versions (8.x, 9.9) do not provide this function.
+  if declare -F setDbVars >/dev/null; then
+    setDbVars
+  fi
+
   TEMPORARY_ADMIN_GROUP=$(doguctl random)
   TEMPORARY_ADMIN_USER=$(doguctl random)
   TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
