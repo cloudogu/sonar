@@ -6,8 +6,8 @@ Technische Details zu einem Release finden Sie im zugehörigen [Changelog](https
 
 ## [Unreleased]
 ### Fixed
-- Installierte Plugins werden beim Upgrade von SonarQube v25.x auf v26.x nun wieder aktualisiert.
-  - Wenn Sie bereits von SonarQube v25.x auf die Dogu-Version v26.2.0-1, v26.2.0-2 oder v26.2.0-3 aktualisiert haben, wurden Ihre Plugins nicht aktualisiert. Sie werden beim Upgrade auf diese Version automatisch aktualisiert. Falls SonarQube sein Update Center nicht erreichen kann, aktualisieren Sie die Plugins bitte manuell unter *Administration → Marketplace → Updates* und starten Sie SonarQube anschließend neu.
+- Plugins werden beim Upgrade von SonarQube v25.x auf v26.x wieder aktualisiert.
+- Plugins, die von den Dogu-Versionen v26.2.0-1 bis v26.2.0-3 nicht aktualisiert wurden, werden mit dieser Version aktualisiert.
 
 ## [v26.2.0-3] - 2026-11-25
 ### Fixed
