@@ -128,3 +128,36 @@ teardown() {
   assert_line "Could not collect the installed plugins because SonarQube is not ready."
   refute_line "add_temporary_admin_group called"
 }
+
+@test "collectInstalledPlugins should remove the prefixed temporary admin if collecting the plugins fails" {
+  source /workspace/resources/pre-upgrade.sh
+  mock_set_output "${doguctl}" "abc123"
+  waitForSonarToBeReady() {
+    return 0
+  }
+  add_temporary_admin_group() {
+    echo "add_temporary_admin_group ${1}"
+  }
+  add_user() {
+    echo "add_user ${1}"
+  }
+  assign_group() {
+    echo "assign_group failed"
+    exit 1
+  }
+  remove_user() {
+    echo "remove_user ${1}"
+  }
+  remove_group() {
+    echo "remove_group ${1}"
+  }
+
+  run collectInstalledPlugins
+
+  assert_failure
+  assert_line "add_temporary_admin_group TMP_CES_ADMIN_abc123"
+  assert_line "add_user TMP_CES_ADMIN_abc123"
+  assert_line "assign_group failed"
+  assert_line "remove_user TMP_CES_ADMIN_abc123"
+  assert_line "remove_group TMP_CES_ADMIN_abc123"
+}

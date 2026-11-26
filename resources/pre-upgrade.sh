@@ -10,6 +10,8 @@ if [[ ${sourcingExitCode} -ne 0 ]]; then
   echo "ERROR: An error occurred while sourcing ${STARTUP_DIR}util.sh."
 fi
 
+PRE_UPGRADE_TEMPORARY_ADMIN_PREFIX="TMP_CES_ADMIN"
+
 function run_pre_upgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
@@ -62,9 +64,14 @@ function collectInstalledPlugins() {
     exit 1
   fi
 
-  TEMPORARY_ADMIN_GROUP=$(doguctl random)
-  TEMPORARY_ADMIN_USER=$(doguctl random)
+  # Use the same prefix as the util.sh of newer versions, so that their startup removes leftovers of this user as well.
+  # It is defined here because the util.sh of older versions does not provide it.
+  TEMPORARY_ADMIN_GROUP="${PRE_UPGRADE_TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
+  TEMPORARY_ADMIN_USER="${PRE_UPGRADE_TEMPORARY_ADMIN_PREFIX}_$(doguctl random)"
   TEMPORARY_ADMIN_PASSWORD=$(doguctl random)
+
+  # remove the temporary admin even if collecting the plugins fails
+  trap removeTemporaryAdmin EXIT
 
   echo "Creating temporary user \"${TEMPORARY_ADMIN_USER}\"..."
   add_temporary_admin_group "${TEMPORARY_ADMIN_GROUP}"
@@ -85,11 +92,16 @@ function collectInstalledPlugins() {
     doguctl config install_plugins "${SAVED_PLUGIN_NAMES}"
   fi
 
-  echo "Remove temporary admin user"
-  remove_user "${TEMPORARY_ADMIN_USER}"
-  remove_group "${TEMPORARY_ADMIN_GROUP}"
+  removeTemporaryAdmin
+  trap - EXIT
 
   mv /opt/sonar/extensions/plugins "/opt/sonar/extensions/plugins-${FROM_VERSION}"
+}
+
+function removeTemporaryAdmin() {
+  echo "Remove temporary admin user"
+  remove_user "${TEMPORARY_ADMIN_USER}" || echo "WARNING: Could not remove temporary admin user ${TEMPORARY_ADMIN_USER}."
+  remove_group "${TEMPORARY_ADMIN_GROUP}" || echo "WARNING: Could not remove temporary admin group ${TEMPORARY_ADMIN_GROUP}."
 }
 
 # Waits until the dogu has finished its startup and SonarQube is up. The dogu reports itself as healthy while the
