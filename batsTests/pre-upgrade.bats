@@ -22,14 +22,38 @@ teardown() {
   rm "${BATS_TMPDIR}/doguctl"
 }
 
-@test "run_pre_upgrade should fail for upgrade from 25.12.0-16 to 26.5.0-0" {
+@test "run_pre_upgrade should fail for upgrade from 25.1.0-7 to 26.9.0-0" {
   source /workspace/resources/pre-upgrade.sh
 
-  run run_pre_upgrade "25.12.0-16" "26.5.0-0"
+  run run_pre_upgrade "25.1.0-7" "26.9.0-0"
 
   assert_failure
-  assert_line --partial 'Upgrade from version 25.12.0-16 to 26.5.0-0 is not supported. Upgrade to version 26.2.0 before.'
+  assert_line --partial 'Upgrade from version 25.1.0-7 to 26.9.0-0 is not supported. Upgrade to version 25.12.0 before.'
   assert_equal "$(mock_get_call_num "${doguctl}")" "0"
+}
+
+@test "run_pre_upgrade should fail for upgrade from 9.9.1-3 to 26.9.0-0" {
+  source /workspace/resources/pre-upgrade.sh
+
+  run run_pre_upgrade "9.9.1-3" "26.9.0-0"
+
+  assert_failure
+  assert_line --partial 'Upgrade from version 9.9.1-3 to 26.9.0-0 is not supported. Upgrade to version 25.12.0 before.'
+  assert_equal "$(mock_get_call_num "${doguctl}")" "0"
+}
+
+@test "run_pre_upgrade should collect installed plugins for upgrade from 25.12.0-16 to 26.9.0-0" {
+  source /workspace/resources/pre-upgrade.sh
+
+  collectInstalledPlugins() {
+    echo "collectInstalledPlugins null implementation"
+  }
+
+  run run_pre_upgrade "25.12.0-16" "26.9.0-0"
+
+  assert_success
+  assert_line "collectInstalledPlugins null implementation"
+  assert_equal "$(mock_get_call_args "${doguctl}" "1")" "config post_upgrade_running true"
 }
 
 @test "run_pre_upgrade should collect installed plugins for upgrade from 25.12.0-16 to 26.2.0-0" {

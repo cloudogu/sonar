@@ -14,8 +14,8 @@ function run_pre_upgrade() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
   FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
+  FROM_MINOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f2)
   TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
-  TO_MINOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f2)
 
   echo "Running pre-upgrade script..."
   echo "  FROM_VERSION: ${FROM_VERSION}"
@@ -27,10 +27,10 @@ function run_pre_upgrade() {
     exit 1
   fi
 
-  # A known bug breaks the direct upgrade from SonarQube 25.x to 26.5 or newer
-  if [[ ${FROM_MAJOR_VERSION} -eq 25 ]] && [[ ${TO_MAJOR_VERSION} -eq 26 ]] && [[ ${TO_MINOR_VERSION} -ge 5 ]]; then
-    echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 26.2.0 before."
-    echo "A direct upgrade from SonarQube 25.x to 26.5 or newer fails because of a known bug."
+  # SonarQube 26.x refuses to migrate databases of versions older than 25.12
+  if [[ ${TO_MAJOR_VERSION} -ge 26 ]] && { [[ ${FROM_MAJOR_VERSION} -lt 25 ]] || { [[ ${FROM_MAJOR_VERSION} -eq 25 ]] && [[ ${FROM_MINOR_VERSION} -lt 12 ]]; }; }; then
+    echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 25.12.0 before."
+    echo "SonarQube 26.x only supports upgrades from SonarQube 25.12 or newer."
     exit 1
   fi
 

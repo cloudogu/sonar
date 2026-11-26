@@ -10,6 +10,7 @@ function run_upgrade_notification() {
   FROM_VERSION="${1}"
   TO_VERSION="${2}"
   FROM_MAJOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f1)
+  FROM_MINOR_VERSION=$(echo "${FROM_VERSION}" | cut -d '.' -f2)
   TO_MAJOR_VERSION=$(echo "${TO_VERSION}" | cut -d '.' -f1)
 
   if [[ ${CURRENT_MAX_MAP_COUNT} -lt 262144 ]]; then
@@ -38,6 +39,13 @@ function run_upgrade_notification() {
     echo "  - 9.x   -> 25.x"
     echo "  - 25.x  -> 26.x"
     echo "No other major transitions (including downgrades or same-version) are allowed."
+    exit 1
+  fi
+
+  # SonarQube 26.x refuses to migrate databases of versions older than 25.12
+  if [[ ${FROM_MAJOR_VERSION} -eq 25 ]] && [[ ${FROM_MINOR_VERSION} -lt 12 ]]; then
+    echo "Upgrade from version ${FROM_VERSION} to ${TO_VERSION} is not supported. Upgrade to version 25.12.0 before."
+    echo "SonarQube 26.x only supports upgrades from SonarQube 25.12 or newer."
     exit 1
   fi
 

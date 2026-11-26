@@ -68,3 +68,34 @@ teardown() {
   assert_failure
   assert_line --partial 'Upgrade from version 9.9.1-3 to 26.2.0-0 is not supported'
 }
+
+@test "run_upgrade_notification should fail for upgrade from 25.1.0-7 to 26.9.0-0" {
+  # note the sequence of sourcing and overwriting the map count variable
+  source /workspace/resources/upgrade-notification.sh
+  local CURRENT_MAX_MAP_COUNT=9999999
+
+  run run_upgrade_notification "25.1.0-7" "26.9.0-0"
+
+  assert_failure
+  assert_line --partial 'Upgrade from version 25.1.0-7 to 26.9.0-0 is not supported. Upgrade to version 25.12.0 before.'
+}
+
+@test "run_upgrade_notification should succeed for upgrade from 25.12.0-17 to 26.9.0-0" {
+  # note the sequence of sourcing and overwriting the map count variable
+  source /workspace/resources/upgrade-notification.sh
+  local CURRENT_MAX_MAP_COUNT=9999999
+
+  run run_upgrade_notification "25.12.0-17" "26.9.0-0"
+
+  assert_success
+}
+
+@test "run_upgrade_notification should succeed for upgrade from 25.1.0-7 to 25.12.0-17" {
+  # note the sequence of sourcing and overwriting the map count variable
+  source /workspace/resources/upgrade-notification.sh
+  local CURRENT_MAX_MAP_COUNT=9999999
+
+  run run_upgrade_notification "25.1.0-7" "25.12.0-17"
+
+  assert_success
+}
