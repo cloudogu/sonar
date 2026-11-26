@@ -5,7 +5,7 @@
         'dogu-build-lib'
 ]) _
 
-def goVersion = "1.27.3-bookworm"
+def goVersion = "1.27.4-bookworm"
 def pipe = new com.cloudogu.sos.pipebuildlib.DoguPipe(this, [
         doguName           : 'sonar',
         shellScripts       : ['''
