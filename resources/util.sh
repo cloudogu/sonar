@@ -495,7 +495,8 @@ function disableProductNewsIcon() {
   fi
 
 
-  minified_css='[data-component="beamer-widget-custom"]{display:none;}'
+  # SonarQube 26.9 no longer renders "beamer-widget-custom" in the DOM, the widget is wrapped in "beamer-widget-content"
+  minified_css='[data-component="beamer-widget-custom"],[data-component="beamer-widget-content"]{display:none;}'
   # Check if already present
   if ! grep -Fq "${minified_css}" "${css_file}"; then
     echo "Disabling product news icon in css file: ${css_file}"
