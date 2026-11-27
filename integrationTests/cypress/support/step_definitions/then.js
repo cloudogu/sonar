@@ -93,5 +93,11 @@ Then("the interception count for {string} should be {int} after {int} seconds", 
 });
 
 Then("the data-component {string} should not be visible", function (component) {
-    cy.get('[data-component="' + component + '"]').should('not.be.visible')
+    // passes if the component is not rendered at all (e.g. the beamer widget in SonarQube 26.9) or is hidden
+    cy.get('body').then(($body) => {
+        const $component = $body.find('[data-component="' + component + '"]');
+        if ($component.length > 0) {
+            cy.wrap($component).should('not.be.visible');
+        }
+    });
 });

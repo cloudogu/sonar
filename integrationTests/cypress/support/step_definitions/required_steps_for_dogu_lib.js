@@ -40,12 +40,15 @@ When(/^the user clicks the dogu logout button$/, function () {
 });
 
 
+// SonarQube 26.9 renders the main navigation as <nav data-component="global-nav"> (no "global-navigation" id anymore)
+const globalNavSel = 'nav[data-component="global-nav"]';
+
 Then(/^the user has administrator privileges in the dogu$/, function () {
     cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
-    cy.get('#global-navigation').contains("Administration")
+    cy.get(globalNavSel).contains("Administration")
 });
 
 Then(/^the user has no administrator privileges in the dogu$/, function () {
     cy.visit("/" + env.GetDoguName(), { failOnStatusCode: false })
-    cy.get('#global-navigation').contains("Administration").should('not.exist')
+    cy.get(globalNavSel).contains("Administration").should('not.exist')
 });
