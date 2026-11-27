@@ -8,7 +8,8 @@ Then(/^the page shows the replicated data of the user in tabular form$/, functio
     cy.fixture("testuser_data").then((testuserdata) => {
         cy.get("#login").contains(testuserdata.username)
         cy.get("#email").contains(testuserdata.mail)
-        cy.get("#account-page nav").contains(testuserdata.displayName)
+        // SonarQube 26.9 shows the display name in the account sidebar, which is no longer inside #account-page
+        cy.get('[data-component="account-sidebar"]').contains(testuserdata.displayName)
     })
 });
 
@@ -93,11 +94,5 @@ Then("the interception count for {string} should be {int} after {int} seconds", 
 });
 
 Then("the data-component {string} should not be visible", function (component) {
-    // passes if the component is not rendered at all (e.g. the beamer widget in SonarQube 26.9) or is hidden
-    cy.get('body').then(($body) => {
-        const $component = $body.find('[data-component="' + component + '"]');
-        if ($component.length > 0) {
-            cy.wrap($component).should('not.be.visible');
-        }
-    });
+    cy.get('[data-component="' + component + '"]').should('not.be.visible')
 });
